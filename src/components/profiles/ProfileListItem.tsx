@@ -1,5 +1,7 @@
 import type { PublicServerProfile } from '@shared/contracts/profile'
 
+import { Button } from '@/components/ui/Button'
+
 type ProfileListItemProps = {
   profile: PublicServerProfile
   isLastConnected: boolean
@@ -32,13 +34,18 @@ export function ProfileListItem({
 
   return (
     <div
-      className={`rounded-lg border px-3 py-2 ${
+      className={`rounded-lg border px-3 py-2 transition ${
         isSelected
           ? 'border-accent bg-accent/10'
           : 'border-border bg-surface hover:bg-surface-muted'
       }`}
     >
-      <button type="button" onClick={() => onSelect(profile)} className="w-full text-left">
+      <button
+        type="button"
+        onClick={() => onSelect(profile)}
+        className="w-full rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+        aria-current={isSelected ? 'true' : undefined}
+      >
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             <p className="truncate text-sm font-medium text-white">{profile.name}</p>
@@ -58,20 +65,22 @@ export function ProfileListItem({
       </button>
 
       <div className="mt-2 flex gap-2">
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          className="px-2 py-1 text-[11px]"
           onClick={() => onEdit(profile)}
-          className="rounded-md border border-border px-2 py-1 text-[11px] text-text-muted transition hover:bg-surface"
+          aria-label={`${profile.name} profilini düzenle`}
         >
           Düzenle
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="danger"
+          className="px-2 py-1 text-[11px]"
           onClick={() => onDelete(profile)}
-          className="rounded-md border border-status-error/30 px-2 py-1 text-[11px] text-status-error transition hover:bg-status-error/10"
+          aria-label={`${profile.name} profilini sil`}
         >
           Sil
-        </button>
+        </Button>
       </div>
     </div>
   )

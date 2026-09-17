@@ -1,7 +1,7 @@
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, nativeImage } from 'electron'
 
 import { registerAppHandlers } from './ipc/app.handlers'
 import { registerDialogHandlers } from './ipc/dialog.handlers'
@@ -10,12 +10,30 @@ import { registerSshHandlers } from './ipc/ssh.handlers'
 import { sshSessionManager } from './services/ssh-session-manager'
 
 const distDir = path.dirname(fileURLToPath(import.meta.url))
+const projectRoot = path.join(distDir, '..')
 const preloadPath = path.join(distDir, 'index.mjs')
 const rendererPath = path.join(distDir, '../dist/index.html')
+const iconPath = path.join(projectRoot, 'resources/icons/icon.png')
 
 const isDev = !app.isPackaged
 
+function resolveWindowIcon() {
+  if (!app.isPackaged) {
+    return nativeImage.createFromPath(iconPath)
+  }
+
+  const packagedIcon = path.join(process.resourcesPath, 'icons/icon.png')
+
+  if (nativeImage.createFromPath(packagedIcon).isEmpty()) {
+    return nativeImage.createFromPath(iconPath)
+  }
+
+  return nativeImage.createFromPath(packagedIcon)
+}
+
 function createMainWindow(): BrowserWindow {
+  const windowIcon = resolveWindowIcon()
+
   const mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
@@ -24,6 +42,7 @@ function createMainWindow(): BrowserWindow {
     show: false,
     title: 'TerminalSSH',
     backgroundColor: '#0f1117',
+    icon: windowIcon.isEmpty() ? undefined : windowIcon,
     webPreferences: {
       preload: preloadPath,
       nodeIntegration: false,

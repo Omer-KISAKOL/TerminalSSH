@@ -1,78 +1,71 @@
 import type { ConnectionStatus } from '@shared/contracts/ssh'
 
+import { Button } from '@/components/ui/Button'
+import { StatusBadge } from '@/components/ui/StatusBadge'
+
 type TerminalToolbarProps = {
   serverLabel: string | null
   status: ConnectionStatus
+  isBusy?: boolean
   onReconnect: () => void
   onDisconnect: () => void
   onClear: () => void
-}
-
-const STATUS_LABELS: Record<ConnectionStatus, string> = {
-  idle: 'Bağlı değil',
-  connecting: 'Bağlanıyor',
-  connected: 'Bağlı',
-  disconnecting: 'Bağlantı kesiliyor',
-  disconnected: 'Bağlantı kesildi',
-  error: 'Hata',
-}
-
-const STATUS_COLORS: Record<ConnectionStatus, string> = {
-  idle: 'bg-status-idle',
-  connecting: 'bg-status-connecting',
-  connected: 'bg-status-connected',
-  disconnecting: 'bg-status-connecting',
-  disconnected: 'bg-status-idle',
-  error: 'bg-status-error',
+  onOpenSidebar?: () => void
 }
 
 export function TerminalToolbar({
   serverLabel,
   status,
+  isBusy = false,
   onReconnect,
   onDisconnect,
   onClear,
+  onOpenSidebar,
 }: TerminalToolbarProps) {
   const canReconnect = status === 'disconnected' || status === 'error'
   const canDisconnect = status === 'connected' || status === 'connecting' || status === 'error'
 
   return (
-    <header className="flex items-center justify-between border-b border-border px-4 py-3">
-      <div className="min-w-0">
-        <h2 className="truncate text-sm font-medium text-white">{serverLabel ?? 'SSH Terminal'}</h2>
-        <div className="mt-1 flex items-center gap-2 text-xs text-text-muted">
-          <span
-            className={`inline-block h-2 w-2 rounded-full ${STATUS_COLORS[status]}`}
-            aria-hidden="true"
-          />
-          {STATUS_LABELS[status]}
+    <header className="flex items-center justify-between gap-3 border-b border-border px-3 py-3 md:px-4">
+      <div className="flex min-w-0 items-center gap-3">
+        {onOpenSidebar ? (
+          <Button
+            variant="ghost"
+            className="px-2 py-1.5 md:hidden"
+            onClick={onOpenSidebar}
+            aria-label="Kenar çubuğunu aç"
+          >
+            ☰
+          </Button>
+        ) : null}
+        <div className="min-w-0">
+          <h2 className="truncate text-sm font-medium text-white">{serverLabel ?? 'SSH Terminal'}</h2>
+          <StatusBadge status={status} className="mt-1" />
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={onClear}
-          className="rounded-md border border-border px-3 py-1.5 text-xs text-text transition hover:bg-surface-muted"
-        >
+      <div className="flex shrink-0 items-center gap-2">
+        <Button variant="secondary" className="px-2.5 py-1.5 text-xs" onClick={onClear}>
           Temizle
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="secondary"
+          className="hidden px-2.5 py-1.5 text-xs sm:inline-flex"
           onClick={onReconnect}
           disabled={!canReconnect}
-          className="rounded-md border border-border px-3 py-1.5 text-xs text-text transition hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-50"
+          loading={isBusy && canReconnect}
         >
           Yeniden Bağlan
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="danger"
+          className="px-2.5 py-1.5 text-xs"
           onClick={onDisconnect}
           disabled={!canDisconnect}
-          className="rounded-md border border-status-error/40 px-3 py-1.5 text-xs text-status-error transition hover:bg-status-error/10 disabled:cursor-not-allowed disabled:opacity-50"
+          loading={isBusy && status === 'disconnecting'}
         >
           Bağlantıyı Kes
-        </button>
+        </Button>
       </div>
     </header>
   )

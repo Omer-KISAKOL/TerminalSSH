@@ -1,5 +1,7 @@
 import type { HostVerifyRequestEvent } from '@shared/contracts/host'
 
+import { Button } from '@/components/ui/Button'
+
 type HostFingerprintDialogProps = {
   request: HostVerifyRequestEvent
   isResponding: boolean
@@ -62,32 +64,17 @@ export function HostFingerprintDialog({
 
         <div className="mt-6 flex justify-end gap-3">
           {isMismatch ? (
-            <button
-              type="button"
-              className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition hover:brightness-110 disabled:opacity-50"
-              disabled={isResponding}
-              onClick={onDismiss}
-            >
+            <Button variant="primary" loading={isResponding} onClick={onDismiss}>
               Kapat
-            </button>
+            </Button>
           ) : (
             <>
-              <button
-                type="button"
-                className="rounded-lg border border-border px-4 py-2 text-sm text-text hover:bg-surface disabled:opacity-50"
-                disabled={isResponding}
-                onClick={onReject}
-              >
+              <Button variant="secondary" disabled={isResponding} onClick={onReject}>
                 Reddet
-              </button>
-              <button
-                type="button"
-                className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition hover:brightness-110 disabled:opacity-50"
-                disabled={isResponding}
-                onClick={onApprove}
-              >
+              </Button>
+              <Button variant="primary" loading={isResponding} onClick={onApprove}>
                 Güven ve devam et
-              </button>
+              </Button>
             </>
           )}
         </div>

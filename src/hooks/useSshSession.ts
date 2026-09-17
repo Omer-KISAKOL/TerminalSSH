@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 import type { ConnectRequest, ConnectionFormValues, ConnectionStatus } from '@shared/contracts/ssh'
 
+import { toUserErrorMessage } from '@/lib/user-error'
+
 type UseSshSessionOptions = {
   cols: number
   rows: number
@@ -153,7 +155,7 @@ export function useSshSession({
         setSessionId(response.sessionId)
         sessionIdRef.current = response.sessionId
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Bağlantı kurulamadı.'
+        const message = toUserErrorMessage(error)
         setStatus('error')
         setErrorMessage(message)
 

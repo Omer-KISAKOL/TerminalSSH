@@ -15,6 +15,9 @@ type UseTerminalResult = {
   write: (data: string) => void
   writeln: (message: string) => void
   focus: () => void
+  copySelection: () => Promise<void>
+  pasteFromClipboard: () => Promise<void>
+  hasSelection: () => boolean
 }
 
 export function useTerminal({ onInput, onResize }: UseTerminalOptions): UseTerminalResult {
@@ -127,11 +130,34 @@ export function useTerminal({ onInput, onResize }: UseTerminalOptions): UseTermi
     terminalRef.current?.focus()
   }, [])
 
+  const hasSelection = useCallback(() => {
+    return Boolean(terminalRef.current?.getSelection())
+  }, [])
+
+  const copySelection = useCallback(async () => {
+    const selection = terminalRef.current?.getSelection()
+
+    if (selection) {
+      await navigator.clipboard.writeText(selection)
+    }
+  }, [])
+
+  const pasteFromClipboard = useCallback(async () => {
+    const text = await navigator.clipboard.readText()
+
+    if (text) {
+      onInputRef.current(text)
+    }
+  }, [])
+
   return {
     containerRef,
     clear,
     write,
     writeln,
     focus,
+    copySelection,
+    pasteFromClipboard,
+    hasSelection,
   }
 }

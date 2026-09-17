@@ -280,8 +280,8 @@ Koyu temalı, sade ve masaüstü odaklı bir tasarım kullan.
 
 Yerleşim:
 
-- Sol kenar çubuğu: uygulama adı, yeni bağlantı ve kayıtlı sunucular
-- Ana alan: bağlantı yoksa form; bağlıysa terminal
+- Sol kenar çubuğu: uygulama adı, yeni bağlantı ve kayıtlı sunucular (bağlan butonu)
+- Ana alan: bağlantı yoksa form; bağlıysa terminal ve sunucu sekmeleri
 - Üst terminal çubuğu: sunucu adı, durum, yeniden bağlan ve bağlantıyı kes
 
 Durum renkleri:
@@ -458,3 +458,4 @@ Bu dokümanı projenin ana gereksinim kaynağı kabul et. Uygulamayı aşamalar 
 ```text
 Proje kökündeki SSH_TERMINAL_PROJE_DOKUMANI.md dosyasını eksiksiz oku ve gereksinim kaynağı olarak kabul et. Yalnızca Aşama 1'i uygula. pnpm kullan. Electron güvenlik ayarlarını değiştirme; nodeIntegration kapalı, contextIsolation ve sandbox açık olmalı. Genel amaçlı IPC köprüsü açma. Önce planı yaz, sonra uygula; en sonunda typecheck, lint ve build çalıştırarak sonucu raporla.
 ```
+

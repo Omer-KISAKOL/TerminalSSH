@@ -1,0 +1,53 @@
+appId: com.terminalssh.app
+productName: TerminalSSH
+copyright: Copyright © 2026 TerminalSSH
+
+directories:
+  output: release
+  buildResources: resources/icons
+
+files:
+  - dist/**/*
+  - dist-electron/**/*
+  - package.json
+  - '!**/*.map'
+
+asar: true
+asarUnpack:
+  - '**/node_modules/ssh2/**'
+
+extraResources:
+  - from: resources/icons/icon.png
+    to: icons/icon.png
+
+linux:
+  target:
+    - AppImage
+    - rpm
+  category: Network
+  syncDesktopName: true
+  maintainer: TerminalSSH
+  synopsis: SSH terminal istemcisi
+  description: Electron tabanlı sade SSH terminal istemcisi.
+  icon: resources/icons
+
+win:
+  target:
+    - nsis
+  icon: resources/icons/icon.ico
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: TerminalSSH
+
+mac:
+  target:
+    - dmg
+  category: public.app-category.developer-tools
+  icon: resources/icons/icon.png
+
+npmRebuild: false
+buildDependenciesFromSource: false

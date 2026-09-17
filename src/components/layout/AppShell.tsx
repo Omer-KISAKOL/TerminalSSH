@@ -5,8 +5,12 @@ import type { ConnectionFormValues, ConnectionStatus } from '@shared/contracts/s
 
 import { ConnectionForm } from '@/components/connection/ConnectionForm'
 import { HostFingerprintDialog } from '@/components/connection/HostFingerprintDialog'
+import { TerminalStateOverlay } from '@/components/terminal/TerminalStateOverlay'
 import { TerminalToolbar } from '@/components/terminal/TerminalToolbar'
 import { TerminalView, type TerminalApi } from '@/components/terminal/TerminalView'
+import { Button } from '@/components/ui/Button'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { StatusBadge } from '@/components/ui/StatusBadge'
 import { useHostVerification } from '@/hooks/useHostVerification'
 import { useProfiles } from '@/hooks/useProfiles'
 import { useSshSession } from '@/hooks/useSshSession'
@@ -32,6 +36,8 @@ export function AppShell({ appVersion }: AppShellProps) {
   const [formValues, setFormValues] = useState<ConnectionFormValues>(DEFAULT_CONNECTION_FORM)
   const [terminalSize, setTerminalSize] = useState({ cols: 80, rows: 24 })
   const [formKey, setFormKey] = useState('create')
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [isReconnecting, setIsReconnecting] = useState(false)
 
   const handleTerminalReady = useCallback((api: TerminalApi | null) => {
     terminalApiRef.current = api
@@ -65,6 +71,7 @@ export function AppShell({ appVersion }: AppShellProps) {
       setSelectedProfileId(profile.id)
       resetForm('edit', publicProfileToFormValues(profile))
       setView('form')
+      setSidebarOpen(false)
     },
     [resetForm],
   )
@@ -101,6 +108,7 @@ export function AppShell({ appVersion }: AppShellProps) {
       setFormValues(connectValues)
       setTerminalMounted(true)
       setView('terminal')
+      setSidebarOpen(false)
 
       const label = getConnectionLabel(connectValues)
       await ssh.connect(connectValues, label)
@@ -112,6 +120,7 @@ export function AppShell({ appVersion }: AppShellProps) {
   useEffect(() => {
     if (ssh.status === 'connected') {
       terminalApiRef.current?.focus()
+      setIsReconnecting(false)
     }
   }, [ssh.status])
 
@@ -121,6 +130,7 @@ export function AppShell({ appVersion }: AppShellProps) {
     setSelectedProfileId(null)
     resetForm('create', DEFAULT_CONNECTION_FORM)
     setView('form')
+    setSidebarOpen(false)
   }, [resetForm, ssh])
 
   const handleProfileSelect = useCallback(
@@ -154,8 +164,14 @@ export function AppShell({ appVersion }: AppShellProps) {
   )
 
   const handleReconnect = useCallback(async () => {
-    await ssh.reconnect()
-    terminalApiRef.current?.focus()
+    setIsReconnecting(true)
+
+    try {
+      await ssh.reconnect()
+      terminalApiRef.current?.focus()
+    } finally {
+      setIsReconnecting(false)
+    }
   }, [ssh])
 
   const handleDisconnect = useCallback(async () => {
@@ -181,8 +197,20 @@ export function AppShell({ appVersion }: AppShellProps) {
     [ssh],
   )
 
+  const handleBackToForm = useCallback(async () => {
+    await ssh.disconnect()
+    ssh.reset()
+    setView('form')
+  }, [ssh])
+
   const showTerminal = view === 'terminal'
   const status: ConnectionStatus = showTerminal ? ssh.status : 'idle'
+  const showTerminalOverlay =
+    showTerminal &&
+    (status === 'connecting' ||
+      status === 'disconnecting' ||
+      status === 'error' ||
+      status === 'disconnected')
 
   return (
     <div className="flex h-full min-h-0 bg-surface">
@@ -192,6 +220,8 @@ export function AppShell({ appVersion }: AppShellProps) {
         lastConnectedProfileId={profiles.lastConnectedProfileId}
         profilesLoading={profiles.isLoading}
         profilesError={profiles.error}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
         onNewConnection={() => void handleNewConnection()}
         onSelectProfile={handleProfileSelect}
         onEditProfile={handleProfileSelect}
@@ -203,47 +233,70 @@ export function AppShell({ appVersion }: AppShellProps) {
           <div
             className={
               showTerminal
-                ? 'flex min-h-0 flex-1 flex-col'
+                ? 'relative flex min-h-0 flex-1 flex-col'
                 : 'pointer-events-none invisible absolute inset-0 flex min-h-0 flex-col'
             }
           >
             <TerminalToolbar
               serverLabel={ssh.serverLabel}
               status={status}
+              isBusy={ssh.isBusy || isReconnecting}
               onReconnect={() => void handleReconnect()}
               onDisconnect={() => void handleDisconnect()}
               onClear={handleClear}
+              onOpenSidebar={() => setSidebarOpen(true)}
             />
             <TerminalView
               onReady={handleTerminalReady}
               onInput={handleInput}
               onResize={handleResize}
             />
+            {showTerminalOverlay ? (
+              <TerminalStateOverlay
+                status={status}
+                errorMessage={ssh.errorMessage}
+                isReconnecting={isReconnecting}
+                onReconnect={() => void handleReconnect()}
+                onBackToForm={() => void handleBackToForm()}
+              />
+            ) : null}
           </div>
         ) : null}
 
         {!showTerminal ? (
           <>
-            <header className="flex items-center justify-between border-b border-border px-6 py-4">
-              <div>
-                <h2 className="text-base font-medium text-white">
-                  {formMode === 'edit' ? 'Profili Düzenle' : 'Bağlantı'}
-                </h2>
-                <p className="text-sm text-text-muted">
-                  SSH oturumu başlatmak için bağlantı bilgilerini girin.
-                </p>
+            <header className="flex items-center justify-between gap-3 border-b border-border px-4 py-4 md:px-6">
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="ghost"
+                  className="px-2 py-1.5 md:hidden"
+                  onClick={() => setSidebarOpen(true)}
+                  aria-label="Kenar çubuğunu aç"
+                >
+                  ☰
+                </Button>
+                <div>
+                  <h2 className="text-base font-medium text-white">
+                    {formMode === 'edit' ? 'Profili Düzenle' : 'Bağlantı'}
+                  </h2>
+                  <p className="text-sm text-text-muted">
+                    SSH oturumu başlatmak için bağlantı bilgilerini girin.
+                  </p>
+                </div>
               </div>
-              <div className="flex items-center gap-2 text-xs text-text-muted">
-                <span
-                  className="inline-block h-2 w-2 rounded-full bg-status-idle"
-                  aria-hidden="true"
-                />
-                Bağlı değil
-              </div>
+              <StatusBadge status="idle" />
             </header>
 
-            <section className="flex flex-1 items-center justify-center overflow-y-auto p-8">
-              <div className="w-full max-w-xl">
+            <section className="flex flex-1 flex-col overflow-y-auto p-4 md:p-8">
+              {profiles.profiles.length === 0 && formMode === 'create' ? (
+                <EmptyState
+                  title="Hoş geldiniz"
+                  description="Henüz kayıtlı sunucu yok. Aşağıdaki formu kullanarak ilk SSH bağlantınızı kurabilir veya profil olarak kaydedebilirsiniz."
+                  icon={<span className="text-xl">&gt;_</span>}
+                />
+              ) : null}
+
+              <div className="mx-auto w-full max-w-xl">
                 <ConnectionForm
                   key={formKey}
                   mode={formMode}

@@ -2,7 +2,9 @@ import { useState } from 'react'
 
 import type { ConnectionFormValues } from '@shared/contracts/ssh'
 
+import { Button } from '@/components/ui/Button'
 import { DEFAULT_CONNECTION_FORM, validateConnectionForm } from '@/lib/connection-form'
+import { toUserErrorMessage } from '@/lib/user-error'
 
 type ConnectionFormProps = {
   disabled?: boolean
@@ -58,7 +60,7 @@ export function ConnectionForm({
     try {
       await onSubmit(values)
     } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : 'Bağlantı kurulamadı.')
+      setSubmitError(toUserErrorMessage(error))
     } finally {
       setIsSubmitting(false)
     }
@@ -69,13 +71,14 @@ export function ConnectionForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="mx-auto w-full max-w-lg rounded-xl border border-border bg-surface-muted p-6"
+      className="mx-auto w-full max-w-lg rounded-xl border border-border bg-surface-muted p-6 shadow-lg shadow-black/20"
+      aria-busy={isSubmitting}
     >
       <div className="space-y-4">
         {showProfileFields ? (
           <div>
-            <label htmlFor="name" className="mb-1.5 block text-sm text-text-muted">
-              Profil adı
+            <label htmlFor="name" className="mb-1.5 block text-sm font-medium text-text">
+              Sunucu adı
             </label>
             <input
               id="name"
@@ -84,14 +87,14 @@ export function ConnectionForm({
               disabled={isDisabled}
               value={values.name}
               onChange={(event) => updateField('name', event.target.value)}
-              placeholder="Üretim Ubuntu"
-              className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-accent disabled:opacity-60"
+              placeholder="Ubuntu1"
+              className="field-input"
             />
           </div>
         ) : null}
 
         <div>
-          <label htmlFor="host" className="mb-1.5 block text-sm text-text-muted">
+          <label htmlFor="host" className="mb-1.5 block text-sm font-medium text-text">
             Sunucu adresi
           </label>
           <input
@@ -102,13 +105,13 @@ export function ConnectionForm({
             value={values.host}
             onChange={(event) => updateField('host', event.target.value)}
             placeholder="192.168.1.10 veya sunucu.example.com"
-            className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-accent disabled:opacity-60"
+            className="field-input"
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label htmlFor="port" className="mb-1.5 block text-sm text-text-muted">
+            <label htmlFor="port" className="mb-1.5 block text-sm font-medium text-text">
               Port
             </label>
             <input
@@ -119,12 +122,12 @@ export function ConnectionForm({
               disabled={isDisabled}
               value={values.port}
               onChange={(event) => updateField('port', event.target.value)}
-              className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-accent disabled:opacity-60"
+              className="field-input"
             />
           </div>
 
           <div>
-            <label htmlFor="username" className="mb-1.5 block text-sm text-text-muted">
+            <label htmlFor="username" className="mb-1.5 block text-sm font-medium text-text">
               Kullanıcı adı
             </label>
             <input
@@ -134,14 +137,14 @@ export function ConnectionForm({
               disabled={isDisabled}
               value={values.username}
               onChange={(event) => updateField('username', event.target.value)}
-              className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-accent disabled:opacity-60"
+              className="field-input"
             />
           </div>
         </div>
 
-        <div>
-          <span className="mb-1.5 block text-sm text-text-muted">Kimlik doğrulama</span>
-          <div className="flex gap-3">
+        <fieldset>
+          <legend className="mb-1.5 block text-sm font-medium text-text">Kimlik doğrulama</legend>
+          <div className="flex flex-wrap gap-4">
             <label className="flex items-center gap-2 text-sm text-text">
               <input
                 type="radio"
@@ -165,11 +168,11 @@ export function ConnectionForm({
               Özel anahtar
             </label>
           </div>
-        </div>
+        </fieldset>
 
         {values.authType === 'password' ? (
           <div>
-            <label htmlFor="password" className="mb-1.5 block text-sm text-text-muted">
+            <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-text">
               Parola
             </label>
             <input
@@ -180,7 +183,7 @@ export function ConnectionForm({
               value={values.password}
               onChange={(event) => updateField('password', event.target.value)}
               placeholder={values.hasSavedPassword ? 'Kayıtlı parola kullanılacak' : undefined}
-              className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-accent disabled:opacity-60"
+              className="field-input"
             />
             {values.hasSavedPassword ? (
               <p className="mt-1 text-xs text-text-muted">
@@ -202,7 +205,7 @@ export function ConnectionForm({
         ) : (
           <>
             <div>
-              <label htmlFor="privateKeyPath" className="mb-1.5 block text-sm text-text-muted">
+              <label htmlFor="privateKeyPath" className="mb-1.5 block text-sm font-medium text-text">
                 Özel anahtar dosyası
               </label>
               <div className="flex gap-2">
@@ -213,21 +216,21 @@ export function ConnectionForm({
                   disabled={isDisabled}
                   value={values.privateKeyPath}
                   placeholder="Dosya seçilmedi"
-                  className="min-w-0 flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none disabled:opacity-60"
+                  className="field-input min-w-0 flex-1"
                 />
-                <button
+                <Button
                   type="button"
                   disabled={isDisabled}
                   onClick={() => void handleSelectPrivateKey()}
-                  className="shrink-0 rounded-lg border border-border px-3 py-2 text-sm text-text transition hover:bg-surface disabled:opacity-60"
+                  aria-label="Özel anahtar dosyası seç"
                 >
                   Seç
-                </button>
+                </Button>
               </div>
             </div>
 
             <div>
-              <label htmlFor="passphrase" className="mb-1.5 block text-sm text-text-muted">
+              <label htmlFor="passphrase" className="mb-1.5 block text-sm font-medium text-text">
                 Passphrase (isteğe bağlı)
               </label>
               <input
@@ -240,7 +243,7 @@ export function ConnectionForm({
                 placeholder={
                   values.hasSavedPassphrase ? 'Kayıtlı passphrase kullanılacak' : undefined
                 }
-                className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-accent disabled:opacity-60"
+                className="field-input"
               />
               {values.hasSavedPassphrase ? (
                 <p className="mt-1 text-xs text-text-muted">
@@ -275,15 +278,21 @@ export function ConnectionForm({
         ) : null}
       </div>
 
-      {errorMessage ? <p className="mt-4 text-sm text-status-error">{errorMessage}</p> : null}
+      {errorMessage ? (
+        <p className="mt-4 rounded-lg border border-status-error/30 bg-status-error/10 px-3 py-2 text-sm text-status-error" role="alert">
+          {errorMessage}
+        </p>
+      ) : null}
 
-      <button
+      <Button
         type="submit"
+        variant="primary"
         disabled={isDisabled}
-        className="mt-6 w-full rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+        loading={isSubmitting}
+        className="mt-6 w-full py-2.5"
       >
-        {isSubmitting ? 'Bağlanıyor…' : mode === 'edit' ? 'Güncelle ve Bağlan' : 'Bağlan'}
-      </button>
+        {mode === 'edit' ? 'Güncelle ve Bağlan' : 'Bağlan'}
+      </Button>
     </form>
   )
 }
