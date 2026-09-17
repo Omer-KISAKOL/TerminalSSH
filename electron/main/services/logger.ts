@@ -1,29 +1,55 @@
-const isDev = process.env.NODE_ENV !== 'production'
+import { app } from 'electron'
 
-const SENSITIVE_KEYS = [
+function isProductionMode(): boolean {
+  return app.isPackaged
+}
+
+const SENSITIVE_KEYS = new Set([
   'password',
   'passphrase',
   'privateKey',
+  'privateKeyPath',
   'encryptedPassword',
   'encryptedPassphrase',
-]
+  'connectRequest',
+  'payload',
+  'data',
+])
+
+const ALLOWED_KEYS = new Set([
+  'authType',
+  'host',
+  'port',
+  'username',
+  'sessionId',
+  'profileId',
+  'verificationId',
+  'kind',
+  'code',
+  'webContentsId',
+])
 
 function sanitizeMeta(meta: Record<string, unknown>): Record<string, unknown> {
   const sanitized: Record<string, unknown> = {}
 
   for (const [key, value] of Object.entries(meta)) {
-    if (SENSITIVE_KEYS.includes(key)) {
+    if (SENSITIVE_KEYS.has(key)) {
       sanitized[key] = '[REDACTED]'
       continue
     }
 
-    if (key === 'authType' || key === 'host' || key === 'port' || key === 'username') {
+    if (ALLOWED_KEYS.has(key)) {
       sanitized[key] = value
       continue
     }
 
     if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
       sanitized[key] = sanitizeMeta(value as Record<string, unknown>)
+      continue
+    }
+
+    if (isProductionMode()) {
+      sanitized[key] = '[REDACTED]'
       continue
     }
 
@@ -34,7 +60,7 @@ function sanitizeMeta(meta: Record<string, unknown>): Record<string, unknown> {
 }
 
 function formatMessage(message: string, meta?: Record<string, unknown>): string {
-  if (!meta || Object.keys(meta).length === 0) {
+  if (!meta || Object.keys(meta).length === 0 || isProductionMode()) {
     return message
   }
 
@@ -43,7 +69,7 @@ function formatMessage(message: string, meta?: Record<string, unknown>): string 
 
 export const logger = {
   debug(message: string, meta?: Record<string, unknown>): void {
-    if (isDev) {
+    if (!isProductionMode()) {
       console.debug(formatMessage(message, meta))
     }
   },

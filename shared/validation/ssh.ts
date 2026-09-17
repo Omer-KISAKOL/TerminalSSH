@@ -1,11 +1,12 @@
+import {
+  MAX_PORT,
+  MAX_TERMINAL_COLS,
+  MAX_TERMINAL_ROWS,
+  MIN_PORT,
+  MIN_TERMINAL_COLS,
+  MIN_TERMINAL_ROWS,
+} from '@shared/constants/validation'
 import type { AuthType, ConnectRequest } from '@shared/contracts/ssh'
-
-const MIN_PORT = 1
-const MAX_PORT = 65535
-const MIN_COLS = 1
-const MAX_COLS = 500
-const MIN_ROWS = 1
-const MAX_ROWS = 200
 
 export class IpcValidationError extends Error {
   constructor(message: string) {
@@ -80,8 +81,18 @@ export function assertConnectRequest(input: unknown): ConnectRequest {
   const port = assertPort(value.port)
   const username = assertNonEmptyString(value.username, 'Kullanıcı adı')
   const authType = assertAuthType(value.authType)
-  const cols = assertTerminalDimension(value.cols, MIN_COLS, MAX_COLS, 'genişliği')
-  const rows = assertTerminalDimension(value.rows, MIN_ROWS, MAX_ROWS, 'yüksekliği')
+  const cols = assertTerminalDimension(
+    value.cols,
+    MIN_TERMINAL_COLS,
+    MAX_TERMINAL_COLS,
+    'genişliği',
+  )
+  const rows = assertTerminalDimension(
+    value.rows,
+    MIN_TERMINAL_ROWS,
+    MAX_TERMINAL_ROWS,
+    'yüksekliği',
+  )
   const profileId = assertOptionalString(value.profileId)
   const password = assertOptionalString(value.password)
   const privateKeyPath = assertOptionalString(value.privateKeyPath)
@@ -135,8 +146,18 @@ export function assertResizePayload(input: unknown): {
 } {
   const value = assertObject(input, 'boyutlandırma isteği')
   const sessionId = assertSessionId(value.sessionId)
-  const cols = assertTerminalDimension(value.cols, MIN_COLS, MAX_COLS, 'genişliği')
-  const rows = assertTerminalDimension(value.rows, MIN_ROWS, MAX_ROWS, 'yüksekliği')
+  const cols = assertTerminalDimension(
+    value.cols,
+    MIN_TERMINAL_COLS,
+    MAX_TERMINAL_COLS,
+    'genişliği',
+  )
+  const rows = assertTerminalDimension(
+    value.rows,
+    MIN_TERMINAL_ROWS,
+    MAX_TERMINAL_ROWS,
+    'yüksekliği',
+  )
 
   return { sessionId, cols, rows }
 }

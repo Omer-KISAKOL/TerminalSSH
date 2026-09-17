@@ -4,8 +4,10 @@ import type { PublicServerProfile } from '@shared/contracts/profile'
 import type { ConnectionFormValues, ConnectionStatus } from '@shared/contracts/ssh'
 
 import { ConnectionForm } from '@/components/connection/ConnectionForm'
+import { HostFingerprintDialog } from '@/components/connection/HostFingerprintDialog'
 import { TerminalToolbar } from '@/components/terminal/TerminalToolbar'
 import { TerminalView, type TerminalApi } from '@/components/terminal/TerminalView'
+import { useHostVerification } from '@/hooks/useHostVerification'
 import { useProfiles } from '@/hooks/useProfiles'
 import { useSshSession } from '@/hooks/useSshSession'
 import {
@@ -42,6 +44,8 @@ export function AppShell({ appVersion }: AppShellProps) {
   const handleTerminalMessage = useCallback((message: string) => {
     terminalApiRef.current?.writeln(message)
   }, [])
+
+  const hostVerification = useHostVerification()
 
   const ssh = useSshSession({
     cols: terminalSize.cols,
@@ -257,6 +261,16 @@ export function AppShell({ appVersion }: AppShellProps) {
           </>
         ) : null}
       </main>
+
+      {hostVerification.pendingRequest ? (
+        <HostFingerprintDialog
+          request={hostVerification.pendingRequest}
+          isResponding={hostVerification.isResponding}
+          onApprove={() => void hostVerification.approve()}
+          onReject={() => void hostVerification.reject()}
+          onDismiss={hostVerification.dismiss}
+        />
+      ) : null}
     </div>
   )
 }

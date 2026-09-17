@@ -42,8 +42,14 @@ function createMainWindow(): BrowserWindow {
     void mainWindow.loadFile(rendererPath)
   }
 
+  const webContentsId = mainWindow.webContents.id
+
+  mainWindow.webContents.on('did-start-loading', () => {
+    sshSessionManager.disconnectAllForWebContents(webContentsId)
+  })
+
   mainWindow.webContents.on('destroyed', () => {
-    sshSessionManager.disconnectAllForWebContents(mainWindow.webContents.id)
+    sshSessionManager.disconnectAllForWebContents(webContentsId)
   })
 
   return mainWindow
@@ -62,6 +68,10 @@ app.whenReady().then(() => {
       createMainWindow()
     }
   })
+})
+
+app.on('before-quit', () => {
+  sshSessionManager.disconnectAll()
 })
 
 app.on('window-all-closed', () => {

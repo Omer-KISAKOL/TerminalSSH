@@ -1,8 +1,31 @@
 import { contextBridge, ipcRenderer } from 'electron'
 
+import type { HostVerifyRequestEvent } from '@shared/contracts/host'
+import type { SshDataEvent, SshStatusEvent } from '@shared/contracts/ssh'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
 
 import type { DesktopApi } from './api.types'
+
+type HostVerifyListener = (event: HostVerifyRequestEvent) => void
+
+const hostVerifyListeners = new Set<HostVerifyListener>()
+let hostVerifyBridgeRegistered = false
+
+function ensureHostVerifyBridge(): void {
+  if (hostVerifyBridgeRegistered) {
+    return
+  }
+
+  hostVerifyBridgeRegistered = true
+
+  ipcRenderer.on(IPC_CHANNELS.ssh.hostVerifyRequest, (_event, payload: unknown) => {
+    const event = payload as HostVerifyRequestEvent
+
+    for (const listener of hostVerifyListeners) {
+      listener(event)
+    }
+  })
+}
 
 const desktopApi: DesktopApi = {
   app: {
@@ -16,7 +39,7 @@ const desktopApi: DesktopApi = {
     disconnect: (sessionId) => ipcRenderer.invoke(IPC_CHANNELS.ssh.disconnect, { sessionId }),
     onData: (callback) => {
       const listener = (_event: Electron.IpcRendererEvent, payload: unknown) => {
-        callback(payload as Parameters<typeof callback>[0])
+        callback(payload as SshDataEvent)
       }
 
       ipcRenderer.on(IPC_CHANNELS.ssh.data, listener)
@@ -26,7 +49,7 @@ const desktopApi: DesktopApi = {
     },
     onStatus: (callback) => {
       const listener = (_event: Electron.IpcRendererEvent, payload: unknown) => {
-        callback(payload as Parameters<typeof callback>[0])
+        callback(payload as SshStatusEvent)
       }
 
       ipcRenderer.on(IPC_CHANNELS.ssh.status, listener)
@@ -34,6 +57,16 @@ const desktopApi: DesktopApi = {
         ipcRenderer.removeListener(IPC_CHANNELS.ssh.status, listener)
       }
     },
+    onHostVerifyRequest: (callback) => {
+      ensureHostVerifyBridge()
+      hostVerifyListeners.add(callback)
+
+      return () => {
+        hostVerifyListeners.delete(callback)
+      }
+    },
+    respondHostVerification: (verificationId, approved) =>
+      ipcRenderer.invoke(IPC_CHANNELS.ssh.hostVerifyRespond, { verificationId, approved }),
   },
   profiles: {
     list: () => ipcRenderer.invoke(IPC_CHANNELS.profiles.list),

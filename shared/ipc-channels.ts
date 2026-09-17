@@ -9,6 +9,8 @@ export const IPC_CHANNELS = {
     disconnect: 'ssh:disconnect',
     data: 'ssh:data',
     status: 'ssh:status',
+    hostVerifyRequest: 'ssh:host-verify-request',
+    hostVerifyRespond: 'ssh:host-verify-respond',
   },
   profiles: {
     list: 'profiles:list',

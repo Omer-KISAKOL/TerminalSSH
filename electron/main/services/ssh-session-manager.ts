@@ -13,6 +13,9 @@ import type {
 } from '@shared/contracts/ssh'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
 
+import { formatHostFingerprint } from './fingerprint'
+import { hostVerificationService } from './host-verification-service'
+import { knownHostsStore } from './known-hosts-store'
 import { logger } from './logger'
 import { mapSshError } from './ssh-errors'
 
@@ -69,10 +72,11 @@ export class SshSessionManager {
     let connectOptions: ConnectConfig
 
     try {
-      connectOptions = await this.buildConnectOptions(request, sessionId)
+      connectOptions = await this.buildConnectOptions(request, sessionId, webContentsId)
     } catch (error) {
       this.clearTimeout(session)
       this.sessions.delete(sessionId)
+      hostVerificationService.cancelForWebContents(webContentsId)
       const message = error instanceof Error ? error.message : 'Bağlantı kurulamadı.'
       throw new Error(message)
     }
@@ -89,6 +93,9 @@ export class SshSessionManager {
         callback()
       }
 
+      const sessionReason = () =>
+        hostVerificationService.consumeSessionReason(sessionId)
+
       client.on('ready', () => {
         logger.debug('SSH istemcisi hazır', { sessionId })
 
@@ -102,7 +109,7 @@ export class SshSessionManager {
             this.clearTimeout(session)
 
             if (shellError) {
-              const message = mapSshError(shellError)
+              const message = mapSshError(shellError, sessionReason())
               this.finalizeSession(session, 'error', message)
               client.end()
               settle(() => reject(new Error(message)))
@@ -125,7 +132,7 @@ export class SshSessionManager {
           return
         }
 
-        const message = mapSshError(error)
+        const message = mapSshError(error, sessionReason())
         logger.error('SSH istemci hatası', {
           sessionId,
           code: 'code' in error ? String(error.code) : undefined,
@@ -158,19 +165,15 @@ export class SshSessionManager {
   private async buildConnectOptions(
     request: ConnectRequest,
     sessionId: string,
+    webContentsId: number,
   ): Promise<ConnectConfig> {
     const baseConfig: ConnectConfig = {
       host: request.host,
       port: request.port,
       username: request.username,
       readyTimeout: CONNECTION_TIMEOUT_MS,
-      // TODO(Aşama 4): host fingerprint doğrulaması uygulanacak.
-      hostVerifier: () => {
-        logger.warn('SSH host fingerprint doğrulaması henüz uygulanmadı', {
-          sessionId,
-          host: request.host,
-        })
-        return true
+      hostVerifier: (hostKey: Buffer, verify: (approved: boolean) => void) => {
+        void this.verifyHostKey(hostKey, request, sessionId, webContentsId, verify)
       },
     }
 
@@ -200,12 +203,57 @@ export class SshSessionManager {
     } catch (error) {
       logger.error('Özel anahtar okunamadı', {
         sessionId,
-        privateKeyPath: request.privateKeyPath,
         code:
           error && typeof error === 'object' && 'code' in error ? String(error.code) : undefined,
       })
       throw new Error('Özel anahtar okunamadı.')
     }
+  }
+
+  private async verifyHostKey(
+    hostKey: Buffer,
+    request: ConnectRequest,
+    sessionId: string,
+    webContentsId: number,
+    verify: (approved: boolean) => void,
+  ): Promise<void> {
+    const fingerprint = formatHostFingerprint(hostKey)
+    const knownHost = knownHostsStore.get(request.host, request.port)
+
+    if (knownHost) {
+      if (knownHost.fingerprint === fingerprint) {
+        verify(true)
+        return
+      }
+
+      const approved = await hostVerificationService.verifyHostKey({
+        webContentsId,
+        sessionId,
+        host: request.host,
+        port: request.port,
+        fingerprint,
+        kind: 'mismatch',
+        expectedFingerprint: knownHost.fingerprint,
+      })
+
+      verify(approved)
+      return
+    }
+
+    const approved = await hostVerificationService.verifyHostKey({
+      webContentsId,
+      sessionId,
+      host: request.host,
+      port: request.port,
+      fingerprint,
+      kind: 'unknown',
+    })
+
+    if (approved) {
+      knownHostsStore.save(request.host, request.port, fingerprint)
+    }
+
+    verify(approved)
   }
 
   write(webContentsId: number, sessionId: string, data: string): void {
@@ -260,10 +308,20 @@ export class SshSessionManager {
   }
 
   disconnectAllForWebContents(webContentsId: number): void {
+    hostVerificationService.cancelForWebContents(webContentsId)
+
     for (const session of this.sessions.values()) {
       if (session.webContentsId === webContentsId) {
         this.disconnect(webContentsId, session.sessionId)
       }
+    }
+  }
+
+  disconnectAll(): void {
+    hostVerificationService.cancelAll()
+
+    for (const session of this.sessions.values()) {
+      this.disconnect(session.webContentsId, session.sessionId)
     }
   }
 

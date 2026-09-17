@@ -1,3 +1,4 @@
+import type { HostVerifyRequestEvent } from '@shared/contracts/host'
 import type { PublicServerProfile, SaveProfileRequest } from '@shared/contracts/profile'
 import type {
   ConnectRequest,
@@ -17,6 +18,8 @@ export interface DesktopApi {
     disconnect(sessionId: string): Promise<void>
     onData(callback: (event: SshDataEvent) => void): () => void
     onStatus(callback: (event: SshStatusEvent) => void): () => void
+    onHostVerifyRequest(callback: (event: HostVerifyRequestEvent) => void): () => void
+    respondHostVerification(verificationId: string, approved: boolean): Promise<void>
   }
   profiles: {
     list(): Promise<PublicServerProfile[]>

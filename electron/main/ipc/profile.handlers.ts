@@ -2,18 +2,19 @@ import { ipcMain } from 'electron'
 
 import { IPC_CHANNELS } from '@shared/ipc-channels'
 import { assertProfileId, assertSaveProfileRequest } from '@shared/validation/profile'
-import { IpcValidationError } from '@shared/validation/ssh'
 
 import { logger } from '../services/logger'
 import { profileStore } from '../services/profile-store'
 import { SecretStoreError } from '../services/secret-store'
 
-function handleValidationError(error: unknown): never {
-  if (error instanceof IpcValidationError || error instanceof SecretStoreError) {
+import { createIpcHandler, createIpcVoidHandler, handleIpcError } from './ipc-utils'
+
+function handleProfileError(error: unknown): never {
+  if (error instanceof SecretStoreError) {
     throw new Error(error.message)
   }
 
-  throw error
+  handleIpcError(error)
 }
 
 export function registerProfileHandlers(): void {
@@ -21,23 +22,23 @@ export function registerProfileHandlers(): void {
     return profileStore.list()
   })
 
-  ipcMain.handle(IPC_CHANNELS.profiles.save, (_event, input) => {
-    try {
-      const request = assertSaveProfileRequest(input)
-      return profileStore.save(request)
-    } catch (error) {
-      handleValidationError(error)
-    }
-  })
+  ipcMain.handle(
+    IPC_CHANNELS.profiles.save,
+    createIpcHandler(assertSaveProfileRequest, (_event, request) => {
+      try {
+        return profileStore.save(request)
+      } catch (error) {
+        handleProfileError(error)
+      }
+    }),
+  )
 
-  ipcMain.handle(IPC_CHANNELS.profiles.remove, (_event, input) => {
-    try {
-      const profileId = assertProfileId(input)
+  ipcMain.handle(
+    IPC_CHANNELS.profiles.remove,
+    createIpcVoidHandler(assertProfileId, (_event, profileId) => {
       profileStore.remove(profileId)
-    } catch (error) {
-      handleValidationError(error)
-    }
-  })
+    }),
+  )
 
   logger.debug('Profil IPC handler kayıtları tamamlandı')
 }

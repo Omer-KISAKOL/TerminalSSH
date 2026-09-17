@@ -39,22 +39,40 @@ export function useSshSession({
   const lastFormValuesRef = useRef<ConnectionFormValues | null>(null)
   const lastServerLabelRef = useRef<string | null>(null)
   const terminalSizeRef = useRef({ cols, rows })
+  const onDataRef = useRef(onData)
+  const onTerminalMessageRef = useRef(onTerminalMessage)
+  const listenersRegisteredRef = useRef(false)
+  const disconnectingRef = useRef(false)
 
   useEffect(() => {
     terminalSizeRef.current = { cols, rows }
   }, [cols, rows])
 
   useEffect(() => {
+    onDataRef.current = onData
+  }, [onData])
+
+  useEffect(() => {
+    onTerminalMessageRef.current = onTerminalMessage
+  }, [onTerminalMessage])
+
+  useEffect(() => {
     sessionIdRef.current = sessionId
   }, [sessionId])
 
   useEffect(() => {
+    if (listenersRegisteredRef.current) {
+      return
+    }
+
+    listenersRegisteredRef.current = true
+
     const unsubscribeData = window.desktopApi.ssh.onData((event) => {
       if (sessionIdRef.current && event.sessionId !== sessionIdRef.current) {
         return
       }
 
-      onData(event.data)
+      onDataRef.current(event.data)
     })
 
     const unsubscribeStatus = window.desktopApi.ssh.onStatus((event) => {
@@ -67,37 +85,62 @@ export function useSshSession({
       if (event.status === 'connecting') {
         setSessionId(event.sessionId)
         sessionIdRef.current = event.sessionId
+        setErrorMessage(null)
       }
 
       if (event.status === 'error') {
         const message = event.message ?? 'Bağlantı kurulamadı.'
         setErrorMessage(message)
-        onTerminalMessage(`[Hata: ${message}]`)
+        onTerminalMessageRef.current(`[Hata: ${message}]`)
         setSessionId(null)
         sessionIdRef.current = null
+        disconnectingRef.current = false
       }
 
       if (event.status === 'disconnected') {
+        const wasConnected = sessionIdRef.current !== null
         setSessionId(null)
         sessionIdRef.current = null
-        onTerminalMessage('[Bağlantı kesildi]')
+        disconnectingRef.current = false
+
+        if (wasConnected) {
+          onTerminalMessageRef.current('[Bağlantı kesildi]')
+        }
       }
 
       if (event.status === 'connected') {
         setSessionId(event.sessionId)
         sessionIdRef.current = event.sessionId
         setErrorMessage(null)
+        disconnectingRef.current = false
       }
     })
 
     return () => {
+      listenersRegisteredRef.current = false
       unsubscribeData()
       unsubscribeStatus()
     }
-  }, [onData, onTerminalMessage])
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      const activeSessionId = sessionIdRef.current
+
+      if (activeSessionId) {
+        void window.desktopApi.ssh.disconnect(activeSessionId)
+      }
+    }
+  }, [])
 
   const connectWithRequest = useCallback(
     async (request: ConnectRequest, label: string, formValues: ConnectionFormValues) => {
+      if (sessionIdRef.current) {
+        await window.desktopApi.ssh.disconnect(sessionIdRef.current)
+        sessionIdRef.current = null
+        setSessionId(null)
+      }
+
       setStatus('connecting')
       setErrorMessage(null)
       setServerLabel(label)
@@ -106,18 +149,20 @@ export function useSshSession({
       lastServerLabelRef.current = label
 
       try {
-        await window.desktopApi.ssh.connect(request)
+        const response = await window.desktopApi.ssh.connect(request)
+        setSessionId(response.sessionId)
+        sessionIdRef.current = response.sessionId
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Bağlantı kurulamadı.'
         setStatus('error')
         setErrorMessage(message)
 
         if (!sessionIdRef.current) {
-          onTerminalMessage(`[Hata: ${message}]`)
+          onTerminalMessageRef.current(`[Hata: ${message}]`)
         }
       }
     },
-    [onTerminalMessage],
+    [],
   )
 
   const connect = useCallback(
@@ -151,10 +196,15 @@ export function useSshSession({
     }
 
     if (sessionIdRef.current) {
+      disconnectingRef.current = true
       await window.desktopApi.ssh.disconnect(sessionIdRef.current)
       setSessionId(null)
       sessionIdRef.current = null
     }
+
+    setErrorMessage(null)
+    setStatus('connecting')
+    onTerminalMessageRef.current('[Yeniden bağlanılıyor...]')
 
     await connectWithRequest(
       {
@@ -170,16 +220,25 @@ export function useSshSession({
   const disconnect = useCallback(async () => {
     const activeSessionId = sessionIdRef.current
 
-    if (!activeSessionId) {
-      setStatus('disconnected')
+    if (!activeSessionId || disconnectingRef.current) {
+      if (!activeSessionId) {
+        setStatus('disconnected')
+      }
+
       return
     }
 
+    disconnectingRef.current = true
     setStatus('disconnecting')
-    await window.desktopApi.ssh.disconnect(activeSessionId)
-    setSessionId(null)
-    sessionIdRef.current = null
-    setStatus('disconnected')
+
+    try {
+      await window.desktopApi.ssh.disconnect(activeSessionId)
+    } finally {
+      setSessionId(null)
+      sessionIdRef.current = null
+      disconnectingRef.current = false
+      setStatus('disconnected')
+    }
   }, [])
 
   const write = useCallback(async (data: string) => {
@@ -208,6 +267,7 @@ export function useSshSession({
     setStatus('idle')
     setErrorMessage(null)
     setServerLabel(null)
+    disconnectingRef.current = false
   }, [])
 
   return {

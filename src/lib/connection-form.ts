@@ -1,3 +1,4 @@
+import { MAX_PORT, MIN_PORT } from '@shared/constants/validation'
 import type { PublicServerProfile } from '@shared/contracts/profile'
 import type { ConnectionFormValues } from '@shared/contracts/ssh'
 
@@ -45,10 +46,16 @@ export function validateConnectionForm(values: ConnectionFormValues): string | n
     return 'Sunucu adresi boş olamaz.'
   }
 
-  const port = Number.parseInt(values.port, 10)
+  const portText = values.port.trim()
 
-  if (Number.isNaN(port) || port < 1 || port > 65535) {
-    return 'Port 1–65535 arasında olmalı.'
+  if (!/^\d+$/.test(portText)) {
+    return 'Port geçerli bir sayı olmalı.'
+  }
+
+  const port = Number.parseInt(portText, 10)
+
+  if (Number.isNaN(port) || port < MIN_PORT || port > MAX_PORT) {
+    return `Port ${MIN_PORT}–${MAX_PORT} arasında olmalı.`
   }
 
   if (values.username.trim().length === 0) {
