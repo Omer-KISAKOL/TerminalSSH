@@ -6,9 +6,11 @@ type ProfileListProps = {
   profiles: PublicServerProfile[]
   selectedProfileId: string | null
   lastConnectedProfileId: string | null
+  connectingProfileId: string | null
+  connectDisabled: boolean
   isLoading: boolean
   error: string | null
-  onSelect: (profile: PublicServerProfile) => void
+  onConnect: (profile: PublicServerProfile) => void
   onEdit: (profile: PublicServerProfile) => void
   onDelete: (profile: PublicServerProfile) => void
 }
@@ -17,9 +19,11 @@ export function ProfileList({
   profiles,
   selectedProfileId,
   lastConnectedProfileId,
+  connectingProfileId,
+  connectDisabled,
   isLoading,
   error,
-  onSelect,
+  onConnect,
   onEdit,
   onDelete,
 }: ProfileListProps) {
@@ -55,7 +59,9 @@ export function ProfileList({
           profile={profile}
           isSelected={selectedProfileId === profile.id}
           isLastConnected={lastConnectedProfileId === profile.id}
-          onSelect={onSelect}
+          isConnecting={connectingProfileId === profile.id}
+          connectDisabled={connectDisabled}
+          onConnect={onConnect}
           onEdit={onEdit}
           onDelete={onDelete}
         />

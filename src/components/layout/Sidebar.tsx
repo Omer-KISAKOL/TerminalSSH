@@ -7,12 +7,14 @@ type SidebarProps = {
   profiles: PublicServerProfile[]
   selectedProfileId: string | null
   lastConnectedProfileId: string | null
+  connectingProfileId: string | null
+  connectDisabled: boolean
   profilesLoading: boolean
   profilesError: string | null
   isOpen: boolean
   onClose?: () => void
   onNewConnection: () => void
-  onSelectProfile: (profile: PublicServerProfile) => void
+  onConnectProfile: (profile: PublicServerProfile) => void
   onEditProfile: (profile: PublicServerProfile) => void
   onDeleteProfile: (profile: PublicServerProfile) => void
 }
@@ -21,12 +23,14 @@ export function Sidebar({
   profiles,
   selectedProfileId,
   lastConnectedProfileId,
+  connectingProfileId,
+  connectDisabled,
   profilesLoading,
   profilesError,
   isOpen,
   onClose,
   onNewConnection,
-  onSelectProfile,
+  onConnectProfile,
   onEditProfile,
   onDeleteProfile,
 }: SidebarProps) {
@@ -68,6 +72,7 @@ export function Sidebar({
           <Button
             variant="primary"
             className="w-full py-2.5"
+            disabled={connectDisabled}
             onClick={onNewConnection}
             aria-label="Yeni SSH bağlantısı oluştur"
           >
@@ -83,9 +88,11 @@ export function Sidebar({
             profiles={profiles}
             selectedProfileId={selectedProfileId}
             lastConnectedProfileId={lastConnectedProfileId}
+            connectingProfileId={connectingProfileId}
+            connectDisabled={connectDisabled}
             isLoading={profilesLoading}
             error={profilesError}
-            onSelect={onSelectProfile}
+            onConnect={onConnectProfile}
             onEdit={onEditProfile}
             onDelete={onDeleteProfile}
           />

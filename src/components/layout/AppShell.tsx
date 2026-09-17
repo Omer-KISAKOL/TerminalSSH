@@ -5,6 +5,7 @@ import type { ConnectionFormValues, ConnectionStatus } from '@shared/contracts/s
 
 import { ConnectionForm } from '@/components/connection/ConnectionForm'
 import { HostFingerprintDialog } from '@/components/connection/HostFingerprintDialog'
+import { ServerTabBar } from '@/components/terminal/ServerTabBar'
 import { TerminalStateOverlay } from '@/components/terminal/TerminalStateOverlay'
 import { TerminalToolbar } from '@/components/terminal/TerminalToolbar'
 import { TerminalView, type TerminalApi } from '@/components/terminal/TerminalView'
@@ -18,6 +19,7 @@ import {
   DEFAULT_CONNECTION_FORM,
   getConnectionLabel,
   publicProfileToFormValues,
+  validateConnectionForm,
 } from '@/lib/connection-form'
 
 import { Sidebar } from './Sidebar'
@@ -32,6 +34,7 @@ export function AppShell({ appVersion }: AppShellProps) {
   const [view, setView] = useState<'form' | 'terminal'>('form')
   const [formMode, setFormMode] = useState<'create' | 'edit'>('create')
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null)
+  const [connectingProfileId, setConnectingProfileId] = useState<string | null>(null)
   const [terminalMounted, setTerminalMounted] = useState(false)
   const [formValues, setFormValues] = useState<ConnectionFormValues>(DEFAULT_CONNECTION_FORM)
   const [terminalSize, setTerminalSize] = useState({ cols: 80, rows: 24 })
@@ -76,6 +79,20 @@ export function AppShell({ appVersion }: AppShellProps) {
     [resetForm],
   )
 
+  const connectSession = useCallback(
+    async (values: ConnectionFormValues) => {
+      setFormValues(values)
+      setTerminalMounted(true)
+      setView('terminal')
+      setSidebarOpen(false)
+
+      const label = getConnectionLabel(values)
+      await ssh.connect(values, label)
+      await profiles.refresh()
+    },
+    [profiles, ssh],
+  )
+
   const handleConnect = useCallback(
     async (values: ConnectionFormValues) => {
       let profileId = values.profileId
@@ -105,16 +122,37 @@ export function AppShell({ appVersion }: AppShellProps) {
         profileId,
       }
 
-      setFormValues(connectValues)
-      setTerminalMounted(true)
-      setView('terminal')
-      setSidebarOpen(false)
+      setConnectingProfileId(profileId ?? null)
 
-      const label = getConnectionLabel(connectValues)
-      await ssh.connect(connectValues, label)
-      await profiles.refresh()
+      try {
+        await connectSession(connectValues)
+      } finally {
+        setConnectingProfileId(null)
+      }
     },
-    [formMode, profiles, resetForm, ssh],
+    [connectSession, formMode, profiles, resetForm],
+  )
+
+  const handleProfileConnect = useCallback(
+    async (profile: PublicServerProfile) => {
+      const values = publicProfileToFormValues(profile)
+      const validationError = validateConnectionForm(values)
+
+      if (validationError) {
+        openProfile(profile)
+        return
+      }
+
+      setSelectedProfileId(profile.id)
+      setConnectingProfileId(profile.id)
+
+      try {
+        await connectSession(values)
+      } finally {
+        setConnectingProfileId(null)
+      }
+    },
+    [connectSession, openProfile],
   )
 
   useEffect(() => {
@@ -132,15 +170,6 @@ export function AppShell({ appVersion }: AppShellProps) {
     setView('form')
     setSidebarOpen(false)
   }, [resetForm, ssh])
-
-  const handleProfileSelect = useCallback(
-    (profile: PublicServerProfile) => {
-      void ssh.disconnect()
-      ssh.reset()
-      openProfile(profile)
-    },
-    [openProfile, ssh],
-  )
 
   const handleProfileDelete = useCallback(
     async (profile: PublicServerProfile) => {
@@ -205,6 +234,7 @@ export function AppShell({ appVersion }: AppShellProps) {
 
   const showTerminal = view === 'terminal'
   const status: ConnectionStatus = showTerminal ? ssh.status : 'idle'
+  const isConnectBusy = ssh.isBusy || isReconnecting || connectingProfileId !== null
   const showTerminalOverlay =
     showTerminal &&
     (status === 'connecting' ||
@@ -212,19 +242,33 @@ export function AppShell({ appVersion }: AppShellProps) {
       status === 'error' ||
       status === 'disconnected')
 
+  const serverTabs =
+    showTerminal && ssh.serverLabel
+      ? [
+          {
+            id: selectedProfileId ?? 'active-session',
+            label: ssh.serverLabel,
+            status,
+            isActive: true,
+          },
+        ]
+      : []
+
   return (
     <div className="flex h-full min-h-0 bg-surface">
       <Sidebar
         profiles={profiles.profiles}
         selectedProfileId={selectedProfileId}
         lastConnectedProfileId={profiles.lastConnectedProfileId}
+        connectingProfileId={connectingProfileId}
+        connectDisabled={isConnectBusy}
         profilesLoading={profiles.isLoading}
         profilesError={profiles.error}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         onNewConnection={() => void handleNewConnection()}
-        onSelectProfile={handleProfileSelect}
-        onEditProfile={handleProfileSelect}
+        onConnectProfile={(profile) => void handleProfileConnect(profile)}
+        onEditProfile={openProfile}
         onDeleteProfile={(profile) => void handleProfileDelete(profile)}
       />
 
@@ -237,6 +281,7 @@ export function AppShell({ appVersion }: AppShellProps) {
                 : 'pointer-events-none invisible absolute inset-0 flex min-h-0 flex-col'
             }
           >
+            <ServerTabBar tabs={serverTabs} />
             <TerminalToolbar
               serverLabel={ssh.serverLabel}
               status={status}
@@ -287,7 +332,7 @@ export function AppShell({ appVersion }: AppShellProps) {
               <StatusBadge status="idle" />
             </header>
 
-            <section className="flex flex-1 flex-col overflow-y-auto p-4 md:p-8">
+            <section className="flex flex-1 flex-col overflow-y-auto">
               {profiles.profiles.length === 0 && formMode === 'create' ? (
                 <EmptyState
                   title="Hoş geldiniz"
@@ -296,11 +341,11 @@ export function AppShell({ appVersion }: AppShellProps) {
                 />
               ) : null}
 
-              <div className="mx-auto w-full max-w-xl">
+              <div className="mx-auto w-full max-w-xl py-4">
                 <ConnectionForm
                   key={formKey}
                   mode={formMode}
-                  disabled={ssh.isBusy}
+                  disabled={isConnectBusy}
                   initialValues={formValues}
                   onSubmit={handleConnect}
                 />
