@@ -6,12 +6,14 @@ import { DEFAULT_CONNECTION_FORM, validateConnectionForm } from '@/lib/connectio
 
 type ConnectionFormProps = {
   disabled?: boolean
+  mode: 'create' | 'edit'
   initialValues?: ConnectionFormValues
   onSubmit: (values: ConnectionFormValues) => Promise<void>
 }
 
 export function ConnectionForm({
   disabled = false,
+  mode,
   initialValues = DEFAULT_CONNECTION_FORM,
   onSubmit,
 }: ConnectionFormProps) {
@@ -21,6 +23,7 @@ export function ConnectionForm({
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const isDisabled = disabled || isSubmitting
+  const showProfileFields = values.saveProfile || mode === 'edit'
 
   const updateField = <K extends keyof ConnectionFormValues>(
     key: K,
@@ -29,6 +32,14 @@ export function ConnectionForm({
     setValues((current) => ({ ...current, [key]: value }))
     setValidationError(null)
     setSubmitError(null)
+  }
+
+  const handleSelectPrivateKey = async () => {
+    const selectedPath = await window.desktopApi.files.selectPrivateKey()
+
+    if (selectedPath) {
+      updateField('privateKeyPath', selectedPath)
+    }
   }
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -61,6 +72,24 @@ export function ConnectionForm({
       className="mx-auto w-full max-w-lg rounded-xl border border-border bg-surface-muted p-6"
     >
       <div className="space-y-4">
+        {showProfileFields ? (
+          <div>
+            <label htmlFor="name" className="mb-1.5 block text-sm text-text-muted">
+              Profil adı
+            </label>
+            <input
+              id="name"
+              type="text"
+              autoComplete="off"
+              disabled={isDisabled}
+              value={values.name}
+              onChange={(event) => updateField('name', event.target.value)}
+              placeholder="Üretim Ubuntu"
+              className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-accent disabled:opacity-60"
+            />
+          </div>
+        ) : null}
+
         <div>
           <label htmlFor="host" className="mb-1.5 block text-sm text-text-muted">
             Sunucu adresi
@@ -124,34 +153,126 @@ export function ConnectionForm({
               />
               Parola
             </label>
-            <label className="flex items-center gap-2 text-sm text-text-muted">
+            <label className="flex items-center gap-2 text-sm text-text">
               <input
                 type="radio"
                 name="authType"
                 value="privateKey"
-                disabled
+                disabled={isDisabled}
                 checked={values.authType === 'privateKey'}
                 onChange={() => updateField('authType', 'privateKey')}
               />
-              Özel anahtar (yakında)
+              Özel anahtar
             </label>
           </div>
         </div>
 
-        <div>
-          <label htmlFor="password" className="mb-1.5 block text-sm text-text-muted">
-            Parola
+        {values.authType === 'password' ? (
+          <div>
+            <label htmlFor="password" className="mb-1.5 block text-sm text-text-muted">
+              Parola
+            </label>
+            <input
+              id="password"
+              type="password"
+              autoComplete="current-password"
+              disabled={isDisabled}
+              value={values.password}
+              onChange={(event) => updateField('password', event.target.value)}
+              placeholder={values.hasSavedPassword ? 'Kayıtlı parola kullanılacak' : undefined}
+              className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-accent disabled:opacity-60"
+            />
+            {values.hasSavedPassword ? (
+              <p className="mt-1 text-xs text-text-muted">
+                Bu profilde kayıtlı parola var. Değiştirmek için yeni parola girin.
+              </p>
+            ) : null}
+            {showProfileFields ? (
+              <label className="mt-3 flex items-center gap-2 text-sm text-text">
+                <input
+                  type="checkbox"
+                  disabled={isDisabled}
+                  checked={values.savePassword}
+                  onChange={(event) => updateField('savePassword', event.target.checked)}
+                />
+                Parolayı kaydet
+              </label>
+            ) : null}
+          </div>
+        ) : (
+          <>
+            <div>
+              <label htmlFor="privateKeyPath" className="mb-1.5 block text-sm text-text-muted">
+                Özel anahtar dosyası
+              </label>
+              <div className="flex gap-2">
+                <input
+                  id="privateKeyPath"
+                  type="text"
+                  readOnly
+                  disabled={isDisabled}
+                  value={values.privateKeyPath}
+                  placeholder="Dosya seçilmedi"
+                  className="min-w-0 flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none disabled:opacity-60"
+                />
+                <button
+                  type="button"
+                  disabled={isDisabled}
+                  onClick={() => void handleSelectPrivateKey()}
+                  className="shrink-0 rounded-lg border border-border px-3 py-2 text-sm text-text transition hover:bg-surface disabled:opacity-60"
+                >
+                  Seç
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="passphrase" className="mb-1.5 block text-sm text-text-muted">
+                Passphrase (isteğe bağlı)
+              </label>
+              <input
+                id="passphrase"
+                type="password"
+                autoComplete="off"
+                disabled={isDisabled}
+                value={values.passphrase}
+                onChange={(event) => updateField('passphrase', event.target.value)}
+                placeholder={
+                  values.hasSavedPassphrase ? 'Kayıtlı passphrase kullanılacak' : undefined
+                }
+                className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-accent disabled:opacity-60"
+              />
+              {values.hasSavedPassphrase ? (
+                <p className="mt-1 text-xs text-text-muted">
+                  Bu profilde kayıtlı passphrase var. Değiştirmek için yeni passphrase girin.
+                </p>
+              ) : null}
+              {showProfileFields ? (
+                <label className="mt-3 flex items-center gap-2 text-sm text-text">
+                  <input
+                    type="checkbox"
+                    disabled={isDisabled}
+                    checked={values.savePassphrase}
+                    onChange={(event) => updateField('savePassphrase', event.target.checked)}
+                  />
+                  Passphrase kaydet
+                </label>
+              ) : null}
+            </div>
+          </>
+        )}
+
+        {mode === 'create' ? (
+          <label className="flex items-center gap-2 text-sm text-text">
+            <input
+              type="checkbox"
+              disabled={isDisabled}
+              checked={values.saveProfile}
+              onChange={(event) => updateField('saveProfile', event.target.checked)}
+            />
+            Bu sunucuyu kaydet
           </label>
-          <input
-            id="password"
-            type="password"
-            autoComplete="current-password"
-            disabled={isDisabled}
-            value={values.password}
-            onChange={(event) => updateField('password', event.target.value)}
-            className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:border-accent disabled:opacity-60"
-          />
-        </div>
+        ) : null}
       </div>
 
       {errorMessage ? <p className="mt-4 text-sm text-status-error">{errorMessage}</p> : null}
@@ -161,7 +282,7 @@ export function ConnectionForm({
         disabled={isDisabled}
         className="mt-6 w-full rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {isSubmitting ? 'Bağlanıyor…' : 'Bağlan'}
+        {isSubmitting ? 'Bağlanıyor…' : mode === 'edit' ? 'Güncelle ve Bağlan' : 'Bağlan'}
       </button>
     </form>
   )

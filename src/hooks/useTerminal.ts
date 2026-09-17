@@ -65,17 +65,24 @@ export function useTerminal({ onInput, onResize }: UseTerminalOptions): UseTermi
     })
 
     terminal.attachCustomKeyEventHandler((event) => {
-      if (event.ctrlKey && event.shiftKey && event.key === 'C') {
+      if (event.type !== 'keydown' || event.altKey || event.metaKey) {
+        return true
+      }
+
+      const key = event.key.toLowerCase()
+
+      if (event.ctrlKey && key === 'c') {
         const selection = terminal.getSelection()
 
         if (selection) {
           void navigator.clipboard.writeText(selection)
+          return false
         }
 
-        return false
+        return true
       }
 
-      if (event.ctrlKey && event.shiftKey && event.key === 'V') {
+      if (event.ctrlKey && key === 'v') {
         void navigator.clipboard.readText().then((text) => {
           if (text) {
             onInputRef.current(text)

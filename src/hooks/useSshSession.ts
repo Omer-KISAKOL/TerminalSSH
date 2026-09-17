@@ -123,11 +123,15 @@ export function useSshSession({
   const connect = useCallback(
     async (values: ConnectionFormValues, label: string) => {
       const request: ConnectRequest = {
+        profileId: values.profileId,
         host: values.host.trim(),
         port: Number.parseInt(values.port, 10),
         username: values.username.trim(),
         authType: values.authType,
-        password: values.password,
+        password: values.authType === 'password' ? values.password || undefined : undefined,
+        privateKeyPath:
+          values.authType === 'privateKey' ? values.privateKeyPath || undefined : undefined,
+        passphrase: values.authType === 'privateKey' ? values.passphrase || undefined : undefined,
         cols: terminalSizeRef.current.cols,
         rows: terminalSizeRef.current.rows,
       }

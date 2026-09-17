@@ -4,6 +4,8 @@ import { fileURLToPath } from 'node:url'
 import { app, BrowserWindow } from 'electron'
 
 import { registerAppHandlers } from './ipc/app.handlers'
+import { registerDialogHandlers } from './ipc/dialog.handlers'
+import { registerProfileHandlers } from './ipc/profile.handlers'
 import { registerSshHandlers } from './ipc/ssh.handlers'
 import { sshSessionManager } from './services/ssh-session-manager'
 
@@ -48,6 +50,8 @@ function createMainWindow(): BrowserWindow {
 }
 
 registerAppHandlers()
+registerProfileHandlers()
+registerDialogHandlers()
 registerSshHandlers()
 
 app.whenReady().then(() => {

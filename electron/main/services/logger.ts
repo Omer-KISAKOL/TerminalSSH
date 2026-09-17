@@ -1,6 +1,12 @@
 const isDev = process.env.NODE_ENV !== 'production'
 
-const SENSITIVE_KEYS = ['password', 'passphrase', 'privateKey', 'privateKeyPath']
+const SENSITIVE_KEYS = [
+  'password',
+  'passphrase',
+  'privateKey',
+  'encryptedPassword',
+  'encryptedPassphrase',
+]
 
 function sanitizeMeta(meta: Record<string, unknown>): Record<string, unknown> {
   const sanitized: Record<string, unknown> = {}

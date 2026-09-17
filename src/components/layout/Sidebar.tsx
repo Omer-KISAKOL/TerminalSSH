@@ -1,8 +1,30 @@
+import type { PublicServerProfile } from '@shared/contracts/profile'
+
+import { ProfileList } from '@/components/profiles/ProfileList'
+
 type SidebarProps = {
+  profiles: PublicServerProfile[]
+  selectedProfileId: string | null
+  lastConnectedProfileId: string | null
+  profilesLoading: boolean
+  profilesError: string | null
   onNewConnection: () => void
+  onSelectProfile: (profile: PublicServerProfile) => void
+  onEditProfile: (profile: PublicServerProfile) => void
+  onDeleteProfile: (profile: PublicServerProfile) => void
 }
 
-export function Sidebar({ onNewConnection }: SidebarProps) {
+export function Sidebar({
+  profiles,
+  selectedProfileId,
+  lastConnectedProfileId,
+  profilesLoading,
+  profilesError,
+  onNewConnection,
+  onSelectProfile,
+  onEditProfile,
+  onDeleteProfile,
+}: SidebarProps) {
   return (
     <aside className="flex h-full w-64 shrink-0 flex-col border-r border-border bg-surface-raised">
       <header className="border-b border-border px-5 py-4">
@@ -24,9 +46,16 @@ export function Sidebar({ onNewConnection }: SidebarProps) {
         <h2 className="mb-2 px-1 text-xs font-medium uppercase tracking-wide text-text-muted">
           Kayıtlı Sunucular
         </h2>
-        <div className="rounded-lg border border-dashed border-border px-3 py-6 text-center text-sm text-text-muted">
-          Henüz kayıtlı sunucu yok.
-        </div>
+        <ProfileList
+          profiles={profiles}
+          selectedProfileId={selectedProfileId}
+          lastConnectedProfileId={lastConnectedProfileId}
+          isLoading={profilesLoading}
+          error={profilesError}
+          onSelect={onSelectProfile}
+          onEdit={onEditProfile}
+          onDelete={onDeleteProfile}
+        />
       </section>
     </aside>
   )

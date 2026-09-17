@@ -1,3 +1,4 @@
+import type { PublicServerProfile, SaveProfileRequest } from '@shared/contracts/profile'
 import type {
   ConnectRequest,
   ConnectResponse,
@@ -16,6 +17,14 @@ export interface DesktopApi {
     disconnect(sessionId: string): Promise<void>
     onData(callback: (event: SshDataEvent) => void): () => void
     onStatus(callback: (event: SshStatusEvent) => void): () => void
+  }
+  profiles: {
+    list(): Promise<PublicServerProfile[]>
+    save(input: SaveProfileRequest): Promise<PublicServerProfile>
+    remove(id: string): Promise<void>
+  }
+  files: {
+    selectPrivateKey(): Promise<string | null>
   }
 }
 

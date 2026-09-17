@@ -9,6 +9,7 @@ export type ConnectionStatus =
   | 'error'
 
 export interface ConnectRequest {
+  profileId?: string
   host: string
   port: number
   username: string
@@ -36,9 +37,18 @@ export interface SshStatusEvent {
 }
 
 export interface ConnectionFormValues {
+  profileId?: string
+  name: string
   host: string
   port: string
   username: string
   authType: AuthType
   password: string
+  privateKeyPath: string
+  passphrase: string
+  savePassword: boolean
+  savePassphrase: boolean
+  saveProfile: boolean
+  hasSavedPassword: boolean
+  hasSavedPassphrase: boolean
 }

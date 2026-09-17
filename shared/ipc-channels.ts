@@ -10,4 +10,12 @@ export const IPC_CHANNELS = {
     data: 'ssh:data',
     status: 'ssh:status',
   },
+  profiles: {
+    list: 'profiles:list',
+    save: 'profiles:save',
+    remove: 'profiles:remove',
+  },
+  files: {
+    selectPrivateKey: 'files:select-private-key',
+  },
 } as const

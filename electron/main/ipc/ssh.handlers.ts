@@ -9,7 +9,9 @@ import {
   IpcValidationError,
 } from '@shared/validation/ssh'
 
+import { resolveConnectRequest } from '../services/connect-resolver'
 import { logger } from '../services/logger'
+import { profileStore } from '../services/profile-store'
 import { sshSessionManager } from '../services/ssh-session-manager'
 
 function handleValidationError(error: unknown): never {
@@ -24,7 +26,14 @@ export function registerSshHandlers(): void {
   ipcMain.handle(IPC_CHANNELS.ssh.connect, async (event, input) => {
     try {
       const request = assertConnectRequest(input)
-      return await sshSessionManager.connect(event.sender.id, request)
+      const resolved = await resolveConnectRequest(request)
+      const response = await sshSessionManager.connect(event.sender.id, resolved)
+
+      if (resolved.profileId) {
+        profileStore.updateLastConnected(resolved.profileId)
+      }
+
+      return response
     } catch (error) {
       handleValidationError(error)
     }

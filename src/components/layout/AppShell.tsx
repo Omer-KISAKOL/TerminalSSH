@@ -1,12 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
+import type { PublicServerProfile } from '@shared/contracts/profile'
 import type { ConnectionFormValues, ConnectionStatus } from '@shared/contracts/ssh'
 
 import { ConnectionForm } from '@/components/connection/ConnectionForm'
 import { TerminalToolbar } from '@/components/terminal/TerminalToolbar'
 import { TerminalView, type TerminalApi } from '@/components/terminal/TerminalView'
+import { useProfiles } from '@/hooks/useProfiles'
 import { useSshSession } from '@/hooks/useSshSession'
-import { DEFAULT_CONNECTION_FORM, getConnectionLabel } from '@/lib/connection-form'
+import {
+  DEFAULT_CONNECTION_FORM,
+  getConnectionLabel,
+  publicProfileToFormValues,
+} from '@/lib/connection-form'
 
 import { Sidebar } from './Sidebar'
 
@@ -15,15 +21,19 @@ type AppShellProps = {
 }
 
 export function AppShell({ appVersion }: AppShellProps) {
+  const profiles = useProfiles()
   const terminalApiRef = useRef<TerminalApi | null>(null)
+  const [view, setView] = useState<'form' | 'terminal'>('form')
+  const [formMode, setFormMode] = useState<'create' | 'edit'>('create')
+  const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null)
+  const [terminalMounted, setTerminalMounted] = useState(false)
+  const [formValues, setFormValues] = useState<ConnectionFormValues>(DEFAULT_CONNECTION_FORM)
+  const [terminalSize, setTerminalSize] = useState({ cols: 80, rows: 24 })
+  const [formKey, setFormKey] = useState('create')
 
   const handleTerminalReady = useCallback((api: TerminalApi | null) => {
     terminalApiRef.current = api
   }, [])
-  const [view, setView] = useState<'form' | 'terminal'>('form')
-  const [terminalMounted, setTerminalMounted] = useState(false)
-  const [formValues, setFormValues] = useState<ConnectionFormValues>(DEFAULT_CONNECTION_FORM)
-  const [terminalSize, setTerminalSize] = useState({ cols: 80, rows: 24 })
 
   const handleTerminalData = useCallback((data: string) => {
     terminalApiRef.current?.write(data)
@@ -40,15 +50,59 @@ export function AppShell({ appVersion }: AppShellProps) {
     onTerminalMessage: handleTerminalMessage,
   })
 
+  const resetForm = useCallback((mode: 'create' | 'edit', values: ConnectionFormValues) => {
+    setFormMode(mode)
+    setFormValues(values)
+    setFormKey(`${mode}-${values.profileId ?? 'new'}-${Date.now()}`)
+  }, [])
+
+  const openProfile = useCallback(
+    (profile: PublicServerProfile) => {
+      setSelectedProfileId(profile.id)
+      resetForm('edit', publicProfileToFormValues(profile))
+      setView('form')
+    },
+    [resetForm],
+  )
+
   const handleConnect = useCallback(
     async (values: ConnectionFormValues) => {
-      setFormValues(values)
+      let profileId = values.profileId
+
+      if (values.saveProfile || formMode === 'edit') {
+        const saved = await profiles.save({
+          id: values.profileId,
+          name: values.name.trim(),
+          host: values.host.trim(),
+          port: Number.parseInt(values.port, 10),
+          username: values.username.trim(),
+          authType: values.authType,
+          privateKeyPath: values.authType === 'privateKey' ? values.privateKeyPath : undefined,
+          savePassword: values.savePassword,
+          savePassphrase: values.savePassphrase,
+          password: values.password || undefined,
+          passphrase: values.passphrase || undefined,
+        })
+
+        profileId = saved.id
+        setSelectedProfileId(saved.id)
+        resetForm('edit', publicProfileToFormValues(saved))
+      }
+
+      const connectValues: ConnectionFormValues = {
+        ...values,
+        profileId,
+      }
+
+      setFormValues(connectValues)
       setTerminalMounted(true)
       setView('terminal')
-      const label = getConnectionLabel(values)
-      await ssh.connect(values, label)
+
+      const label = getConnectionLabel(connectValues)
+      await ssh.connect(connectValues, label)
+      await profiles.refresh()
     },
-    [ssh],
+    [formMode, profiles, resetForm, ssh],
   )
 
   useEffect(() => {
@@ -60,8 +114,40 @@ export function AppShell({ appVersion }: AppShellProps) {
   const handleNewConnection = useCallback(async () => {
     await ssh.disconnect()
     ssh.reset()
+    setSelectedProfileId(null)
+    resetForm('create', DEFAULT_CONNECTION_FORM)
     setView('form')
-  }, [ssh])
+  }, [resetForm, ssh])
+
+  const handleProfileSelect = useCallback(
+    (profile: PublicServerProfile) => {
+      void ssh.disconnect()
+      ssh.reset()
+      openProfile(profile)
+    },
+    [openProfile, ssh],
+  )
+
+  const handleProfileDelete = useCallback(
+    async (profile: PublicServerProfile) => {
+      const confirmed = window.confirm(
+        `"${profile.name}" profilini silmek istediğinize emin misiniz?`,
+      )
+
+      if (!confirmed) {
+        return
+      }
+
+      await profiles.remove(profile.id)
+
+      if (selectedProfileId === profile.id) {
+        setSelectedProfileId(null)
+        resetForm('create', DEFAULT_CONNECTION_FORM)
+        setView('form')
+      }
+    },
+    [profiles, resetForm, selectedProfileId],
+  )
 
   const handleReconnect = useCallback(async () => {
     await ssh.reconnect()
@@ -96,7 +182,17 @@ export function AppShell({ appVersion }: AppShellProps) {
 
   return (
     <div className="flex h-full min-h-0 bg-surface">
-      <Sidebar onNewConnection={() => void handleNewConnection()} />
+      <Sidebar
+        profiles={profiles.profiles}
+        selectedProfileId={selectedProfileId}
+        lastConnectedProfileId={profiles.lastConnectedProfileId}
+        profilesLoading={profiles.isLoading}
+        profilesError={profiles.error}
+        onNewConnection={() => void handleNewConnection()}
+        onSelectProfile={handleProfileSelect}
+        onEditProfile={handleProfileSelect}
+        onDeleteProfile={(profile) => void handleProfileDelete(profile)}
+      />
 
       <main className="relative flex min-h-0 min-w-0 flex-1 flex-col">
         {terminalMounted ? (
@@ -126,7 +222,9 @@ export function AppShell({ appVersion }: AppShellProps) {
           <>
             <header className="flex items-center justify-between border-b border-border px-6 py-4">
               <div>
-                <h2 className="text-base font-medium text-white">Bağlantı</h2>
+                <h2 className="text-base font-medium text-white">
+                  {formMode === 'edit' ? 'Profili Düzenle' : 'Bağlantı'}
+                </h2>
                 <p className="text-sm text-text-muted">
                   SSH oturumu başlatmak için bağlantı bilgilerini girin.
                 </p>
@@ -140,10 +238,11 @@ export function AppShell({ appVersion }: AppShellProps) {
               </div>
             </header>
 
-            <section className="flex flex-1 items-center justify-center p-8">
+            <section className="flex flex-1 items-center justify-center overflow-y-auto p-8">
               <div className="w-full max-w-xl">
                 <ConnectionForm
-                  key="connection-form"
+                  key={formKey}
+                  mode={formMode}
                   disabled={ssh.isBusy}
                   initialValues={formValues}
                   onSubmit={handleConnect}

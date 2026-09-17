@@ -318,7 +318,7 @@ Hata mesajları teknik yığın izlerini göstermemeli. Örnek kullanıcı mesaj
 - Sunucudan gelen veriyi `terminal.write()` ile yaz.
 - Bağlantı kesildiğinde terminale okunabilir bir sistem mesajı yaz.
 - `Ctrl+C`, `Ctrl+D`, yön tuşları, Tab ve diğer terminal tuşları uzak shell'e gitmeli.
-- Kopyalama için seçili metinde `Ctrl+Shift+C`, yapıştırma için `Ctrl+Shift+V` destekle.
+- Kopyalama için seçili metinde `Ctrl+C`, yapıştırma için `Ctrl+V` destekle.
 - Terminale sağ tık menüsü eklenebilir: Kopyala, Yapıştır, Temizle.
 
 

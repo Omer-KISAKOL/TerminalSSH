@@ -28,7 +28,11 @@ export function mapSshError(error: unknown): string {
     message.includes('authentication failed') ||
     message.includes('all configured authentication methods failed')
   ) {
-    return 'Kullanıcı adı veya parola hatalı.'
+    return 'Kimlik doğrulama başarısız.'
+  }
+
+  if (message.includes('cannot parse privatekey') || message.includes('passphrase')) {
+    return 'Özel anahtar okunamadı.'
   }
 
   if (message.includes('timed out') || message.includes('timeout')) {

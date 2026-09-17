@@ -1,7 +1,8 @@
 import { randomUUID } from 'node:crypto'
+import { readFile } from 'node:fs/promises'
 
 import { webContents } from 'electron'
-import { Client, type ClientChannel } from 'ssh2'
+import { Client, type ClientChannel, type ConnectConfig } from 'ssh2'
 
 import type {
   ConnectRequest,
@@ -64,6 +65,17 @@ export class SshSessionManager {
         client.destroy()
       }
     }, CONNECTION_TIMEOUT_MS)
+
+    let connectOptions: ConnectConfig
+
+    try {
+      connectOptions = await this.buildConnectOptions(request, sessionId)
+    } catch (error) {
+      this.clearTimeout(session)
+      this.sessions.delete(sessionId)
+      const message = error instanceof Error ? error.message : 'Bağlantı kurulamadı.'
+      throw new Error(message)
+    }
 
     return new Promise<ConnectResponse>((resolve, reject) => {
       let settled = false
@@ -139,23 +151,61 @@ export class SshSessionManager {
         }
       })
 
-      client.connect({
-        host: request.host,
-        port: request.port,
-        username: request.username,
-        password: request.password,
-        readyTimeout: CONNECTION_TIMEOUT_MS,
-        // TODO(Aşama 4): host fingerprint doğrulaması uygulanacak.
-        // Şu an bilinçli olarak devre dışı; otomatik güven varsayılmamalı.
-        hostVerifier: () => {
-          logger.warn('SSH host fingerprint doğrulaması henüz uygulanmadı', {
-            sessionId,
-            host: request.host,
-          })
-          return true
-        },
-      })
+      client.connect(connectOptions)
     })
+  }
+
+  private async buildConnectOptions(
+    request: ConnectRequest,
+    sessionId: string,
+  ): Promise<ConnectConfig> {
+    const baseConfig: ConnectConfig = {
+      host: request.host,
+      port: request.port,
+      username: request.username,
+      readyTimeout: CONNECTION_TIMEOUT_MS,
+      // TODO(Aşama 4): host fingerprint doğrulaması uygulanacak.
+      hostVerifier: () => {
+        logger.warn('SSH host fingerprint doğrulaması henüz uygulanmadı', {
+          sessionId,
+          host: request.host,
+        })
+        return true
+      },
+    }
+
+    if (request.authType === 'password') {
+      if (!request.password) {
+        throw new Error('Parola gerekli.')
+      }
+
+      return {
+        ...baseConfig,
+        password: request.password,
+      }
+    }
+
+    if (!request.privateKeyPath) {
+      throw new Error('Özel anahtar dosyası seçilmeli.')
+    }
+
+    try {
+      const privateKey = await readFile(request.privateKeyPath)
+
+      return {
+        ...baseConfig,
+        privateKey,
+        passphrase: request.passphrase,
+      }
+    } catch (error) {
+      logger.error('Özel anahtar okunamadı', {
+        sessionId,
+        privateKeyPath: request.privateKeyPath,
+        code:
+          error && typeof error === 'object' && 'code' in error ? String(error.code) : undefined,
+      })
+      throw new Error('Özel anahtar okunamadı.')
+    }
   }
 
   write(webContentsId: number, sessionId: string, data: string): void {

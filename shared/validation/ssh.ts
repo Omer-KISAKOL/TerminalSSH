@@ -62,6 +62,18 @@ function assertTerminalDimension(value: unknown, min: number, max: number, label
   return value
 }
 
+function assertOptionalString(value: unknown): string | undefined {
+  if (value === undefined || value === null || value === '') {
+    return undefined
+  }
+
+  if (typeof value !== 'string') {
+    throw new IpcValidationError('Geçersiz metin alanı.')
+  }
+
+  return value
+}
+
 export function assertConnectRequest(input: unknown): ConnectRequest {
   const value = assertObject(input, 'bağlantı isteği')
   const host = assertNonEmptyString(value.host, 'Sunucu adresi')
@@ -70,27 +82,28 @@ export function assertConnectRequest(input: unknown): ConnectRequest {
   const authType = assertAuthType(value.authType)
   const cols = assertTerminalDimension(value.cols, MIN_COLS, MAX_COLS, 'genişliği')
   const rows = assertTerminalDimension(value.rows, MIN_ROWS, MAX_ROWS, 'yüksekliği')
+  const profileId = assertOptionalString(value.profileId)
+  const password = assertOptionalString(value.password)
+  const privateKeyPath = assertOptionalString(value.privateKeyPath)
+  const passphrase = assertOptionalString(value.passphrase)
 
-  let password: string | undefined
-
-  if (authType === 'password') {
-    if (typeof value.password !== 'string' || value.password.length === 0) {
-      throw new IpcValidationError('Parola boş olamaz.')
-    }
-
-    password = value.password
+  if (authType === 'password' && !profileId && !password) {
+    throw new IpcValidationError('Parola boş olamaz.')
   }
 
-  if (authType === 'privateKey') {
-    throw new IpcValidationError('Özel anahtar kimlik doğrulaması henüz desteklenmiyor.')
+  if (authType === 'privateKey' && !profileId && !privateKeyPath) {
+    throw new IpcValidationError('Özel anahtar dosyası seçilmeli.')
   }
 
   return {
+    profileId,
     host,
     port,
     username,
     authType,
     password,
+    privateKeyPath,
+    passphrase,
     cols,
     rows,
   }

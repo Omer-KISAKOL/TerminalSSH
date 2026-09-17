@@ -35,6 +35,14 @@ const desktopApi: DesktopApi = {
       }
     },
   },
+  profiles: {
+    list: () => ipcRenderer.invoke(IPC_CHANNELS.profiles.list),
+    save: (input) => ipcRenderer.invoke(IPC_CHANNELS.profiles.save, input),
+    remove: (id) => ipcRenderer.invoke(IPC_CHANNELS.profiles.remove, id),
+  },
+  files: {
+    selectPrivateKey: () => ipcRenderer.invoke(IPC_CHANNELS.files.selectPrivateKey),
+  },
 }
 
 contextBridge.exposeInMainWorld('desktopApi', desktopApi)
