@@ -2,10 +2,7 @@ import { useState } from 'react'
 
 import type { ConnectionFormValues } from '@shared/contracts/ssh'
 
-import {
-  DEFAULT_CONNECTION_FORM,
-  validateConnectionForm,
-} from '@/lib/connection-form'
+import { DEFAULT_CONNECTION_FORM, validateConnectionForm } from '@/lib/connection-form'
 
 type ConnectionFormProps = {
   disabled?: boolean
@@ -50,9 +47,7 @@ export function ConnectionForm({
     try {
       await onSubmit(values)
     } catch (error) {
-      setSubmitError(
-        error instanceof Error ? error.message : 'Bağlantı kurulamadı.',
-      )
+      setSubmitError(error instanceof Error ? error.message : 'Bağlantı kurulamadı.')
     } finally {
       setIsSubmitting(false)
     }
@@ -100,10 +95,7 @@ export function ConnectionForm({
           </div>
 
           <div>
-            <label
-              htmlFor="username"
-              className="mb-1.5 block text-sm text-text-muted"
-            >
+            <label htmlFor="username" className="mb-1.5 block text-sm text-text-muted">
               Kullanıcı adı
             </label>
             <input
@@ -119,9 +111,7 @@ export function ConnectionForm({
         </div>
 
         <div>
-          <span className="mb-1.5 block text-sm text-text-muted">
-            Kimlik doğrulama
-          </span>
+          <span className="mb-1.5 block text-sm text-text-muted">Kimlik doğrulama</span>
           <div className="flex gap-3">
             <label className="flex items-center gap-2 text-sm text-text">
               <input
@@ -149,10 +139,7 @@ export function ConnectionForm({
         </div>
 
         <div>
-          <label
-            htmlFor="password"
-            className="mb-1.5 block text-sm text-text-muted"
-          >
+          <label htmlFor="password" className="mb-1.5 block text-sm text-text-muted">
             Parola
           </label>
           <input
@@ -167,9 +154,7 @@ export function ConnectionForm({
         </div>
       </div>
 
-      {errorMessage ? (
-        <p className="mt-4 text-sm text-status-error">{errorMessage}</p>
-      ) : null}
+      {errorMessage ? <p className="mt-4 text-sm text-status-error">{errorMessage}</p> : null}
 
       <button
         type="submit"

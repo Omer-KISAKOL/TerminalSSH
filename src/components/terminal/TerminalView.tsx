@@ -12,26 +12,26 @@ export type TerminalApi = {
 }
 
 type TerminalViewProps = {
-  apiRef: React.RefObject<TerminalApi | null>
+  onReady: (api: TerminalApi | null) => void
   onInput: (data: string) => void
   onResize: (cols: number, rows: number) => void
 }
 
-export function TerminalView({ apiRef, onInput, onResize }: TerminalViewProps) {
+export function TerminalView({ onReady, onInput, onResize }: TerminalViewProps) {
   const terminal = useTerminal({ onInput, onResize })
 
   useEffect(() => {
-    apiRef.current = {
+    onReady({
       write: terminal.write,
       writeln: terminal.writeln,
       clear: terminal.clear,
       focus: terminal.focus,
-    }
+    })
 
     return () => {
-      apiRef.current = null
+      onReady(null)
     }
-  }, [apiRef, terminal.clear, terminal.focus, terminal.write, terminal.writeln])
+  }, [onReady, terminal.clear, terminal.focus, terminal.write, terminal.writeln])
 
   return (
     <div className="min-h-0 flex-1 overflow-hidden bg-[#0f1117] p-2">

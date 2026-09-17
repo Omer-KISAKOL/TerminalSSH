@@ -30,10 +30,7 @@ interface Session {
 export class SshSessionManager {
   private readonly sessions = new Map<string, Session>()
 
-  async connect(
-    webContentsId: number,
-    request: ConnectRequest,
-  ): Promise<ConnectResponse> {
+  async connect(webContentsId: number, request: ConnectRequest): Promise<ConnectResponse> {
     this.disconnectAllForWebContents(webContentsId)
 
     const sessionId = randomUUID()
@@ -137,10 +134,7 @@ export class SshSessionManager {
       })
 
       client.on('end', () => {
-        if (
-          this.sessions.has(session.sessionId) &&
-          session.status === 'connected'
-        ) {
+        if (this.sessions.has(session.sessionId) && session.status === 'connected') {
           this.finalizeSession(session, 'disconnected')
         }
       })
@@ -174,12 +168,7 @@ export class SshSessionManager {
     session.stream.write(data)
   }
 
-  resize(
-    webContentsId: number,
-    sessionId: string,
-    cols: number,
-    rows: number,
-  ): void {
+  resize(webContentsId: number, sessionId: string, cols: number, rows: number): void {
     const session = this.getOwnedSession(webContentsId, sessionId)
 
     if (session.status !== 'connected' || !session.stream) {
@@ -254,11 +243,7 @@ export class SshSessionManager {
     return session
   }
 
-  private finalizeSession(
-    session: Session,
-    status: ConnectionStatus,
-    message?: string,
-  ): void {
+  private finalizeSession(session: Session, status: ConnectionStatus, message?: string): void {
     session.status = status
     this.emitStatus(session, status, message)
     this.sessions.delete(session.sessionId)
@@ -280,11 +265,7 @@ export class SshSessionManager {
     this.sendToWebContents(session.webContentsId, IPC_CHANNELS.ssh.data, payload)
   }
 
-  private emitStatus(
-    session: Session,
-    status: ConnectionStatus,
-    message?: string,
-  ): void {
+  private emitStatus(session: Session, status: ConnectionStatus, message?: string): void {
     const payload: SshStatusEvent = {
       sessionId: session.sessionId,
       status,

@@ -17,10 +17,7 @@ type UseTerminalResult = {
   focus: () => void
 }
 
-export function useTerminal({
-  onInput,
-  onResize,
-}: UseTerminalOptions): UseTerminalResult {
+export function useTerminal({ onInput, onResize }: UseTerminalOptions): UseTerminalResult {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const terminalRef = useRef<Terminal | null>(null)
   const fitAddonRef = useRef<FitAddon | null>(null)

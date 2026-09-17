@@ -34,15 +34,12 @@ export function TerminalToolbar({
   onClear,
 }: TerminalToolbarProps) {
   const canReconnect = status === 'disconnected' || status === 'error'
-  const canDisconnect =
-    status === 'connected' || status === 'connecting' || status === 'error'
+  const canDisconnect = status === 'connected' || status === 'connecting' || status === 'error'
 
   return (
     <header className="flex items-center justify-between border-b border-border px-4 py-3">
       <div className="min-w-0">
-        <h2 className="truncate text-sm font-medium text-white">
-          {serverLabel ?? 'SSH Terminal'}
-        </h2>
+        <h2 className="truncate text-sm font-medium text-white">{serverLabel ?? 'SSH Terminal'}</h2>
         <div className="mt-1 flex items-center gap-2 text-xs text-text-muted">
           <span
             className={`inline-block h-2 w-2 rounded-full ${STATUS_COLORS[status]}`}

@@ -42,12 +42,7 @@ export function registerSshHandlers(): void {
   ipcMain.handle(IPC_CHANNELS.ssh.resize, (event, input) => {
     try {
       const payload = assertResizePayload(input)
-      sshSessionManager.resize(
-        event.sender.id,
-        payload.sessionId,
-        payload.cols,
-        payload.rows,
-      )
+      sshSessionManager.resize(event.sender.id, payload.sessionId, payload.cols, payload.rows)
     } catch (error) {
       handleValidationError(error)
     }

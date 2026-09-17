@@ -10,12 +10,10 @@ const desktopApi: DesktopApi = {
   },
   ssh: {
     connect: (input) => ipcRenderer.invoke(IPC_CHANNELS.ssh.connect, input),
-    write: (sessionId, data) =>
-      ipcRenderer.invoke(IPC_CHANNELS.ssh.write, { sessionId, data }),
+    write: (sessionId, data) => ipcRenderer.invoke(IPC_CHANNELS.ssh.write, { sessionId, data }),
     resize: (sessionId, cols, rows) =>
       ipcRenderer.invoke(IPC_CHANNELS.ssh.resize, { sessionId, cols, rows }),
-    disconnect: (sessionId) =>
-      ipcRenderer.invoke(IPC_CHANNELS.ssh.disconnect, { sessionId }),
+    disconnect: (sessionId) => ipcRenderer.invoke(IPC_CHANNELS.ssh.disconnect, { sessionId }),
     onData: (callback) => {
       const listener = (_event: Electron.IpcRendererEvent, payload: unknown) => {
         callback(payload as Parameters<typeof callback>[0])

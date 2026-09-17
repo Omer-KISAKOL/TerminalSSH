@@ -24,7 +24,10 @@ export function mapSshError(error: unknown): string {
 
   const message = value.message?.toLowerCase() ?? ''
 
-  if (message.includes('authentication failed') || message.includes('all configured authentication methods failed')) {
+  if (
+    message.includes('authentication failed') ||
+    message.includes('all configured authentication methods failed')
+  ) {
     return 'Kullanıcı adı veya parola hatalı.'
   }
 

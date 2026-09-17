@@ -1,18 +1,12 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import type { ConnectionFormValues, ConnectionStatus } from '@shared/contracts/ssh'
 
 import { ConnectionForm } from '@/components/connection/ConnectionForm'
 import { TerminalToolbar } from '@/components/terminal/TerminalToolbar'
-import {
-  TerminalView,
-  type TerminalApi,
-} from '@/components/terminal/TerminalView'
+import { TerminalView, type TerminalApi } from '@/components/terminal/TerminalView'
 import { useSshSession } from '@/hooks/useSshSession'
-import {
-  DEFAULT_CONNECTION_FORM,
-  getConnectionLabel,
-} from '@/lib/connection-form'
+import { DEFAULT_CONNECTION_FORM, getConnectionLabel } from '@/lib/connection-form'
 
 import { Sidebar } from './Sidebar'
 
@@ -22,11 +16,13 @@ type AppShellProps = {
 
 export function AppShell({ appVersion }: AppShellProps) {
   const terminalApiRef = useRef<TerminalApi | null>(null)
+
+  const handleTerminalReady = useCallback((api: TerminalApi | null) => {
+    terminalApiRef.current = api
+  }, [])
   const [view, setView] = useState<'form' | 'terminal'>('form')
   const [terminalMounted, setTerminalMounted] = useState(false)
-  const [formValues, setFormValues] = useState<ConnectionFormValues>(
-    DEFAULT_CONNECTION_FORM,
-  )
+  const [formValues, setFormValues] = useState<ConnectionFormValues>(DEFAULT_CONNECTION_FORM)
   const [terminalSize, setTerminalSize] = useState({ cols: 80, rows: 24 })
 
   const handleTerminalData = useCallback((data: string) => {
@@ -51,10 +47,15 @@ export function AppShell({ appVersion }: AppShellProps) {
       setView('terminal')
       const label = getConnectionLabel(values)
       await ssh.connect(values, label)
-      terminalApiRef.current?.focus()
     },
     [ssh],
   )
+
+  useEffect(() => {
+    if (ssh.status === 'connected') {
+      terminalApiRef.current?.focus()
+    }
+  }, [ssh.status])
 
   const handleNewConnection = useCallback(async () => {
     await ssh.disconnect()
@@ -114,7 +115,7 @@ export function AppShell({ appVersion }: AppShellProps) {
               onClear={handleClear}
             />
             <TerminalView
-              apiRef={terminalApiRef}
+              onReady={handleTerminalReady}
               onInput={handleInput}
               onResize={handleResize}
             />
@@ -149,8 +150,7 @@ export function AppShell({ appVersion }: AppShellProps) {
                 />
                 {appVersion ? (
                   <p className="mt-4 text-center text-xs text-text-muted">
-                    Uygulama sürümü:{' '}
-                    <span className="font-mono text-text">{appVersion}</span>
+                    Uygulama sürümü: <span className="font-mono text-text">{appVersion}</span>
                   </p>
                 ) : null}
               </div>

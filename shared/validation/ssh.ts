@@ -50,12 +50,7 @@ function assertAuthType(value: unknown): AuthType {
   return value
 }
 
-function assertTerminalDimension(
-  value: unknown,
-  min: number,
-  max: number,
-  label: string,
-): number {
+function assertTerminalDimension(value: unknown, min: number, max: number, label: string): number {
   if (typeof value !== 'number' || !Number.isInteger(value)) {
     throw new IpcValidationError(`Terminal ${label} geçerli bir sayı olmalı.`)
   }
@@ -109,9 +104,7 @@ export function assertSessionId(input: unknown): string {
   return input.trim()
 }
 
-export function assertWritePayload(
-  input: unknown,
-): { sessionId: string; data: string } {
+export function assertWritePayload(input: unknown): { sessionId: string; data: string } {
   const value = assertObject(input, 'yazma isteği')
   const sessionId = assertSessionId(value.sessionId)
 
@@ -122,9 +115,11 @@ export function assertWritePayload(
   return { sessionId, data: value.data }
 }
 
-export function assertResizePayload(
-  input: unknown,
-): { sessionId: string; cols: number; rows: number } {
+export function assertResizePayload(input: unknown): {
+  sessionId: string
+  cols: number
+  rows: number
+} {
   const value = assertObject(input, 'boyutlandırma isteği')
   const sessionId = assertSessionId(value.sessionId)
   const cols = assertTerminalDimension(value.cols, MIN_COLS, MAX_COLS, 'genişliği')

@@ -1,10 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import type {
-  ConnectRequest,
-  ConnectionFormValues,
-  ConnectionStatus,
-} from '@shared/contracts/ssh'
+import type { ConnectRequest, ConnectionFormValues, ConnectionStatus } from '@shared/contracts/ssh'
 
 type UseSshSessionOptions = {
   cols: number
@@ -54,10 +50,7 @@ export function useSshSession({
 
   useEffect(() => {
     const unsubscribeData = window.desktopApi.ssh.onData((event) => {
-      if (
-        sessionIdRef.current &&
-        event.sessionId !== sessionIdRef.current
-      ) {
+      if (sessionIdRef.current && event.sessionId !== sessionIdRef.current) {
         return
       }
 
@@ -65,10 +58,7 @@ export function useSshSession({
     })
 
     const unsubscribeStatus = window.desktopApi.ssh.onStatus((event) => {
-      if (
-        sessionIdRef.current &&
-        event.sessionId !== sessionIdRef.current
-      ) {
+      if (sessionIdRef.current && event.sessionId !== sessionIdRef.current) {
         return
       }
 
@@ -118,8 +108,7 @@ export function useSshSession({
       try {
         await window.desktopApi.ssh.connect(request)
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : 'Bağlantı kurulamadı.'
+        const message = error instanceof Error ? error.message : 'Bağlantı kurulamadı.'
         setStatus('error')
         setErrorMessage(message)
 
