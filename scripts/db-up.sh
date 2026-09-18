@@ -31,39 +31,56 @@ print_help() {
   cat >&2 <<'EOF'
 Hata: PostgreSQL container başlatılamadı.
 
-Fedora seçenekleri:
+Yaygın nedenler:
+- 5432 portu dolu (yerel PostgreSQL): ss -tlnp | grep 5432
+- Eski container çakışması: docker ps -a | grep terminalssh-postgres
 
-1) Podman compose eklentisi:
-   sudo dnf install podman-compose
-   pnpm db:up
+Manuel deneme:
+  docker compose -f server/docker-compose.yml up -d
 
-2) Docker uyumluluk (docker → podman):
-   sudo dnf install podman-docker
-   pnpm db:up
-
-3) Yerel PostgreSQL (container olmadan):
-   bash scripts/db-native-setup.sh
+Docker yoksa yerel PostgreSQL:
+  sudo apt install postgresql postgresql-contrib
+  bash scripts/db-native-setup.sh
 EOF
 }
 
-if command -v docker >/dev/null 2>&1; then
-  if run_compose docker 2>/dev/null; then
+try_docker() {
+  if ! command -v docker >/dev/null 2>&1; then
+    return 1
+  fi
+
+  echo "Docker Compose ile PostgreSQL başlatılıyor..."
+  if run_compose docker; then
     echo "PostgreSQL başlatıldı (docker compose)."
-    exit 0
+    return 0
   fi
-fi
 
-if command -v podman >/dev/null 2>&1; then
-  if run_compose podman 2>/dev/null; then
+  return 1
+}
+
+try_podman() {
+  if ! command -v podman >/dev/null 2>&1; then
+    return 1
+  fi
+
+  echo "Podman Compose ile PostgreSQL başlatılıyor..."
+  if run_compose podman; then
     echo "PostgreSQL başlatıldı (podman compose)."
-    exit 0
+    return 0
   fi
 
-  if start_podman_container 2>/dev/null; then
+  echo "Podman run ile PostgreSQL başlatılıyor..."
+  if start_podman_container; then
     echo "PostgreSQL başlatıldı (podman run)."
-    exit 0
+    return 0
   fi
+
+  return 1
+}
+
+if try_docker || try_podman; then
+  exit 0
 fi
 
 print_help
-exit 127
+exit 1
