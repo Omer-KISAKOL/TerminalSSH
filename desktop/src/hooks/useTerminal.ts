@@ -63,6 +63,12 @@ export function useTerminal({ onInput, onResize }: UseTerminalOptions): UseTermi
       onResizeRef.current(terminal.cols, terminal.rows)
     }, 150)
 
+    const pasteText = (text: string) => {
+      if (text) {
+        onInputRef.current(text)
+      }
+    }
+
     const dataDisposable = terminal.onData((data) => {
       onInputRef.current(data)
     })
@@ -85,8 +91,22 @@ export function useTerminal({ onInput, onResize }: UseTerminalOptions): UseTermi
         return true
       }
 
+      if (event.ctrlKey && !event.shiftKey && key === 'v') {
+        event.preventDefault()
+        void navigator.clipboard.readText().then(pasteText)
+        return false
+      }
+
       return true
     })
+
+    // xterm'in paste olayını engelle; Ctrl+V yalnızca yukarıdaki handler'dan gider.
+    const onPaste = (event: ClipboardEvent) => {
+      event.preventDefault()
+      event.stopImmediatePropagation()
+    }
+
+    container.addEventListener('paste', onPaste, true)
 
     const resizeObserver = new ResizeObserver(() => {
       fitAndNotify()
@@ -97,6 +117,7 @@ export function useTerminal({ onInput, onResize }: UseTerminalOptions): UseTermi
 
     return () => {
       dataDisposable.dispose()
+      container.removeEventListener('paste', onPaste, true)
       resizeObserver.disconnect()
       terminal.dispose()
       terminalRef.current = null
