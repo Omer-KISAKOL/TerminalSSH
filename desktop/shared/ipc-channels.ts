@@ -27,6 +27,11 @@ export const IPC_CHANNELS = {
     listLocalOnly: 'profiles:list-local-only',
     importLocal: 'profiles:import-local',
   },
+  snippets: {
+    list: 'snippets:list',
+    save: 'snippets:save',
+    remove: 'snippets:remove',
+  },
   sftp: {
     connect: 'sftp:connect',
     listDir: 'sftp:list-dir',

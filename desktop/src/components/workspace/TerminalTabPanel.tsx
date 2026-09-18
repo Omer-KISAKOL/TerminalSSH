@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef } from 'react'
 
 import type { TerminalWorkspaceTab } from '@shared/contracts/workspace'
 
+import { SnippetPanel } from '@/components/snippets/SnippetPanel'
 import { TerminalStateOverlay } from '@/components/terminal/TerminalStateOverlay'
 import { TerminalToolbar } from '@/components/terminal/TerminalToolbar'
 import { TerminalView, type TerminalApi } from '@/components/terminal/TerminalView'
@@ -72,25 +73,41 @@ export function TerminalTabPanel({
     tab.status === 'error' ||
     tab.status === 'disconnected'
 
+  const profileId = tab.connectValues?.profileId
+  const showSnippets = Boolean(profileId) && tab.status === 'connected'
+
+  const handleApplySnippet = (content: string, appendNewline: boolean) => {
+    handleInput(appendNewline ? `${content}\n` : content)
+  }
+
   return (
-    <div className={isActive ? 'relative flex min-h-0 flex-1 flex-col' : 'hidden'}>
-      <TerminalToolbar
-        serverLabel={tab.label}
-        status={tab.status}
-        isBusy={isBusy}
-        onReconnect={() => onReconnect(tab.id)}
-        onDisconnect={() => onDisconnect(tab.id)}
-        onClear={() => onClear(tab.id)}
-        onOpenSidebar={onOpenSidebar}
-      />
-      <TerminalView onReady={handleReady} onInput={handleInput} onResize={handleResize} />
-      {showOverlay ? (
-        <TerminalStateOverlay
+    <div className={isActive ? 'relative flex min-h-0 flex-1' : 'hidden'}>
+      <div className="relative flex min-w-0 flex-1 flex-col">
+        <TerminalToolbar
+          serverLabel={tab.label}
           status={tab.status}
-          errorMessage={tab.errorMessage}
-          isReconnecting={isBusy}
+          isBusy={isBusy}
           onReconnect={() => onReconnect(tab.id)}
-          onBackToForm={onBackToForm}
+          onDisconnect={() => onDisconnect(tab.id)}
+          onClear={() => onClear(tab.id)}
+          onOpenSidebar={onOpenSidebar}
+        />
+        <TerminalView onReady={handleReady} onInput={handleInput} onResize={handleResize} />
+        {showOverlay ? (
+          <TerminalStateOverlay
+            status={tab.status}
+            errorMessage={tab.errorMessage}
+            isReconnecting={isBusy}
+            onReconnect={() => onReconnect(tab.id)}
+            onBackToForm={onBackToForm}
+          />
+        ) : null}
+      </div>
+      {showSnippets && profileId ? (
+        <SnippetPanel
+          profileId={profileId}
+          mode="terminal"
+          onApply={handleApplySnippet}
         />
       ) : null}
     </div>

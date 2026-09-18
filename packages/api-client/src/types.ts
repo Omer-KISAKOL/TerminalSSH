@@ -53,6 +53,23 @@ export interface SyncCloudProfileInput extends SaveCloudProfileInput {
   deletedAt?: string | null
 }
 
+export interface CloudSnippet {
+  id: string
+  profileId: string
+  name: string
+  content: string
+  sortOrder: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface SaveCloudSnippetInput {
+  id?: string
+  name: string
+  content: string
+  sortOrder?: number
+}
+
 export class ApiClientError extends Error {
   statusCode: number
 

@@ -1,18 +1,26 @@
 import 'package:flutter/material.dart';
 
 import '../models/server_profile.dart';
+import '../services/snippet_service.dart';
 import '../theme/app_theme.dart';
 import 'password_field.dart';
+import 'snippet_panel.dart';
 
 class ConnectServerSheet extends StatefulWidget {
   const ConnectServerSheet({
     super.key,
     this.profile,
+    this.snippetService,
   });
 
   final ServerProfile? profile;
+  final SnippetService? snippetService;
 
-  static Future<ConnectServerResult?> show(BuildContext context, {ServerProfile? profile}) {
+  static Future<ConnectServerResult?> show(
+    BuildContext context, {
+    ServerProfile? profile,
+    SnippetService? snippetService,
+  }) {
     return showModalBottomSheet<ConnectServerResult>(
       context: context,
       isScrollControlled: true,
@@ -22,7 +30,7 @@ class ConnectServerSheet extends StatefulWidget {
       ),
       builder: (_) => Padding(
         padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-        child: ConnectServerSheet(profile: profile),
+        child: ConnectServerSheet(profile: profile, snippetService: snippetService),
       ),
     );
   }
@@ -124,6 +132,16 @@ class _ConnectServerSheetState extends State<ConnectServerSheet> {
             onPressed: _submit,
             child: Text(widget.profile == null ? 'Kaydet ve bağlan' : 'Bağlan'),
           ),
+          if (widget.profile != null && widget.snippetService != null) ...[
+            const SizedBox(height: 24),
+            Text('Snippet\'ler', style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            SnippetPanel(
+              profileId: widget.profile!.id,
+              snippetService: widget.snippetService!,
+              mode: SnippetPanelMode.profile,
+            ),
+          ],
         ],
       ),
     );

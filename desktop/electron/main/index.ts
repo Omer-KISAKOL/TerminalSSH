@@ -8,6 +8,7 @@ import { registerAppHandlers } from './ipc/app.handlers'
 import { registerDialogHandlers } from './ipc/dialog.handlers'
 import { registerFilesHandlers } from './ipc/files.handlers'
 import { registerProfileHandlers } from './ipc/profile.handlers'
+import { registerSnippetHandlers } from './ipc/snippet.handlers'
 import { registerSftpHandlers } from './ipc/sftp.handlers'
 import { registerSshHandlers } from './ipc/ssh.handlers'
 import { sftpSessionManager } from './services/sftp-session-manager'
@@ -83,6 +84,7 @@ function createMainWindow(): BrowserWindow {
 registerAppHandlers()
 registerAuthHandlers()
 registerProfileHandlers()
+registerSnippetHandlers()
 registerDialogHandlers()
 registerFilesHandlers()
 registerSshHandlers()

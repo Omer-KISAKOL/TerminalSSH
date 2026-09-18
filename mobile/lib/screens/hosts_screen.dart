@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/server_profile.dart';
 import '../services/auth_service.dart';
 import '../services/profile_service.dart';
+import '../services/snippet_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/connect_server_sheet.dart';
 import '../widgets/host_card.dart';
@@ -24,6 +25,7 @@ class HostsScreen extends StatefulWidget {
 
 class _HostsScreenState extends State<HostsScreen> {
   late final ProfileService _profileService;
+  late final SnippetService _snippetService;
   List<ServerProfile> _profiles = [];
   bool _loading = true;
   String? _error;
@@ -33,6 +35,7 @@ class _HostsScreenState extends State<HostsScreen> {
   void initState() {
     super.initState();
     _profileService = ProfileService(api: widget.authService.api);
+    _snippetService = SnippetService(api: widget.authService.api);
     _loadProfiles();
   }
 
@@ -68,14 +71,23 @@ class _HostsScreenState extends State<HostsScreen> {
     ServerProfile resolved = profile;
 
     if (profile.password == null || profile.password!.isEmpty) {
-      final result = await ConnectServerSheet.show(context, profile: profile);
+      final result = await ConnectServerSheet.show(
+        context,
+        profile: profile,
+        snippetService: _snippetService,
+      );
       if (result == null || !mounted) return;
       resolved = result.toProfile(id: profile.id);
     }
 
     if (!mounted) return;
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => TerminalScreen(profile: resolved)),
+      MaterialPageRoute(
+        builder: (_) => TerminalScreen(
+          profile: resolved,
+          snippetService: _snippetService,
+        ),
+      ),
     );
   }
 
@@ -84,7 +96,12 @@ class _HostsScreenState extends State<HostsScreen> {
     if (result == null || !mounted) return;
 
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => TerminalScreen(profile: result.toProfile())),
+      MaterialPageRoute(
+        builder: (_) => TerminalScreen(
+          profile: result.toProfile(),
+          snippetService: _snippetService,
+        ),
+      ),
     );
   }
 
@@ -251,7 +268,11 @@ class _HostsScreenState extends State<HostsScreen> {
                         profile: profile,
                         onTap: () => _openTerminal(profile),
                         onLongPress: () async {
-                          final result = await ConnectServerSheet.show(context, profile: profile);
+                          final result = await ConnectServerSheet.show(
+                            context,
+                            profile: profile,
+                            snippetService: _snippetService,
+                          );
                           if (result == null || !mounted) return;
                           await _openTerminal(result.toProfile(id: profile.id));
                         },

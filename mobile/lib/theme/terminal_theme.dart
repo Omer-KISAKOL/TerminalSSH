@@ -29,4 +29,6 @@ const greenTerminalTheme = TerminalTheme(
 
 const greenTerminalStyle = TerminalStyle(
   fontFamily: 'monospace',
+  fontSize: 11,
+  height: 1.1,
 );

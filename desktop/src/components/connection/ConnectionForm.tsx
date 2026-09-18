@@ -2,6 +2,7 @@ import { useState } from 'react'
 
 import type { ConnectionFormValues } from '@shared/contracts/ssh'
 
+import { SnippetPanel } from '@/components/snippets/SnippetPanel'
 import { Button } from '@/components/ui/Button'
 import { PasswordInput } from '@/components/ui/PasswordInput'
 import { DEFAULT_CONNECTION_FORM, validateConnectionForm } from '@/lib/connection-form'
@@ -274,6 +275,20 @@ export function ConnectionForm({
           </label>
         ) : null}
       </div>
+
+      {mode === 'edit' && values.profileId ? (
+        <div className="mt-6 overflow-hidden rounded-xl border border-border">
+          <div className="border-b border-border px-4 py-3">
+            <h3 className="text-sm font-medium text-text">Snippet'ler</h3>
+            <p className="mt-1 text-xs text-text-muted">
+              Bu sunucuya özel komut ve metin parçaları.
+            </p>
+          </div>
+          <div className="max-h-96 overflow-hidden">
+            <SnippetPanel profileId={values.profileId} mode="profile" embedded />
+          </div>
+        </div>
+      ) : null}
 
       {errorMessage ? (
         <p className="mt-4 rounded-lg border border-status-error/30 bg-status-error/10 px-3 py-2 text-sm text-status-error" role="alert">

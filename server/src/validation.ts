@@ -31,6 +31,13 @@ export const profileInputSchema = z.object({
   lastConnectedAt: z.string().datetime().optional().nullable(),
 })
 
+export const snippetInputSchema = z.object({
+  id: z.string().uuid().optional(),
+  name: z.string().min(1).max(120),
+  content: z.string().max(100_000),
+  sortOrder: z.number().int().min(0).max(10_000).optional(),
+})
+
 export const syncSchema = z.object({
   profiles: z.array(
     profileInputSchema.extend({

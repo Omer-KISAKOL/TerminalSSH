@@ -3,7 +3,9 @@ import type {
   AuthSession,
   AuthUser,
   CloudProfile,
+  CloudSnippet,
   SaveCloudProfileInput,
+  SaveCloudSnippetInput,
   SyncCloudProfileInput,
 } from './types.js'
 
@@ -12,7 +14,9 @@ export type {
   AuthUser,
   AuthType,
   CloudProfile,
+  CloudSnippet,
   SaveCloudProfileInput,
+  SaveCloudSnippetInput,
   SyncCloudProfileInput,
 } from './types.js'
 export { ApiClientError } from './types.js'
@@ -150,6 +154,30 @@ export class TerminalSshApiClient {
   markConnected(id: string) {
     return this.request<{ ok: boolean }>(`/profiles/${id}/connected`, {
       method: 'POST',
+    })
+  }
+
+  listSnippets(profileId: string) {
+    return this.request<{ snippets: CloudSnippet[] }>(`/profiles/${profileId}/snippets`)
+  }
+
+  createSnippet(profileId: string, input: SaveCloudSnippetInput) {
+    return this.request<{ snippet: CloudSnippet }>(`/profiles/${profileId}/snippets`, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    })
+  }
+
+  updateSnippet(profileId: string, snippetId: string, input: Partial<SaveCloudSnippetInput>) {
+    return this.request<{ snippet: CloudSnippet }>(`/profiles/${profileId}/snippets/${snippetId}`, {
+      method: 'PUT',
+      body: JSON.stringify(input),
+    })
+  }
+
+  deleteSnippet(profileId: string, snippetId: string) {
+    return this.request<{ ok: boolean }>(`/profiles/${profileId}/snippets/${snippetId}`, {
+      method: 'DELETE',
     })
   }
 }

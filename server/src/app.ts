@@ -4,6 +4,7 @@ import Fastify from 'fastify'
 import { config } from './config.js'
 import { registerAuthRoutes } from './routes/auth.js'
 import { registerProfileRoutes } from './routes/profiles.js'
+import { registerSnippetRoutes } from './routes/snippets.js'
 
 export async function buildApp() {
   const app = Fastify({
@@ -33,6 +34,7 @@ export async function buildApp() {
 
   await registerAuthRoutes(app)
   await registerProfileRoutes(app)
+  await registerSnippetRoutes(app)
 
   return app
 }

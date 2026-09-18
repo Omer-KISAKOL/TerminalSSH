@@ -42,3 +42,18 @@ CREATE TABLE IF NOT EXISTS server_profiles (
 
 CREATE INDEX IF NOT EXISTS server_profiles_user_id_idx ON server_profiles(user_id);
 CREATE INDEX IF NOT EXISTS server_profiles_updated_at_idx ON server_profiles(updated_at);
+
+CREATE TABLE IF NOT EXISTS profile_snippets (
+  id UUID PRIMARY KEY,
+  profile_id UUID NOT NULL REFERENCES server_profiles(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  encrypted_content TEXT NOT NULL,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS profile_snippets_profile_id_idx ON profile_snippets(profile_id);
+CREATE INDEX IF NOT EXISTS profile_snippets_user_id_idx ON profile_snippets(user_id);

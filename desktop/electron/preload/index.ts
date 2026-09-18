@@ -124,6 +124,12 @@ const desktopApi: DesktopApi = {
     listLocalOnly: () => ipcRenderer.invoke(IPC_CHANNELS.profiles.listLocalOnly),
     importLocal: () => ipcRenderer.invoke(IPC_CHANNELS.profiles.importLocal),
   },
+  snippets: {
+    list: (profileId) => ipcRenderer.invoke(IPC_CHANNELS.snippets.list, profileId),
+    save: (input) => ipcRenderer.invoke(IPC_CHANNELS.snippets.save, input),
+    remove: (profileId, snippetId) =>
+      ipcRenderer.invoke(IPC_CHANNELS.snippets.remove, { profileId, snippetId }),
+  },
   files: {
     selectPrivateKey: () => ipcRenderer.invoke(IPC_CHANNELS.files.selectPrivateKey),
     getHomeDir: () => ipcRenderer.invoke(IPC_CHANNELS.files.getHomeDir),

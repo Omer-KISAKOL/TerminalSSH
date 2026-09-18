@@ -45,6 +45,35 @@ export interface SyncProfileInput {
   deletedAt?: string | null
 }
 
+export interface SnippetRow {
+  id: string
+  profile_id: string
+  user_id: string
+  name: string
+  encrypted_content: string
+  sort_order: number
+  created_at: Date
+  updated_at: Date
+  deleted_at: Date | null
+}
+
+export interface SnippetInput {
+  id?: string
+  name: string
+  content: string
+  sortOrder?: number
+}
+
+export interface SnippetResponse {
+  id: string
+  profileId: string
+  name: string
+  content: string
+  sortOrder: number
+  createdAt: string
+  updatedAt: string
+}
+
 export interface ProfileResponse {
   id: string
   name: string
