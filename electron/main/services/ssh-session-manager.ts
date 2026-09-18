@@ -1,5 +1,4 @@
 import { randomUUID } from 'node:crypto'
-import { readFile } from 'node:fs/promises'
 
 import { webContents } from 'electron'
 import { Client, type ClientChannel, type ConnectConfig } from 'ssh2'
@@ -13,13 +12,10 @@ import type {
 } from '@shared/contracts/ssh'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
 
-import { formatHostFingerprint } from './fingerprint'
 import { hostVerificationService } from './host-verification-service'
-import { knownHostsStore } from './known-hosts-store'
 import { logger } from './logger'
 import { mapSshError } from './ssh-errors'
-
-const CONNECTION_TIMEOUT_MS = 15_000
+import { buildSshConnectConfig, CONNECTION_TIMEOUT_MS } from './ssh-connection-builder'
 
 interface Session {
   sessionId: string
@@ -35,8 +31,6 @@ export class SshSessionManager {
   private readonly sessions = new Map<string, Session>()
 
   async connect(webContentsId: number, request: ConnectRequest): Promise<ConnectResponse> {
-    this.disconnectAllForWebContents(webContentsId)
-
     const sessionId = randomUUID()
     const client = new Client()
 
@@ -72,11 +66,10 @@ export class SshSessionManager {
     let connectOptions: ConnectConfig
 
     try {
-      connectOptions = await this.buildConnectOptions(request, sessionId, webContentsId)
+      connectOptions = await buildSshConnectConfig(request, sessionId, webContentsId)
     } catch (error) {
       this.clearTimeout(session)
       this.sessions.delete(sessionId)
-      hostVerificationService.cancelForWebContents(webContentsId)
       const message = error instanceof Error ? error.message : 'Bağlantı kurulamadı.'
       throw new Error(message)
     }
@@ -160,100 +153,6 @@ export class SshSessionManager {
 
       client.connect(connectOptions)
     })
-  }
-
-  private async buildConnectOptions(
-    request: ConnectRequest,
-    sessionId: string,
-    webContentsId: number,
-  ): Promise<ConnectConfig> {
-    const baseConfig: ConnectConfig = {
-      host: request.host,
-      port: request.port,
-      username: request.username,
-      readyTimeout: CONNECTION_TIMEOUT_MS,
-      hostVerifier: (hostKey: Buffer, verify: (approved: boolean) => void) => {
-        void this.verifyHostKey(hostKey, request, sessionId, webContentsId, verify)
-      },
-    }
-
-    if (request.authType === 'password') {
-      if (!request.password) {
-        throw new Error('Parola gerekli.')
-      }
-
-      return {
-        ...baseConfig,
-        password: request.password,
-      }
-    }
-
-    if (!request.privateKeyPath) {
-      throw new Error('Özel anahtar dosyası seçilmeli.')
-    }
-
-    try {
-      const privateKey = await readFile(request.privateKeyPath)
-
-      return {
-        ...baseConfig,
-        privateKey,
-        passphrase: request.passphrase,
-      }
-    } catch (error) {
-      logger.error('Özel anahtar okunamadı', {
-        sessionId,
-        code:
-          error && typeof error === 'object' && 'code' in error ? String(error.code) : undefined,
-      })
-      throw new Error('Özel anahtar okunamadı.')
-    }
-  }
-
-  private async verifyHostKey(
-    hostKey: Buffer,
-    request: ConnectRequest,
-    sessionId: string,
-    webContentsId: number,
-    verify: (approved: boolean) => void,
-  ): Promise<void> {
-    const fingerprint = formatHostFingerprint(hostKey)
-    const knownHost = knownHostsStore.get(request.host, request.port)
-
-    if (knownHost) {
-      if (knownHost.fingerprint === fingerprint) {
-        verify(true)
-        return
-      }
-
-      const approved = await hostVerificationService.verifyHostKey({
-        webContentsId,
-        sessionId,
-        host: request.host,
-        port: request.port,
-        fingerprint,
-        kind: 'mismatch',
-        expectedFingerprint: knownHost.fingerprint,
-      })
-
-      verify(approved)
-      return
-    }
-
-    const approved = await hostVerificationService.verifyHostKey({
-      webContentsId,
-      sessionId,
-      host: request.host,
-      port: request.port,
-      fingerprint,
-      kind: 'unknown',
-    })
-
-    if (approved) {
-      knownHostsStore.save(request.host, request.port, fingerprint)
-    }
-
-    verify(approved)
   }
 
   write(webContentsId: number, sessionId: string, data: string): void {

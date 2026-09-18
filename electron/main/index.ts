@@ -5,8 +5,11 @@ import { app, BrowserWindow, nativeImage } from 'electron'
 
 import { registerAppHandlers } from './ipc/app.handlers'
 import { registerDialogHandlers } from './ipc/dialog.handlers'
+import { registerFilesHandlers } from './ipc/files.handlers'
 import { registerProfileHandlers } from './ipc/profile.handlers'
+import { registerSftpHandlers } from './ipc/sftp.handlers'
 import { registerSshHandlers } from './ipc/ssh.handlers'
+import { sftpSessionManager } from './services/sftp-session-manager'
 import { sshSessionManager } from './services/ssh-session-manager'
 
 const distDir = path.dirname(fileURLToPath(import.meta.url))
@@ -65,10 +68,12 @@ function createMainWindow(): BrowserWindow {
 
   mainWindow.webContents.on('did-start-loading', () => {
     sshSessionManager.disconnectAllForWebContents(webContentsId)
+    sftpSessionManager.disconnectAllForWebContents(webContentsId)
   })
 
   mainWindow.webContents.on('destroyed', () => {
     sshSessionManager.disconnectAllForWebContents(webContentsId)
+    sftpSessionManager.disconnectAllForWebContents(webContentsId)
   })
 
   return mainWindow
@@ -77,7 +82,9 @@ function createMainWindow(): BrowserWindow {
 registerAppHandlers()
 registerProfileHandlers()
 registerDialogHandlers()
+registerFilesHandlers()
 registerSshHandlers()
+registerSftpHandlers()
 
 app.whenReady().then(() => {
   createMainWindow()
@@ -91,6 +98,7 @@ app.whenReady().then(() => {
 
 app.on('before-quit', () => {
   sshSessionManager.disconnectAll()
+  sftpSessionManager.disconnectAll()
 })
 
 app.on('window-all-closed', () => {

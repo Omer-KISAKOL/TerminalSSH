@@ -1,28 +1,28 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import type { PublicServerProfile } from '@shared/contracts/profile'
-import type { ConnectionFormValues, ConnectionStatus } from '@shared/contracts/ssh'
+import type { ConnectionFormValues } from '@shared/contracts/ssh'
 
 import { ConnectionForm } from '@/components/connection/ConnectionForm'
 import { HostFingerprintDialog } from '@/components/connection/HostFingerprintDialog'
-import { ServerTabBar } from '@/components/terminal/ServerTabBar'
-import { TerminalStateOverlay } from '@/components/terminal/TerminalStateOverlay'
-import { TerminalToolbar } from '@/components/terminal/TerminalToolbar'
-import { TerminalView, type TerminalApi } from '@/components/terminal/TerminalView'
+import { SftpTabPanel } from '@/components/sftp/SftpTabPanel'
+import { TerminalTabPanel } from '@/components/workspace/TerminalTabPanel'
+import { WorkspaceTabBar } from '@/components/workspace/WorkspaceTabBar'
 import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { useHostVerification } from '@/hooks/useHostVerification'
 import { useProfiles } from '@/hooks/useProfiles'
-import { useSshSession } from '@/hooks/useSshSession'
+import { useWorkspaceTabs } from '@/hooks/useWorkspaceTabs'
 import {
   DEFAULT_CONNECTION_FORM,
-  getConnectionLabel,
   publicProfileToFormValues,
   validateConnectionForm,
 } from '@/lib/connection-form'
 
 import { Sidebar } from './Sidebar'
+
+import type { TerminalApi } from '@/components/terminal/TerminalView'
 
 type AppShellProps = {
   appVersion: string | null
@@ -30,38 +30,31 @@ type AppShellProps = {
 
 export function AppShell({ appVersion }: AppShellProps) {
   const profiles = useProfiles()
-  const terminalApiRef = useRef<TerminalApi | null>(null)
-  const [view, setView] = useState<'form' | 'terminal'>('form')
+  const terminalApisRef = useRef<Map<string, TerminalApi>>(new Map())
+  const [view, setView] = useState<'form' | 'workspace'>('form')
   const [formMode, setFormMode] = useState<'create' | 'edit'>('create')
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null)
   const [connectingProfileId, setConnectingProfileId] = useState<string | null>(null)
-  const [terminalMounted, setTerminalMounted] = useState(false)
   const [formValues, setFormValues] = useState<ConnectionFormValues>(DEFAULT_CONNECTION_FORM)
   const [terminalSize, setTerminalSize] = useState({ cols: 80, rows: 24 })
   const [formKey, setFormKey] = useState('create')
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [isReconnecting, setIsReconnecting] = useState(false)
 
-  const handleTerminalReady = useCallback((api: TerminalApi | null) => {
-    terminalApiRef.current = api
+  const handleTerminalData = useCallback((tabId: string, data: string) => {
+    terminalApisRef.current.get(tabId)?.write(data)
   }, [])
 
-  const handleTerminalData = useCallback((data: string) => {
-    terminalApiRef.current?.write(data)
+  const handleTerminalMessage = useCallback((tabId: string, message: string) => {
+    terminalApisRef.current.get(tabId)?.writeln(message)
   }, [])
 
-  const handleTerminalMessage = useCallback((message: string) => {
-    terminalApiRef.current?.writeln(message)
-  }, [])
-
-  const hostVerification = useHostVerification()
-
-  const ssh = useSshSession({
-    cols: terminalSize.cols,
-    rows: terminalSize.rows,
-    onData: handleTerminalData,
+  const workspace = useWorkspaceTabs({
+    terminalSize,
+    onTerminalData: handleTerminalData,
     onTerminalMessage: handleTerminalMessage,
   })
+
+  const hostVerification = useHostVerification()
 
   const resetForm = useCallback((mode: 'create' | 'edit', values: ConnectionFormValues) => {
     setFormMode(mode)
@@ -77,20 +70,6 @@ export function AppShell({ appVersion }: AppShellProps) {
       setSidebarOpen(false)
     },
     [resetForm],
-  )
-
-  const connectSession = useCallback(
-    async (values: ConnectionFormValues) => {
-      setFormValues(values)
-      setTerminalMounted(true)
-      setView('terminal')
-      setSidebarOpen(false)
-
-      const label = getConnectionLabel(values)
-      await ssh.connect(values, label)
-      await profiles.refresh()
-    },
-    [profiles, ssh],
   )
 
   const handleConnect = useCallback(
@@ -123,14 +102,16 @@ export function AppShell({ appVersion }: AppShellProps) {
       }
 
       setConnectingProfileId(profileId ?? null)
+      setView('workspace')
 
       try {
-        await connectSession(connectValues)
+        await workspace.openTerminalSession(connectValues)
+        await profiles.refresh()
       } finally {
         setConnectingProfileId(null)
       }
     },
-    [connectSession, formMode, profiles, resetForm],
+    [formMode, profiles, resetForm, workspace],
   )
 
   const handleProfileConnect = useCallback(
@@ -145,31 +126,54 @@ export function AppShell({ appVersion }: AppShellProps) {
 
       setSelectedProfileId(profile.id)
       setConnectingProfileId(profile.id)
+      setView('workspace')
 
       try {
-        await connectSession(values)
+        await workspace.openTerminalSession(values)
+        await profiles.refresh()
       } finally {
         setConnectingProfileId(null)
       }
     },
-    [connectSession, openProfile],
+    [openProfile, profiles, workspace],
+  )
+
+  const handleProfileSftpConnect = useCallback(
+    async (profile: PublicServerProfile) => {
+      const values = publicProfileToFormValues(profile)
+      const validationError = validateConnectionForm(values)
+
+      if (validationError) {
+        openProfile(profile)
+        return
+      }
+
+      setSelectedProfileId(profile.id)
+      setConnectingProfileId(profile.id)
+      setView('workspace')
+
+      try {
+        await workspace.openSftpSession(values)
+        await profiles.refresh()
+      } finally {
+        setConnectingProfileId(null)
+      }
+    },
+    [openProfile, profiles, workspace],
   )
 
   useEffect(() => {
-    if (ssh.status === 'connected') {
-      terminalApiRef.current?.focus()
-      setIsReconnecting(false)
+    if (workspace.activeTab?.type === 'terminal' && workspace.activeTab.status === 'connected') {
+      terminalApisRef.current.get(workspace.activeTab.id)?.focus()
     }
-  }, [ssh.status])
+  }, [workspace.activeTab])
 
-  const handleNewConnection = useCallback(async () => {
-    await ssh.disconnect()
-    ssh.reset()
+  const handleNewConnection = useCallback(() => {
     setSelectedProfileId(null)
     resetForm('create', DEFAULT_CONNECTION_FORM)
     setView('form')
     setSidebarOpen(false)
-  }, [resetForm, ssh])
+  }, [resetForm])
 
   const handleProfileDelete = useCallback(
     async (profile: PublicServerProfile) => {
@@ -192,67 +196,34 @@ export function AppShell({ appVersion }: AppShellProps) {
     [profiles, resetForm, selectedProfileId],
   )
 
-  const handleReconnect = useCallback(async () => {
-    setIsReconnecting(true)
-
-    try {
-      await ssh.reconnect()
-      terminalApiRef.current?.focus()
-    } finally {
-      setIsReconnecting(false)
+  const handleTerminalReady = useCallback((tabId: string, api: TerminalApi | null) => {
+    if (api) {
+      terminalApisRef.current.set(tabId, api)
+      return
     }
-  }, [ssh])
 
-  const handleDisconnect = useCallback(async () => {
-    await ssh.disconnect()
-  }, [ssh])
-
-  const handleClear = useCallback(() => {
-    terminalApiRef.current?.clear()
+    terminalApisRef.current.delete(tabId)
   }, [])
 
-  const handleResize = useCallback(
-    (cols: number, rows: number) => {
-      setTerminalSize({ cols, rows })
-      void ssh.resize(cols, rows)
-    },
-    [ssh],
-  )
-
-  const handleInput = useCallback(
-    (data: string) => {
-      void ssh.write(data)
-    },
-    [ssh],
-  )
-
-  const handleBackToForm = useCallback(async () => {
-    await ssh.disconnect()
-    ssh.reset()
+  const handleBackToForm = useCallback(() => {
     setView('form')
-  }, [ssh])
+  }, [])
 
-  const showTerminal = view === 'terminal'
-  const status: ConnectionStatus = showTerminal ? ssh.status : 'idle'
-  const isConnectBusy = ssh.isBusy || isReconnecting || connectingProfileId !== null
-  const showTerminalOverlay =
-    showTerminal &&
-    (status === 'connecting' ||
-      status === 'disconnecting' ||
-      status === 'error' ||
-      status === 'disconnected')
+  const handleCloseTab = useCallback(
+    async (tabId: string) => {
+      const willBeEmpty = workspace.tabs.filter((tab) => tab.id !== tabId).length === 0
+      await workspace.closeTab(tabId)
+      terminalApisRef.current.delete(tabId)
 
-  const serverTabs =
-    showTerminal && ssh.serverLabel
-      ? [
-          {
-            id: selectedProfileId ?? 'active-session',
-            label: ssh.serverLabel,
-            status,
-            isActive: true,
-          },
-        ]
-      : []
+      if (willBeEmpty) {
+        setView('form')
+      }
+    },
+    [workspace],
+  )
+
+  const showWorkspace = view === 'workspace' && workspace.hasOpenTabs
+  const isConnectBusy = workspace.isBusy || connectingProfileId !== null
 
   return (
     <div className="flex h-full min-h-0 bg-surface">
@@ -266,49 +237,68 @@ export function AppShell({ appVersion }: AppShellProps) {
         profilesError={profiles.error}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
-        onNewConnection={() => void handleNewConnection()}
+        onNewConnection={handleNewConnection}
         onConnectProfile={(profile) => void handleProfileConnect(profile)}
+        onSftpConnectProfile={(profile) => void handleProfileSftpConnect(profile)}
         onEditProfile={openProfile}
         onDeleteProfile={(profile) => void handleProfileDelete(profile)}
       />
 
       <main className="relative flex min-h-0 min-w-0 flex-1 flex-col">
-        {terminalMounted ? (
-          <div
-            className={
-              showTerminal
-                ? 'relative flex min-h-0 flex-1 flex-col'
-                : 'pointer-events-none invisible absolute inset-0 flex min-h-0 flex-col'
-            }
-          >
-            <ServerTabBar tabs={serverTabs} />
-            <TerminalToolbar
-              serverLabel={ssh.serverLabel}
-              status={status}
-              isBusy={ssh.isBusy || isReconnecting}
-              onReconnect={() => void handleReconnect()}
-              onDisconnect={() => void handleDisconnect()}
-              onClear={handleClear}
-              onOpenSidebar={() => setSidebarOpen(true)}
+        {showWorkspace ? (
+          <div className="flex min-h-0 flex-1 flex-col">
+            <WorkspaceTabBar
+              tabs={workspace.tabs}
+              activeTabId={workspace.activeTabId}
+              onSelectTab={workspace.setActiveTabId}
+              onCloseTab={(tabId) => void handleCloseTab(tabId)}
+              onAddTerminalTab={() => {
+                workspace.addTerminalTab()
+                setView('workspace')
+              }}
+              onAddSftpTab={() => {
+                void workspace.addSftpTab()
+                setView('workspace')
+              }}
             />
-            <TerminalView
-              onReady={handleTerminalReady}
-              onInput={handleInput}
-              onResize={handleResize}
-            />
-            {showTerminalOverlay ? (
-              <TerminalStateOverlay
-                status={status}
-                errorMessage={ssh.errorMessage}
-                isReconnecting={isReconnecting}
-                onReconnect={() => void handleReconnect()}
-                onBackToForm={() => void handleBackToForm()}
-              />
-            ) : null}
+
+            {workspace.tabs.map((tab) =>
+              tab.type === 'terminal' ? (
+                <TerminalTabPanel
+                  key={tab.id}
+                  tab={tab}
+                  isActive={tab.id === workspace.activeTabId}
+                  isBusy={tab.status === 'connecting' || tab.status === 'disconnecting'}
+                  onReady={handleTerminalReady}
+                  onInput={(tabId, data) => void workspace.writeToTerminalTab(tabId, data)}
+                  onResize={(tabId, cols, rows) => {
+                    setTerminalSize({ cols, rows })
+                    void workspace.resizeTerminalTab(tabId, cols, rows)
+                  }}
+                  onReconnect={(tabId) => void workspace.reconnectTab(tabId)}
+                  onDisconnect={(tabId) => void workspace.disconnectTab(tabId)}
+                  onClear={(tabId) => terminalApisRef.current.get(tabId)?.clear()}
+                  onBackToForm={handleBackToForm}
+                  onOpenSidebar={() => setSidebarOpen(true)}
+                />
+              ) : (
+                <SftpTabPanel
+                  key={tab.id}
+                  tab={tab}
+                  isActive={tab.id === workspace.activeTabId}
+                  profiles={profiles.profiles}
+                  profilesLoading={profiles.isLoading}
+                  connectDisabled={isConnectBusy}
+                  onConnect={(values) => workspace.connectSftpTab(tab.id, values)}
+                  onLocalPathChange={(path) => workspace.setSftpLocalPath(tab.id, path)}
+                  onRemotePathChange={(path) => workspace.setSftpRemotePath(tab.id, path)}
+                />
+              ),
+            )}
           </div>
         ) : null}
 
-        {!showTerminal ? (
+        {!showWorkspace ? (
           <>
             <header className="flex items-center justify-between gap-3 border-b border-border px-4 py-4 md:px-6">
               <div className="flex items-center gap-3">
@@ -325,23 +315,23 @@ export function AppShell({ appVersion }: AppShellProps) {
                     {formMode === 'edit' ? 'Profili Düzenle' : 'Bağlantı'}
                   </h2>
                   <p className="text-sm text-text-muted">
-                    SSH oturumu başlatmak için bağlantı bilgilerini girin.
+                    SSH terminali veya SFTP oturumu başlatmak için bağlantı bilgilerini girin.
                   </p>
                 </div>
               </div>
               <StatusBadge status="idle" />
             </header>
 
-            <section className="flex flex-1 flex-col overflow-y-auto">
+            <section className="flex flex-1 flex-col overflow-y-auto p-4 md:p-8">
               {profiles.profiles.length === 0 && formMode === 'create' ? (
                 <EmptyState
                   title="Hoş geldiniz"
-                  description="Henüz kayıtlı sunucu yok. Aşağıdaki formu kullanarak ilk SSH bağlantınızı kurabilir veya profil olarak kaydedebilirsiniz."
+                  description="Kayıtlı sunuculara terminal veya SFTP sekmesi ile bağlanabilir, yeni profil oluşturabilirsiniz."
                   icon={<span className="text-xl">&gt;_</span>}
                 />
               ) : null}
 
-              <div className="mx-auto w-full max-w-xl py-4">
+              <div className="mx-auto w-full max-w-xl">
                 <ConnectionForm
                   key={formKey}
                   mode={formMode}

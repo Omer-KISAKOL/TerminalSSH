@@ -17,7 +17,17 @@ export const IPC_CHANNELS = {
     save: 'profiles:save',
     remove: 'profiles:remove',
   },
+  sftp: {
+    connect: 'sftp:connect',
+    listDir: 'sftp:list-dir',
+    upload: 'sftp:upload',
+    download: 'sftp:download',
+    disconnect: 'sftp:disconnect',
+    status: 'sftp:status',
+  },
   files: {
     selectPrivateKey: 'files:select-private-key',
+    getHomeDir: 'files:get-home-dir',
+    listLocalDir: 'files:list-local-dir',
   },
 } as const

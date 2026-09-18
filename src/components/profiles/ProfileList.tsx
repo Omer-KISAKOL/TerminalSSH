@@ -11,6 +11,7 @@ type ProfileListProps = {
   isLoading: boolean
   error: string | null
   onConnect: (profile: PublicServerProfile) => void
+  onSftpConnect: (profile: PublicServerProfile) => void
   onEdit: (profile: PublicServerProfile) => void
   onDelete: (profile: PublicServerProfile) => void
 }
@@ -24,6 +25,7 @@ export function ProfileList({
   isLoading,
   error,
   onConnect,
+  onSftpConnect,
   onEdit,
   onDelete,
 }: ProfileListProps) {
@@ -62,6 +64,7 @@ export function ProfileList({
           isConnecting={connectingProfileId === profile.id}
           connectDisabled={connectDisabled}
           onConnect={onConnect}
+          onSftpConnect={onSftpConnect}
           onEdit={onEdit}
           onDelete={onDelete}
         />

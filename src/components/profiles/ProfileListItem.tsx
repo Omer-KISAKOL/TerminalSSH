@@ -9,6 +9,7 @@ type ProfileListItemProps = {
   isConnecting: boolean
   connectDisabled: boolean
   onConnect: (profile: PublicServerProfile) => void
+  onSftpConnect: (profile: PublicServerProfile) => void
   onEdit: (profile: PublicServerProfile) => void
   onDelete: (profile: PublicServerProfile) => void
 }
@@ -31,6 +32,7 @@ export function ProfileListItem({
   isConnecting,
   connectDisabled,
   onConnect,
+  onSftpConnect,
   onEdit,
   onDelete,
 }: ProfileListItemProps) {
@@ -69,9 +71,18 @@ export function ProfileListItem({
           loading={isConnecting}
           disabled={connectDisabled}
           onClick={() => onConnect(profile)}
-          aria-label={`${profile.name} sunucusuna bağlan`}
+          aria-label={`${profile.name} sunucusuna terminal ile bağlan`}
         >
-          Bağlan
+          Terminal
+        </Button>
+        <Button
+          variant="secondary"
+          className="flex-1 px-2 py-1 text-[11px]"
+          disabled={connectDisabled}
+          onClick={() => onSftpConnect(profile)}
+          aria-label={`${profile.name} sunucusuna SFTP ile bağlan`}
+        >
+          SFTP
         </Button>
         <Button
           variant="ghost"

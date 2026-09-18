@@ -15,6 +15,7 @@ type SidebarProps = {
   onClose?: () => void
   onNewConnection: () => void
   onConnectProfile: (profile: PublicServerProfile) => void
+  onSftpConnectProfile: (profile: PublicServerProfile) => void
   onEditProfile: (profile: PublicServerProfile) => void
   onDeleteProfile: (profile: PublicServerProfile) => void
 }
@@ -31,6 +32,7 @@ export function Sidebar({
   onClose,
   onNewConnection,
   onConnectProfile,
+  onSftpConnectProfile,
   onEditProfile,
   onDeleteProfile,
 }: SidebarProps) {
@@ -93,6 +95,7 @@ export function Sidebar({
             isLoading={profilesLoading}
             error={profilesError}
             onConnect={onConnectProfile}
+            onSftpConnect={onSftpConnectProfile}
             onEdit={onEditProfile}
             onDelete={onDeleteProfile}
           />

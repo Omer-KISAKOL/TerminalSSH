@@ -1,6 +1,12 @@
 import type { HostVerifyRequestEvent } from '@shared/contracts/host'
 import type { PublicServerProfile, SaveProfileRequest } from '@shared/contracts/profile'
 import type {
+  FileEntry,
+  SftpConnectRequest,
+  SftpConnectResponse,
+  SftpStatusEvent,
+} from '@shared/contracts/sftp'
+import type {
   ConnectRequest,
   ConnectResponse,
   SshDataEvent,
@@ -21,6 +27,14 @@ export interface DesktopApi {
     onHostVerifyRequest(callback: (event: HostVerifyRequestEvent) => void): () => void
     respondHostVerification(verificationId: string, approved: boolean): Promise<void>
   }
+  sftp: {
+    connect(input: SftpConnectRequest): Promise<SftpConnectResponse>
+    listDir(sessionId: string, path: string): Promise<FileEntry[]>
+    upload(sessionId: string, localPath: string, remotePath: string): Promise<void>
+    download(sessionId: string, remotePath: string, localPath: string): Promise<void>
+    disconnect(sessionId: string): Promise<void>
+    onStatus(callback: (event: SftpStatusEvent) => void): () => void
+  }
   profiles: {
     list(): Promise<PublicServerProfile[]>
     save(input: SaveProfileRequest): Promise<PublicServerProfile>
@@ -28,6 +42,8 @@ export interface DesktopApi {
   }
   files: {
     selectPrivateKey(): Promise<string | null>
+    getHomeDir(): Promise<string>
+    listLocalDir(path: string): Promise<FileEntry[]>
   }
 }
 

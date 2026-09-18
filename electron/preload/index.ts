@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron'
 
 import type { HostVerifyRequestEvent } from '@shared/contracts/host'
+import type { SftpStatusEvent } from '@shared/contracts/sftp'
 import type { SshDataEvent, SshStatusEvent } from '@shared/contracts/ssh'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
 
@@ -22,6 +23,27 @@ function ensureHostVerifyBridge(): void {
     const event = payload as HostVerifyRequestEvent
 
     for (const listener of hostVerifyListeners) {
+      listener(event)
+    }
+  })
+}
+
+type SftpStatusListener = (event: SftpStatusEvent) => void
+
+const sftpStatusListeners = new Set<SftpStatusListener>()
+let sftpStatusBridgeRegistered = false
+
+function ensureSftpStatusBridge(): void {
+  if (sftpStatusBridgeRegistered) {
+    return
+  }
+
+  sftpStatusBridgeRegistered = true
+
+  ipcRenderer.on(IPC_CHANNELS.sftp.status, (_event, payload: unknown) => {
+    const event = payload as SftpStatusEvent
+
+    for (const listener of sftpStatusListeners) {
       listener(event)
     }
   })
@@ -68,6 +90,25 @@ const desktopApi: DesktopApi = {
     respondHostVerification: (verificationId, approved) =>
       ipcRenderer.invoke(IPC_CHANNELS.ssh.hostVerifyRespond, { verificationId, approved }),
   },
+  sftp: {
+    connect: (input) => ipcRenderer.invoke(IPC_CHANNELS.sftp.connect, input),
+    listDir: (sessionId, path) =>
+      ipcRenderer.invoke(IPC_CHANNELS.sftp.listDir, { sessionId, path }),
+    upload: (sessionId, localPath, remotePath) =>
+      ipcRenderer.invoke(IPC_CHANNELS.sftp.upload, { sessionId, localPath, remotePath }),
+    download: (sessionId, remotePath, localPath) =>
+      ipcRenderer.invoke(IPC_CHANNELS.sftp.download, { sessionId, remotePath, localPath }),
+    disconnect: (sessionId) =>
+      ipcRenderer.invoke(IPC_CHANNELS.sftp.disconnect, { sessionId }),
+    onStatus: (callback) => {
+      ensureSftpStatusBridge()
+      sftpStatusListeners.add(callback)
+
+      return () => {
+        sftpStatusListeners.delete(callback)
+      }
+    },
+  },
   profiles: {
     list: () => ipcRenderer.invoke(IPC_CHANNELS.profiles.list),
     save: (input) => ipcRenderer.invoke(IPC_CHANNELS.profiles.save, input),
@@ -75,6 +116,8 @@ const desktopApi: DesktopApi = {
   },
   files: {
     selectPrivateKey: () => ipcRenderer.invoke(IPC_CHANNELS.files.selectPrivateKey),
+    getHomeDir: () => ipcRenderer.invoke(IPC_CHANNELS.files.getHomeDir),
+    listLocalDir: (path) => ipcRenderer.invoke(IPC_CHANNELS.files.listLocalDir, { path }),
   },
 }
 
