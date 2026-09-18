@@ -1,124 +1,103 @@
-# TerminalSSH
+# TerminalSSH Monorepo
 
-Electron tabanlı, sade ve güvenli bir masaüstü SSH istemcisi. Parola veya özel anahtar ile sunucuya bağlanır, interaktif terminal oturumu sağlar.
+Electron masaüstü SSH/SFTP istemcisi, Fastify backend ve Flutter mobil istemci.
 
-## Kurulum
+## Yapı
 
-### Geliştirici bağımlılıkları
+```
+TerminalSSH/
+├── desktop/     Electron + React + ssh2
+├── server/      Fastify + PostgreSQL API
+├── mobile/      Flutter + dartssh2
+├── packages/    Paylaşılan TypeScript paketleri
+└── docs/        API ve mimari dokümantasyon
+```
 
-- Node.js 20+
-- pnpm 9+
-- Fedora/Linux paketleme için: `rpm-build`, `libxcrypt-compat` (RPM hedefi için)
+## Geliştirme
+
+### Bağımlılıklar
 
 ```bash
-git clone <repo-url> TerminalSSH
-cd TerminalSSH
 pnpm install
 ```
 
-### Son kullanıcı (Linux)
+### Veritabanı
 
-Derlenmiş paketler `release/` klasöründe oluşur:
-
-- **AppImage:** çift tıklayın veya `./TerminalSSH-0.1.0.AppImage`
-- **RPM:** `sudo dnf install ./terminalssh-0.1.0.x86_64.rpm`
-
-RPM derlemek için geliştirme ortamında şu paketler gerekir:
+**Container (Docker veya Podman):**
 
 ```bash
-sudo dnf install rpm-build libxcrypt-compat
-pnpm dist:linux:rpm
+pnpm db:up
+pnpm --filter @terminalssh/server db:migrate
 ```
 
-| Paket | Neden |
-|---|---|
-| `rpm-build` | `rpmbuild` aracını sağlar (electron-builder RPM üretimi için zorunlu) |
-| `libxcrypt-compat` | electron-builder'ın gömülü `fpm` aracının Ruby bağımlılığı |
+Fedora'da Docker yoksa Podman yeterlidir (`podman` kurulu olmalı). İsterseniz:
 
-## Geliştirme
+```bash
+sudo dnf install podman podman-compose
+# veya docker komutu için: sudo dnf install podman-docker
+```
+
+**Container olmadan (yerel PostgreSQL):**
+
+```bash
+sudo dnf install postgresql-server postgresql
+sudo postgresql-setup --initdb
+sudo systemctl enable --now postgresql
+bash scripts/db-native-setup.sh
+pnpm --filter @terminalssh/server db:migrate
+```
+
+### API sunucusu
+
+```bash
+pnpm dev:server
+```
+
+Varsayılan: `http://localhost:8787`
+
+### Masaüstü uygulama
 
 ```bash
 pnpm dev
 ```
 
-Uygulama Vite geliştirme sunucusu ve Electron penceresi ile açılır.
-
-### Komutlar
-
-| Komut | Açıklama |
-|---|---|
-| `pnpm dev` | Geliştirme modu |
-| `pnpm typecheck` | TypeScript doğrulama |
-| `pnpm lint` | Oxlint |
-| `pnpm test` | Vitest birim testleri |
-| `pnpm build` | `dist/` ve `dist-electron/` üretir |
-| `pnpm icons` | Uygulama ikonlarını oluşturur |
-| `pnpm dist` | Tüm platform paketleri |
-| `pnpm dist:linux` | Linux AppImage + RPM |
-| `pnpm dist:win` | Windows NSIS kurulum |
-
-## Build ve paketleme
+Ortam değişkeni (isteğe bağlı):
 
 ```bash
-pnpm dist:linux
+TERMINALSSH_API_URL=http://localhost:8787 pnpm dev
 ```
 
-Çıktılar:
+### Test ve derleme
 
-- `dist/` — renderer (React)
-- `dist-electron/` — main process ve preload
-- `release/` — dağıtım paketleri (AppImage, RPM, NSIS)
-
-Bu klasörler `.gitignore` içinde yer alır; her build öncesi temiz üretim önerilir.
-
-## Mimari
-
-```
-electron/main/       → ssh2, profil store, IPC handlers
-electron/preload/    → dar kapsamlı desktopApi
-shared/              → sözleşmeler, doğrulama, IPC kanalları
-src/                 → React arayüzü, xterm terminal
-resources/icons/     → uygulama ikonları
+```bash
+pnpm typecheck
+pnpm lint
+pnpm test
+pnpm build
 ```
 
-Güvenlik sınırları:
+## Hesap ve profil sync
 
-- `nodeIntegration: false`
-- `contextIsolation: true`
-- `sandbox: true`
-- SSH yalnızca main process'te
-- Parola/passphrase `safeStorage` ile şifrelenir
+- Kullanıcı kaydı / girişi JWT ile yapılır
+- Profil sırları sunucuda AES-256-GCM vault ile saklanır
+- SSH trafiği istemciden doğrudan hedef sunucuya gider
+- API sözleşmesi: [`docs/api.md`](docs/api.md)
 
-## Güvenlik
+## Mobil
 
-- SSH host anahtarı fingerprint doğrulaması (ilk bağlantıda onay, değişimde uyarı)
-- Renderer'a ham host anahtarı gönderilmez
-- Production loglarında parola, passphrase ve özel anahtar yolu maskelenir
-- IPC payload doğrulaması merkezi ve tip güvenlidir
-- Oturum sahipliği `webContentsId` + `sessionId` ile kontrol edilir
+Android geliştirme: [`mobile/README.md`](mobile/README.md)
 
-## Manuel kabul testi
+Flutter SDK kurulu değilse önce [`mobile/README.md`](mobile/README.md) içindeki Fedora kurulum adımlarını izleyin.
 
-Dokümandaki kontrol listesi:
+```bash
+bash scripts/mobile-setup.sh   # Flutter + android/ iskeleti
+cd mobile
+flutter run
+```
 
-- [ ] Fedora üzerinde uygulama açılıyor
-- [ ] Bir Ubuntu sunucusuna bağlanılabiliyor
-- [ ] `top`, `nano`, `vim` gibi interaktif uygulamalar doğru çalışıyor
-- [ ] Türkçe karakterler doğru görünüyor
-- [ ] Terminal yeniden boyutlandırıldığında satırlar doğru düzenleniyor
-- [ ] Kopyalama/yapıştırma (Ctrl+C/V ve sağ tık menüsü) çalışıyor
-- [ ] Uygulama kapanınca sunucudaki shell oturumu kapanıyor
-- [ ] Kaydedilmiş parola dosyada düz metin görünmüyor
+## Dağıtım (masaüstü)
 
-## Bilinen sınırlamalar
-
-- Tek terminal oturumu (çoklu sekme yok)
-- SFTP, port forwarding, snippet ve bulut senkronizasyonu yok
-- macOS paketi yapılandırılmış ancak birincil hedef Linux/Windows
-- RPM paketi `rpmbuild` gerektirir; ortamda yoksa yalnızca AppImage üretilir
-- Otomatik güncelleme mekanizması yok
-- `window.confirm` profil silme onayı için kullanılıyor (ileride özel dialog eklenebilir)
-
-## Lisans
-
-Özel proje — TerminalSSH markası bağımsızdır; Termius veya üçüncü taraf görselleri kullanılmaz.
+```bash
+cd desktop
+pnpm dist:linux:appimage
+```

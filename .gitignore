@@ -9,10 +9,20 @@ lerna-debug.log*
 
 # Dependencies
 node_modules
+desktop/node_modules
+server/node_modules
+packages/*/node_modules
 dist
 dist-ssr
 dist-electron
+desktop/dist
+desktop/dist-electron
+desktop/release
+server/dist
+packages/*/dist
 release
+mobile/build
+mobile/.dart_tool
 *.local
 
 # Editor directories and files
