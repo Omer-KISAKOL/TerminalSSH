@@ -1,0 +1,19 @@
+[Unit]
+Description=TerminalSSH API
+Documentation=https://github.com/Omer-KISAKOL/TerminalSSH
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/var/www/TerminalSSH/server
+EnvironmentFile=/var/www/TerminalSSH/server/.env
+ExecStart=/usr/bin/node /var/www/TerminalSSH/server/dist/index.js
+Restart=on-failure
+RestartSec=5
+
+# Güvenlik (isteğe bağlı — farklı kullanıcı kullanacaksan User= değiştir)
+# User=www-data
+
+[Install]
+WantedBy=multi-user.target
