@@ -8,7 +8,8 @@ services:
       POSTGRES_PASSWORD: terminalssh
       POSTGRES_DB: terminalssh
     ports:
-      - '5432:5432'
+      # 5432 başka projelerde (örn. movy-postgres) kullanılıyorsa çakışmayı önler.
+      - '127.0.0.1:5433:5432'
     volumes:
       - terminalssh_pg_data:/var/lib/postgresql/data
 
