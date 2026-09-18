@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { validateAccountPassword, validateEmail } from '@shared/validation/auth'
 
 import { Button } from '@/components/ui/Button'
+import { PasswordInput } from '@/components/ui/PasswordInput'
 
 type RegisterFormProps = {
   loading: boolean
@@ -39,7 +40,7 @@ export function RegisterForm({ loading, error, onSubmit, onSwitchToLogin }: Regi
   return (
     <form className="mx-auto flex w-full max-w-md flex-col gap-4" onSubmit={(event) => void handleSubmit(event)}>
       <div>
-        <h2 className="text-xl font-semibold text-white">Hesap oluştur</h2>
+        <h2 className="text-xl font-semibold text-text">Hesap oluştur</h2>
         <p className="mt-1 text-sm text-text-muted">Profilleriniz güvenli biçimde bulutta saklanır.</p>
       </div>
 
@@ -62,23 +63,21 @@ export function RegisterForm({ loading, error, onSubmit, onSwitchToLogin }: Regi
 
       <label className="flex flex-col gap-1 text-sm">
         <span className="text-text-muted">Parola</span>
-        <input
-          type="password"
+        <PasswordInput
           autoComplete="new-password"
           className="rounded-lg border border-border bg-surface px-3 py-2 text-text"
           value={password}
-          onChange={(event) => setPassword(event.target.value)}
+          onChange={setPassword}
         />
       </label>
 
       <label className="flex flex-col gap-1 text-sm">
         <span className="text-text-muted">Parola tekrar</span>
-        <input
-          type="password"
+        <PasswordInput
           autoComplete="new-password"
           className="rounded-lg border border-border bg-surface px-3 py-2 text-text"
           value={confirmPassword}
-          onChange={(event) => setConfirmPassword(event.target.value)}
+          onChange={setConfirmPassword}
         />
       </label>
 

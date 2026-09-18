@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../screens/auth_gate_screen.dart';
+import '../theme/app_theme.dart';
 
 class TerminalSshApp extends StatelessWidget {
   const TerminalSshApp({super.key});
@@ -9,10 +10,7 @@ class TerminalSshApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'TerminalSSH',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF6366F1), brightness: Brightness.dark),
-        useMaterial3: true,
-      ),
+      theme: buildAppTheme(),
       home: const AuthGateScreen(),
     );
   }

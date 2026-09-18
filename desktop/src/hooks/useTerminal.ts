@@ -45,8 +45,8 @@ export function useTerminal({ onInput, onResize }: UseTerminalOptions): UseTermi
       fontSize: 14,
       theme: {
         background: '#0f1117',
-        foreground: '#c8cedf',
-        cursor: '#c8cedf',
+        foreground: '#22c55e',
+        cursor: '#22c55e',
       },
       scrollback: 5000,
     })

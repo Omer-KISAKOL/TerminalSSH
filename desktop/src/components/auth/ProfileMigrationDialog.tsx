@@ -22,7 +22,7 @@ export function ProfileMigrationDialog({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
       <div className="w-full max-w-lg rounded-xl border border-border bg-surface-raised p-5 shadow-2xl">
-        <h3 className="text-lg font-semibold text-white">Yerel profilleri buluta taşı</h3>
+        <h3 className="text-lg font-semibold text-text">Yerel profilleri buluta taşı</h3>
         <p className="mt-2 text-sm text-text-muted">
           Bu cihazda {profiles.length} kayıtlı sunucu bulundu. Hesabınıza aktarmak ister misiniz?
         </p>

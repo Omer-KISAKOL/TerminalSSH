@@ -3,6 +3,7 @@ import { useState } from 'react'
 import type { ConnectionFormValues } from '@shared/contracts/ssh'
 
 import { Button } from '@/components/ui/Button'
+import { PasswordInput } from '@/components/ui/PasswordInput'
 import { DEFAULT_CONNECTION_FORM, validateConnectionForm } from '@/lib/connection-form'
 import { toUserErrorMessage } from '@/lib/user-error'
 
@@ -175,15 +176,13 @@ export function ConnectionForm({
             <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-text">
               Parola
             </label>
-            <input
+            <PasswordInput
               id="password"
-              type="password"
               autoComplete="current-password"
               disabled={isDisabled}
               value={values.password}
-              onChange={(event) => updateField('password', event.target.value)}
+              onChange={(value) => updateField('password', value)}
               placeholder={values.hasSavedPassword ? 'Kayıtlı parola kullanılacak' : undefined}
-              className="field-input"
             />
             {values.hasSavedPassword ? (
               <p className="mt-1 text-xs text-text-muted">
@@ -233,17 +232,15 @@ export function ConnectionForm({
               <label htmlFor="passphrase" className="mb-1.5 block text-sm font-medium text-text">
                 Passphrase (isteğe bağlı)
               </label>
-              <input
+              <PasswordInput
                 id="passphrase"
-                type="password"
                 autoComplete="off"
                 disabled={isDisabled}
                 value={values.passphrase}
-                onChange={(event) => updateField('passphrase', event.target.value)}
+                onChange={(value) => updateField('passphrase', value)}
                 placeholder={
                   values.hasSavedPassphrase ? 'Kayıtlı passphrase kullanılacak' : undefined
                 }
-                className="field-input"
               />
               {values.hasSavedPassphrase ? (
                 <p className="mt-1 text-xs text-text-muted">

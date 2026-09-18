@@ -13,7 +13,7 @@ export function AccountMenu({ user, onLogout, onSync, syncing = false }: Account
   return (
     <div className="border-b border-border px-4 py-3">
       <p className="text-xs uppercase tracking-wide text-text-muted">Hesap</p>
-      <p className="truncate text-sm font-medium text-white">{user.email}</p>
+      <p className="truncate text-sm font-medium text-text">{user.email}</p>
       <div className="mt-2 flex gap-2">
         <Button variant="ghost" className="px-2 py-1 text-xs" loading={syncing} onClick={onSync}>
           Senkronize et

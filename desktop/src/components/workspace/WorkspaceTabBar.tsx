@@ -34,7 +34,7 @@ export function WorkspaceTabBar({
             aria-selected={tab.id === activeTabId}
             className={`group flex max-w-55 items-center gap-2 rounded-t-lg border border-b-0 px-3 py-2 text-sm transition ${
               tab.id === activeTabId
-                ? 'border-border bg-surface text-white'
+                ? 'border-border bg-surface text-text'
                 : 'border-transparent bg-transparent text-text-muted hover:bg-surface-muted/60'
             }`}
           >
@@ -54,7 +54,7 @@ export function WorkspaceTabBar({
             </button>
             <button
               type="button"
-              className="rounded px-1 text-xs text-text-muted opacity-0 transition hover:bg-surface-muted hover:text-white group-hover:opacity-100"
+              className="rounded px-1 text-xs text-text-muted opacity-0 transition hover:bg-surface-muted hover:text-text group-hover:opacity-100"
               aria-label={`${tab.label} sekmesini kapat`}
               onClick={() => onCloseTab(tab.id)}
             >

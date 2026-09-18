@@ -39,7 +39,7 @@ export function TerminalToolbar({
           </Button>
         ) : null}
         <div className="min-w-0">
-          <h2 className="truncate text-sm font-medium text-white">{serverLabel ?? 'SSH Terminal'}</h2>
+          <h2 className="truncate text-sm font-medium text-text">{serverLabel ?? 'SSH Terminal'}</h2>
           <StatusBadge status={status} className="mt-1" />
         </div>
       </div>

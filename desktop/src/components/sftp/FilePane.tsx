@@ -151,7 +151,7 @@ export function FilePane({
     >
       <header className="flex items-center justify-between gap-2 border-b border-border px-3 py-2">
         <div className="min-w-0">
-          <h3 className="text-sm font-medium text-white">{title}</h3>
+          <h3 className="text-sm font-medium text-text">{title}</h3>
           <p className="truncate font-mono text-xs text-text-muted">{path || '—'}</p>
         </div>
         <div className="flex shrink-0 gap-2">

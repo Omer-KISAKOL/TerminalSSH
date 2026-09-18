@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { validateAccountPassword, validateEmail } from '@shared/validation/auth'
 
 import { Button } from '@/components/ui/Button'
+import { PasswordInput } from '@/components/ui/PasswordInput'
 
 type LoginFormProps = {
   loading: boolean
@@ -40,7 +41,7 @@ export function LoginForm({
   return (
     <form className="mx-auto flex w-full max-w-md flex-col gap-4" onSubmit={(event) => void handleSubmit(event)}>
       <div>
-        <h2 className="text-xl font-semibold text-white">Hesabınıza giriş yapın</h2>
+        <h2 className="text-xl font-semibold text-text">Hesabınıza giriş yapın</h2>
         <p className="mt-1 text-sm text-text-muted">
           Sunucularınız tüm cihazlarınızda senkronize edilir.
         </p>
@@ -65,12 +66,11 @@ export function LoginForm({
 
       <label className="flex flex-col gap-1 text-sm">
         <span className="text-text-muted">Parola</span>
-        <input
-          type="password"
+        <PasswordInput
           autoComplete="current-password"
           className="rounded-lg border border-border bg-surface px-3 py-2 text-text"
           value={password}
-          onChange={(event) => setPassword(event.target.value)}
+          onChange={setPassword}
         />
       </label>
 

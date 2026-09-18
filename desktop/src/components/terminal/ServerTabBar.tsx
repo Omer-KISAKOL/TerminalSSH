@@ -31,7 +31,7 @@ export function ServerTabBar({ tabs }: ServerTabBarProps) {
           aria-selected={tab.isActive}
           className={`flex max-w-xs items-center gap-2 rounded-t-lg border border-b-0 px-3 py-2 text-sm transition ${
             tab.isActive
-              ? 'border-border bg-surface text-white'
+              ? 'border-border bg-surface text-text'
               : 'border-transparent bg-transparent text-text-muted'
           }`}
         >

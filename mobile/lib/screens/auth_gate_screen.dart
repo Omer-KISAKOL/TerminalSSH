@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../services/auth_service.dart';
-import 'profiles_screen.dart';
+import '../theme/app_theme.dart';
+import '../widgets/password_field.dart';
+import 'home_shell_screen.dart';
 
 class AuthGateScreen extends StatefulWidget {
   const AuthGateScreen({super.key});
@@ -30,7 +32,7 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
 
     if (restored) {
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => ProfilesScreen(authService: _authService)),
+        MaterialPageRoute(builder: (_) => HomeShellScreen(authService: _authService)),
       );
       return;
     }
@@ -48,7 +50,7 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
       await _authService.login(_emailController.text.trim(), _passwordController.text);
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => ProfilesScreen(authService: _authService)),
+        MaterialPageRoute(builder: (_) => HomeShellScreen(authService: _authService)),
       );
     } catch (error) {
       setState(() => _error = error.toString());
@@ -64,6 +66,7 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
     }
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(title: const Text('TerminalSSH')),
       body: Padding(
         padding: const EdgeInsets.all(24),
@@ -73,10 +76,9 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
               controller: _emailController,
               decoration: const InputDecoration(labelText: 'E-posta'),
             ),
-            TextField(
+            PasswordField(
               controller: _passwordController,
-              obscureText: true,
-              decoration: const InputDecoration(labelText: 'Parola'),
+              autofillHints: const [AutofillHints.password],
             ),
             if (_error != null) ...[
               const SizedBox(height: 12),

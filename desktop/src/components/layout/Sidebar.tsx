@@ -72,7 +72,7 @@ export function Sidebar({
               className="h-9 w-9 rounded-lg border border-border"
             />
             <div className="min-w-0">
-              <h1 className="truncate text-lg font-semibold tracking-tight text-white">
+              <h1 className="truncate text-lg font-semibold tracking-tight text-text">
                 TerminalSSH
               </h1>
               <p className="text-xs text-text-muted">SSH Terminal İstemcisi</p>

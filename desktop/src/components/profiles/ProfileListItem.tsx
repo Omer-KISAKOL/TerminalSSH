@@ -48,7 +48,7 @@ export function ProfileListItem({
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="truncate text-sm font-medium text-white">{profile.name}</p>
+          <p className="truncate text-sm font-medium text-text">{profile.name}</p>
           <p className="truncate text-xs text-text-muted">
             {profile.username}@{profile.host}:{profile.port}
           </p>

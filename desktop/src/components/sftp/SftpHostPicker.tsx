@@ -18,7 +18,7 @@ export function SftpHostPicker({
   return (
     <section className="flex min-h-0 min-w-0 flex-1 flex-col border border-border bg-surface-muted">
       <header className="border-b border-border px-4 py-3">
-        <h3 className="text-sm font-medium text-white">Sunucu Seç</h3>
+        <h3 className="text-sm font-medium text-text">Sunucu Seç</h3>
         <p className="mt-1 text-xs text-text-muted">
           SFTP oturumu için kayıtlı bir sunucu seçin veya sol panelden yerel dosyalarınızı yönetin.
         </p>
@@ -39,7 +39,7 @@ export function SftpHostPicker({
                 className="rounded-lg border border-border bg-surface px-3 py-3"
               >
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-white">{profile.name}</p>
+                  <p className="truncate text-sm font-medium text-text">{profile.name}</p>
                   <p className="truncate text-xs text-text-muted">
                     {profile.username}@{profile.host}:{profile.port}
                   </p>

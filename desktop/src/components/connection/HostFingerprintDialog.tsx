@@ -32,7 +32,7 @@ export function HostFingerprintDialog({
       >
         <h2
           id="host-verify-title"
-          className={`text-base font-medium ${isMismatch ? 'text-status-error' : 'text-white'}`}
+          className={`text-base font-medium ${isMismatch ? 'text-status-error' : 'text-text'}`}
         >
           {isMismatch ? 'Güvenlik uyarısı: Sunucu kimliği değişti' : 'Bilinmeyen sunucu kimliği'}
         </h2>

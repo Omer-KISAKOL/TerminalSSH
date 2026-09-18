@@ -423,7 +423,7 @@ export function AppShell({ appVersion }: AppShellProps) {
                   ☰
                 </Button>
                 <div>
-                  <h2 className="text-base font-medium text-white">
+                  <h2 className="text-base font-medium text-text">
                     {formMode === 'edit' ? 'Profili Düzenle' : 'Bağlantı'}
                   </h2>
                   <p className="text-sm text-text-muted">
