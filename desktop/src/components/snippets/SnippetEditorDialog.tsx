@@ -1,19 +1,17 @@
 import { useEffect, useState } from 'react'
 
-import type { ProfileSnippet, SaveSnippetRequest } from '@shared/contracts/snippet'
+import type { SaveSnippetRequest, Snippet } from '@shared/contracts/snippet'
 
 import { Button } from '@/components/ui/Button'
 
 type SnippetEditorDialogProps = {
-  profileId: string
-  snippet?: ProfileSnippet | null
+  snippet?: Snippet | null
   open: boolean
   onClose: () => void
   onSave: (input: SaveSnippetRequest) => Promise<void>
 }
 
 export function SnippetEditorDialog({
-  profileId,
   snippet,
   open,
   onClose,
@@ -52,7 +50,6 @@ export function SnippetEditorDialog({
     try {
       await onSave({
         id: snippet?.id,
-        profileId,
         name: name.trim(),
         content,
       })

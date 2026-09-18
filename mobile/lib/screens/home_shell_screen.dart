@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../services/auth_service.dart';
+import '../services/profile_service.dart';
+import '../services/snippet_service.dart';
 import '../theme/app_theme.dart';
 import 'auth_gate_screen.dart';
 import 'hosts_screen.dart';
@@ -17,14 +19,25 @@ class HomeShellScreen extends StatefulWidget {
 
 class _HomeShellScreenState extends State<HomeShellScreen> {
   int _index = 0;
+  late final SnippetService _snippetService;
+  late final ProfileService _profileService;
+
+  @override
+  void initState() {
+    super.initState();
+    _snippetService = SnippetService(api: widget.authService.api);
+    _profileService = ProfileService(api: widget.authService.api);
+  }
 
   @override
   Widget build(BuildContext context) {
     final pages = [
-      HostsScreen(authService: widget.authService),
-      HostsScreen(authService: widget.authService, showConnectionsMode: true),
+      HostsScreen(authService: widget.authService, snippetService: _snippetService),
+      HostsScreen(authService: widget.authService, showConnectionsMode: true, snippetService: _snippetService),
       SettingsScreen(
         authService: widget.authService,
+        profileService: _profileService,
+        snippetService: _snippetService,
         onLogout: () {
           Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (_) => const AuthGateScreen()),

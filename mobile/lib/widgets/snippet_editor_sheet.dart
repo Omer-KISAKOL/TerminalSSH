@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../models/profile_snippet.dart';
+import '../models/snippet.dart';
 import '../theme/app_theme.dart';
 
 class SnippetEditorSheet extends StatefulWidget {
@@ -9,9 +9,9 @@ class SnippetEditorSheet extends StatefulWidget {
     this.snippet,
   });
 
-  final ProfileSnippet? snippet;
+  final Snippet? snippet;
 
-  static Future<SnippetEditorResult?> show(BuildContext context, {ProfileSnippet? snippet}) {
+  static Future<SnippetEditorResult?> show(BuildContext context, {Snippet? snippet}) {
     return showModalBottomSheet<SnippetEditorResult>(
       context: context,
       isScrollControlled: true,

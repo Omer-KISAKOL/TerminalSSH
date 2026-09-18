@@ -118,7 +118,6 @@ class _TerminalScreenState extends State<TerminalScreen> {
             ),
             if (!_connecting && _error == null && _snippetPanelOpen && widget.snippetService != null)
               SnippetPanel(
-                profileId: widget.profile.id,
                 snippetService: widget.snippetService!,
                 mode: SnippetPanelMode.terminal,
                 onApply: _applySnippet,

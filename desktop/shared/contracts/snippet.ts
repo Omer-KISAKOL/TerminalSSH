@@ -1,6 +1,5 @@
-export interface ProfileSnippet {
+export interface Snippet {
   id: string
-  profileId: string
   name: string
   content: string
   sortOrder: number
@@ -10,8 +9,10 @@ export interface ProfileSnippet {
 
 export interface SaveSnippetRequest {
   id?: string
-  profileId: string
   name: string
   content: string
   sortOrder?: number
 }
+
+/** @deprecated Use Snippet */
+export type ProfileSnippet = Snippet

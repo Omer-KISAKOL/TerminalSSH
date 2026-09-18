@@ -2,10 +2,10 @@ import { randomUUID } from 'node:crypto'
 
 import Store from 'electron-store'
 
-import type { ProfileSnippet, SaveSnippetRequest } from '@shared/contracts/snippet'
+import type { SaveSnippetRequest, Snippet } from '@shared/contracts/snippet'
 
 interface SnippetStoreSchema {
-  snippets: ProfileSnippet[]
+  snippets: Snippet[]
 }
 
 export class SnippetStore {
@@ -16,36 +16,30 @@ export class SnippetStore {
     },
   })
 
-  list(profileId: string): ProfileSnippet[] {
-    return this.store
-      .get('snippets')
-      .filter((snippet) => snippet.profileId === profileId)
-      .sort((left, right) => {
-        if (left.sortOrder !== right.sortOrder) {
-          return left.sortOrder - right.sortOrder
-        }
+  list(): Snippet[] {
+    return [...this.store.get('snippets')].sort((left, right) => {
+      if (left.sortOrder !== right.sortOrder) {
+        return left.sortOrder - right.sortOrder
+      }
 
-        return left.name.localeCompare(right.name, 'tr')
-      })
+      return left.name.localeCompare(right.name, 'tr')
+    })
   }
 
-  save(request: SaveSnippetRequest): ProfileSnippet {
+  save(request: SaveSnippetRequest): Snippet {
     const now = new Date().toISOString()
     const snippets = this.store.get('snippets')
     const existingIndex = request.id
       ? snippets.findIndex((snippet) => snippet.id === request.id)
       : -1
 
-    const snippet: ProfileSnippet = {
+    const snippet: Snippet = {
       id: request.id ?? randomUUID(),
-      profileId: request.profileId,
       name: request.name,
       content: request.content,
       sortOrder:
         request.sortOrder ??
-        (existingIndex >= 0
-          ? snippets[existingIndex]!.sortOrder
-          : snippets.filter((item) => item.profileId === request.profileId).length),
+        (existingIndex >= 0 ? snippets[existingIndex]!.sortOrder : snippets.length),
       createdAt: existingIndex >= 0 ? snippets[existingIndex]!.createdAt : now,
       updatedAt: now,
     }
@@ -60,12 +54,10 @@ export class SnippetStore {
     return snippet
   }
 
-  remove(profileId: string, snippetId: string): void {
+  remove(snippetId: string): void {
     this.store.set(
       'snippets',
-      this.store.get('snippets').filter(
-        (snippet) => !(snippet.profileId === profileId && snippet.id === snippetId),
-      ),
+      this.store.get('snippets').filter((snippet) => snippet.id !== snippetId),
     )
   }
 }

@@ -1,4 +1,4 @@
-import '../models/profile_snippet.dart';
+import '../models/snippet.dart';
 import 'api_service.dart';
 import 'secure_storage_service.dart';
 
@@ -21,13 +21,12 @@ class SnippetService {
     _api.accessToken = token;
   }
 
-  Future<List<ProfileSnippet>> listSnippets(String profileId) async {
+  Future<List<Snippet>> listSnippets() async {
     await _ensureAccessToken();
-    return _api.listSnippets(profileId);
+    return _api.listSnippets();
   }
 
-  Future<ProfileSnippet> saveSnippet({
-    required String profileId,
+  Future<Snippet> saveSnippet({
     String? id,
     required String name,
     required String content,
@@ -35,14 +34,14 @@ class SnippetService {
     await _ensureAccessToken();
 
     if (id == null) {
-      return _api.createSnippet(profileId, name: name, content: content);
+      return _api.createSnippet(name: name, content: content);
     }
 
-    return _api.updateSnippet(profileId, id, name: name, content: content);
+    return _api.updateSnippet(id, name: name, content: content);
   }
 
-  Future<void> deleteSnippet(String profileId, String snippetId) async {
+  Future<void> deleteSnippet(String snippetId) async {
     await _ensureAccessToken();
-    await _api.deleteSnippet(profileId, snippetId);
+    await _api.deleteSnippet(snippetId);
   }
 }

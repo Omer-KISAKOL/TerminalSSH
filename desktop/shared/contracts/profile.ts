@@ -61,3 +61,32 @@ export interface ProfileMigrationCandidate {
   port: number
   username: string
 }
+
+export interface ProfileExportEntry {
+  name: string
+  host: string
+  port: number
+  username: string
+  authType: AuthType
+  savePassword: boolean
+  savePassphrase: boolean
+  password?: string | null
+  passphrase?: string | null
+  privateKey?: string | null
+}
+
+export interface ProfileExportBundle {
+  version: 1
+  kind: 'terminalssh-profiles'
+  exportedAt: string
+  includeSecrets: boolean
+  profiles: ProfileExportEntry[]
+}
+
+export type ProfileExportResult =
+  | { canceled: true }
+  | { canceled: false; path: string; count: number }
+
+export type ProfileImportResult =
+  | { canceled: true }
+  | { canceled: false; count: number }

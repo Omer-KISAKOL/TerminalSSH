@@ -1,7 +1,12 @@
 import type { AuthUser } from '@shared/contracts/auth'
 import type { HostVerifyRequestEvent } from '@shared/contracts/host'
-import type { ProfileMigrationCandidate } from '@shared/contracts/profile'
-import type { PublicServerProfile, SaveProfileRequest } from '@shared/contracts/profile'
+import type {
+  ProfileExportResult,
+  ProfileImportResult,
+  ProfileMigrationCandidate,
+  PublicServerProfile,
+  SaveProfileRequest,
+} from '@shared/contracts/profile'
 import type { ProfileSnippet, SaveSnippetRequest } from '@shared/contracts/snippet'
 import type {
   FileEntry,
@@ -58,11 +63,13 @@ export interface DesktopApi {
     sync(): Promise<PublicServerProfile[]>
     listLocalOnly(): Promise<ProfileMigrationCandidate[]>
     importLocal(): Promise<PublicServerProfile[]>
+    exportToFile(input: { includeSecrets: boolean }): Promise<ProfileExportResult>
+    importFromFile(): Promise<ProfileImportResult>
   }
   snippets: {
-    list(profileId: string): Promise<ProfileSnippet[]>
+    list(): Promise<ProfileSnippet[]>
     save(input: SaveSnippetRequest): Promise<ProfileSnippet>
-    remove(profileId: string, snippetId: string): Promise<void>
+    remove(snippetId: string): Promise<void>
   }
   files: {
     selectPrivateKey(): Promise<string | null>

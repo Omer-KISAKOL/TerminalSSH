@@ -1,22 +1,17 @@
 import { useCallback, useEffect, useState } from 'react'
 
-import type { ProfileSnippet, SaveSnippetRequest } from '@shared/contracts/snippet'
+import type { SaveSnippetRequest, Snippet } from '@shared/contracts/snippet'
 
-export function useSnippets(profileId: string | null | undefined) {
-  const [snippets, setSnippets] = useState<ProfileSnippet[]>([])
+export function useSnippets() {
+  const [snippets, setSnippets] = useState<Snippet[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const refresh = useCallback(async () => {
-    if (!profileId) {
-      setSnippets([])
-      return
-    }
-
     setIsLoading(true)
 
     try {
-      const list = await window.desktopApi.snippets.list(profileId)
+      const list = await window.desktopApi.snippets.list()
       setSnippets(list)
       setError(null)
     } catch (refreshError) {
@@ -24,7 +19,7 @@ export function useSnippets(profileId: string | null | undefined) {
     } finally {
       setIsLoading(false)
     }
-  }, [profileId])
+  }, [])
 
   useEffect(() => {
     void refresh()
@@ -41,14 +36,10 @@ export function useSnippets(profileId: string | null | undefined) {
 
   const remove = useCallback(
     async (snippetId: string) => {
-      if (!profileId) {
-        return
-      }
-
-      await window.desktopApi.snippets.remove(profileId, snippetId)
+      await window.desktopApi.snippets.remove(snippetId)
       await refresh()
     },
-    [profileId, refresh],
+    [refresh],
   )
 
   return {

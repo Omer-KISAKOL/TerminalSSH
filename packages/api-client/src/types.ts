@@ -55,7 +55,6 @@ export interface SyncCloudProfileInput extends SaveCloudProfileInput {
 
 export interface CloudSnippet {
   id: string
-  profileId: string
   name: string
   content: string
   sortOrder: number

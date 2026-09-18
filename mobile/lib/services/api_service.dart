@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
-import '../models/profile_snippet.dart';
+import '../models/snippet.dart';
 import '../models/server_profile.dart';
 import 'api_config.dart';
 
@@ -59,9 +59,47 @@ class ApiService {
     return profiles.map((item) => ServerProfile.fromJson(item as Map<String, dynamic>)).toList();
   }
 
-  Future<List<ProfileSnippet>> listSnippets(String profileId) async {
+  Future<ServerProfile> createProfile({
+    required String name,
+    required String host,
+    required int port,
+    required String username,
+    required String authType,
+    required bool savePassword,
+    required bool savePassphrase,
+    String? password,
+    String? passphrase,
+    String? privateKey,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/profiles'),
+      headers: _headers(auth: true),
+      body: jsonEncode({
+        'name': name,
+        'host': host,
+        'port': port,
+        'username': username,
+        'authType': authType,
+        'savePassword': savePassword,
+        'savePassphrase': savePassphrase,
+        'password': password,
+        'passphrase': passphrase,
+        'privateKey': privateKey,
+      }),
+    );
+
+    final body = jsonDecode(response.body) as Map<String, dynamic>;
+
+    if (response.statusCode >= 400) {
+      throw Exception(body['error'] ?? 'Profil oluşturulamadı');
+    }
+
+    return ServerProfile.fromJson(body['profile'] as Map<String, dynamic>);
+  }
+
+  Future<List<Snippet>> listSnippets() async {
     final response = await http.get(
-      Uri.parse('$baseUrl/profiles/$profileId/snippets'),
+      Uri.parse('$baseUrl/snippets'),
       headers: _headers(auth: true),
     );
 
@@ -72,16 +110,15 @@ class ApiService {
     }
 
     final snippets = body['snippets'] as List<dynamic>;
-    return snippets.map((item) => ProfileSnippet.fromJson(item as Map<String, dynamic>)).toList();
+    return snippets.map((item) => Snippet.fromJson(item as Map<String, dynamic>)).toList();
   }
 
-  Future<ProfileSnippet> createSnippet(
-    String profileId, {
+  Future<Snippet> createSnippet({
     required String name,
     required String content,
   }) async {
     final response = await http.post(
-      Uri.parse('$baseUrl/profiles/$profileId/snippets'),
+      Uri.parse('$baseUrl/snippets'),
       headers: _headers(auth: true),
       body: jsonEncode({'name': name, 'content': content}),
     );
@@ -92,17 +129,16 @@ class ApiService {
       throw Exception(body['error'] ?? 'Snippet oluşturulamadı');
     }
 
-    return ProfileSnippet.fromJson(body['snippet'] as Map<String, dynamic>);
+    return Snippet.fromJson(body['snippet'] as Map<String, dynamic>);
   }
 
-  Future<ProfileSnippet> updateSnippet(
-    String profileId,
+  Future<Snippet> updateSnippet(
     String snippetId, {
     required String name,
     required String content,
   }) async {
     final response = await http.put(
-      Uri.parse('$baseUrl/profiles/$profileId/snippets/$snippetId'),
+      Uri.parse('$baseUrl/snippets/$snippetId'),
       headers: _headers(auth: true),
       body: jsonEncode({'name': name, 'content': content}),
     );
@@ -113,12 +149,12 @@ class ApiService {
       throw Exception(body['error'] ?? 'Snippet güncellenemedi');
     }
 
-    return ProfileSnippet.fromJson(body['snippet'] as Map<String, dynamic>);
+    return Snippet.fromJson(body['snippet'] as Map<String, dynamic>);
   }
 
-  Future<void> deleteSnippet(String profileId, String snippetId) async {
+  Future<void> deleteSnippet(String snippetId) async {
     final response = await http.delete(
-      Uri.parse('$baseUrl/profiles/$profileId/snippets/$snippetId'),
+      Uri.parse('$baseUrl/snippets/$snippetId'),
       headers: _headers(auth: true),
     );
 

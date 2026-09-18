@@ -62,7 +62,10 @@ export class TerminalSshApiClient {
     retryOnUnauthorized = true,
   ): Promise<T> {
     const headers = new Headers(init.headers)
-    headers.set('Content-Type', 'application/json')
+
+    if (init.body != null) {
+      headers.set('Content-Type', 'application/json')
+    }
 
     const accessToken = this.getAccessToken ? await this.getAccessToken() : null
 
@@ -157,26 +160,26 @@ export class TerminalSshApiClient {
     })
   }
 
-  listSnippets(profileId: string) {
-    return this.request<{ snippets: CloudSnippet[] }>(`/profiles/${profileId}/snippets`)
+  listSnippets() {
+    return this.request<{ snippets: CloudSnippet[] }>('/snippets')
   }
 
-  createSnippet(profileId: string, input: SaveCloudSnippetInput) {
-    return this.request<{ snippet: CloudSnippet }>(`/profiles/${profileId}/snippets`, {
+  createSnippet(input: SaveCloudSnippetInput) {
+    return this.request<{ snippet: CloudSnippet }>('/snippets', {
       method: 'POST',
       body: JSON.stringify(input),
     })
   }
 
-  updateSnippet(profileId: string, snippetId: string, input: Partial<SaveCloudSnippetInput>) {
-    return this.request<{ snippet: CloudSnippet }>(`/profiles/${profileId}/snippets/${snippetId}`, {
+  updateSnippet(snippetId: string, input: Partial<SaveCloudSnippetInput>) {
+    return this.request<{ snippet: CloudSnippet }>(`/snippets/${snippetId}`, {
       method: 'PUT',
       body: JSON.stringify(input),
     })
   }
 
-  deleteSnippet(profileId: string, snippetId: string) {
-    return this.request<{ ok: boolean }>(`/profiles/${profileId}/snippets/${snippetId}`, {
+  deleteSnippet(snippetId: string) {
+    return this.request<{ ok: boolean }>(`/snippets/${snippetId}`, {
       method: 'DELETE',
     })
   }

@@ -47,7 +47,6 @@ export interface SyncProfileInput {
 
 export interface SnippetRow {
   id: string
-  profile_id: string
   user_id: string
   name: string
   encrypted_content: string
@@ -66,7 +65,6 @@ export interface SnippetInput {
 
 export interface SnippetResponse {
   id: string
-  profileId: string
   name: string
   content: string
   sortOrder: number

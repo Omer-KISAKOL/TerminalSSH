@@ -5,6 +5,8 @@ import { AccountMenu } from '@/components/auth/AccountMenu'
 import { ProfileList } from '@/components/profiles/ProfileList'
 import { Button } from '@/components/ui/Button'
 
+import appIconUrl from '../../../resources/icons/icon.png?url'
+
 type SidebarProps = {
   authUser: AuthUser | null
   onLogout: () => void
@@ -24,6 +26,7 @@ type SidebarProps = {
   onSftpConnectProfile: (profile: PublicServerProfile) => void
   onEditProfile: (profile: PublicServerProfile) => void
   onDeleteProfile: (profile: PublicServerProfile) => void
+  onOpenSettings: () => void
 }
 
 export function Sidebar({
@@ -45,6 +48,7 @@ export function Sidebar({
   onSftpConnectProfile,
   onEditProfile,
   onDeleteProfile,
+  onOpenSettings,
 }: SidebarProps) {
   return (
     <>
@@ -66,7 +70,7 @@ export function Sidebar({
         <header className="border-b border-border px-5 py-4">
           <div className="flex items-center gap-3">
             <img
-              src="/icon.png"
+              src={appIconUrl}
               alt=""
               aria-hidden="true"
               className="h-9 w-9 rounded-lg border border-border"
@@ -98,6 +102,12 @@ export function Sidebar({
             aria-label="Yeni SSH bağlantısı oluştur"
           >
             Yeni Bağlantı
+          </Button>
+        </div>
+
+        <div className="px-4 pb-3">
+          <Button variant="secondary" className="w-full py-2" onClick={onOpenSettings}>
+            Ayarlar
           </Button>
         </div>
 

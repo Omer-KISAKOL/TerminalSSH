@@ -13,10 +13,12 @@ class HostsScreen extends StatefulWidget {
   const HostsScreen({
     super.key,
     required this.authService,
+    required this.snippetService,
     this.showConnectionsMode = false,
   });
 
   final AuthService authService;
+  final SnippetService snippetService;
   final bool showConnectionsMode;
 
   @override
@@ -25,7 +27,6 @@ class HostsScreen extends StatefulWidget {
 
 class _HostsScreenState extends State<HostsScreen> {
   late final ProfileService _profileService;
-  late final SnippetService _snippetService;
   List<ServerProfile> _profiles = [];
   bool _loading = true;
   String? _error;
@@ -35,7 +36,6 @@ class _HostsScreenState extends State<HostsScreen> {
   void initState() {
     super.initState();
     _profileService = ProfileService(api: widget.authService.api);
-    _snippetService = SnippetService(api: widget.authService.api);
     _loadProfiles();
   }
 
@@ -71,11 +71,7 @@ class _HostsScreenState extends State<HostsScreen> {
     ServerProfile resolved = profile;
 
     if (profile.password == null || profile.password!.isEmpty) {
-      final result = await ConnectServerSheet.show(
-        context,
-        profile: profile,
-        snippetService: _snippetService,
-      );
+      final result = await ConnectServerSheet.show(context, profile: profile);
       if (result == null || !mounted) return;
       resolved = result.toProfile(id: profile.id);
     }
@@ -85,7 +81,7 @@ class _HostsScreenState extends State<HostsScreen> {
       MaterialPageRoute(
         builder: (_) => TerminalScreen(
           profile: resolved,
-          snippetService: _snippetService,
+          snippetService: widget.snippetService,
         ),
       ),
     );
@@ -99,7 +95,7 @@ class _HostsScreenState extends State<HostsScreen> {
       MaterialPageRoute(
         builder: (_) => TerminalScreen(
           profile: result.toProfile(),
-          snippetService: _snippetService,
+          snippetService: widget.snippetService,
         ),
       ),
     );
@@ -191,28 +187,28 @@ class _HostsScreenState extends State<HostsScreen> {
                   ),
                 ),
               ),
-              if (!widget.showConnectionsMode)
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                    child: Text('Gruplar', style: Theme.of(context).textTheme.titleMedium),
-                  ),
-                ),
-              if (!widget.showConnectionsMode)
-                SliverToBoxAdapter(
-                  child: SizedBox(
-                    height: 92,
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      children: [
-                        _GroupCard(title: 'Production', count: _profiles.length),
-                        const SizedBox(width: 12),
-                        _GroupCard(title: 'Development', count: 0),
-                      ],
-                    ),
-                  ),
-                ),
+              // if (!widget.showConnectionsMode)
+              //   SliverToBoxAdapter(
+              //     child: Padding(
+              //       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              //       child: Text('Gruplar', style: Theme.of(context).textTheme.titleMedium),
+              //     ),
+              //   ),
+              // if (!widget.showConnectionsMode)
+              //   SliverToBoxAdapter(
+              //     child: SizedBox(
+              //       height: 92,
+              //       child: ListView(
+              //         scrollDirection: Axis.horizontal,
+              //         padding: const EdgeInsets.symmetric(horizontal: 16),
+              //         children: [
+              //           _GroupCard(title: 'Production', count: _profiles.length),
+              //           const SizedBox(width: 12),
+              //           _GroupCard(title: 'Development', count: 0),
+              //         ],
+              //       ),
+              //     ),
+              //   ),
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -268,11 +264,7 @@ class _HostsScreenState extends State<HostsScreen> {
                         profile: profile,
                         onTap: () => _openTerminal(profile),
                         onLongPress: () async {
-                          final result = await ConnectServerSheet.show(
-                            context,
-                            profile: profile,
-                            snippetService: _snippetService,
-                          );
+                          final result = await ConnectServerSheet.show(context, profile: profile);
                           if (result == null || !mounted) return;
                           await _openTerminal(result.toProfile(id: profile.id));
                         },

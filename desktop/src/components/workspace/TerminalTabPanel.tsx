@@ -73,8 +73,7 @@ export function TerminalTabPanel({
     tab.status === 'error' ||
     tab.status === 'disconnected'
 
-  const profileId = tab.connectValues?.profileId
-  const showSnippets = Boolean(profileId) && tab.status === 'connected'
+  const showSnippets = tab.status === 'connected'
 
   const handleApplySnippet = (content: string, appendNewline: boolean) => {
     handleInput(appendNewline ? `${content}\n` : content)
@@ -103,12 +102,8 @@ export function TerminalTabPanel({
           />
         ) : null}
       </div>
-      {showSnippets && profileId ? (
-        <SnippetPanel
-          profileId={profileId}
-          mode="terminal"
-          onApply={handleApplySnippet}
-        />
+      {showSnippets ? (
+        <SnippetPanel mode="terminal" onApply={handleApplySnippet} />
       ) : null}
     </div>
   )

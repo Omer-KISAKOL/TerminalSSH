@@ -1,6 +1,8 @@
 import { readFileSync } from 'node:fs'
 
 import type {
+  ProfileExportBundle,
+  ProfileExportEntry,
   ProfileMigrationCandidate,
   PublicServerProfile,
   SaveProfileRequest,
@@ -101,6 +103,38 @@ function localProfileToSyncInput(profile: ServerProfile): SyncCloudProfileInput 
   }
 }
 
+function profileToExportEntry(profile: ServerProfile, includeSecrets: boolean): ProfileExportEntry {
+  const syncInput = localProfileToSyncInput(profile)
+
+  return {
+    name: syncInput.name,
+    host: syncInput.host,
+    port: syncInput.port,
+    username: syncInput.username,
+    authType: syncInput.authType,
+    savePassword: syncInput.savePassword,
+    savePassphrase: syncInput.savePassphrase,
+    password: includeSecrets ? syncInput.password : null,
+    passphrase: includeSecrets ? syncInput.passphrase : null,
+    privateKey: includeSecrets ? syncInput.privateKey : null,
+  }
+}
+
+function exportEntryToSaveRequest(entry: ProfileExportEntry): SaveProfileRequest {
+  return {
+    name: entry.name,
+    host: entry.host,
+    port: entry.port,
+    username: entry.username,
+    authType: entry.authType,
+    savePassword: entry.savePassword,
+    savePassphrase: entry.savePassphrase,
+    password: entry.password ?? undefined,
+    passphrase: entry.passphrase ?? undefined,
+    privateKeyContent: entry.privateKey ?? undefined,
+  }
+}
+
 export class ProfileManager {
   private cloudCache: ServerProfile[] = []
 
@@ -168,6 +202,40 @@ export class ProfileManager {
       port: profile.port,
       username: profile.username,
     }))
+  }
+
+  private async getAllServerProfiles(): Promise<ServerProfile[]> {
+    if (!this.isCloudMode()) {
+      return profileStore
+        .list()
+        .map((profile) => profileStore.get(profile.id))
+        .filter((profile): profile is ServerProfile => Boolean(profile))
+    }
+
+    this.cloudCache = await cloudProfileService.listProfiles()
+    return this.cloudCache
+  }
+
+  async buildExportBundle(includeSecrets: boolean): Promise<ProfileExportBundle> {
+    const profiles = await this.getAllServerProfiles()
+
+    return {
+      version: 1,
+      kind: 'terminalssh-profiles',
+      exportedAt: new Date().toISOString(),
+      includeSecrets,
+      profiles: profiles.map((profile) => profileToExportEntry(profile, includeSecrets)),
+    }
+  }
+
+  async importFromBundle(bundle: ProfileExportBundle): Promise<PublicServerProfile[]> {
+    const imported: PublicServerProfile[] = []
+
+    for (const entry of bundle.profiles) {
+      imported.push(await this.save(exportEntryToSaveRequest(entry)))
+    }
+
+    return imported
   }
 
   async importLocalProfiles(): Promise<PublicServerProfile[]> {

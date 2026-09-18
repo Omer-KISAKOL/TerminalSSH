@@ -10,10 +10,9 @@ import {
 import { snippetInputSchema } from '../validation.js'
 
 export async function registerSnippetRoutes(app: FastifyInstance) {
-  app.get('/profiles/:profileId/snippets', { preHandler: requireAuth }, async (request, reply) => {
+  app.get('/snippets', { preHandler: requireAuth }, async (request, reply) => {
     try {
-      const params = request.params as { profileId: string }
-      const snippets = await listSnippets(request.userId!, params.profileId)
+      const snippets = await listSnippets(request.userId!)
       return { snippets }
     } catch (error) {
       const handled = handleAuthError(error)
@@ -21,11 +20,10 @@ export async function registerSnippetRoutes(app: FastifyInstance) {
     }
   })
 
-  app.post('/profiles/:profileId/snippets', { preHandler: requireAuth }, async (request, reply) => {
+  app.post('/snippets', { preHandler: requireAuth }, async (request, reply) => {
     try {
-      const params = request.params as { profileId: string }
       const body = snippetInputSchema.parse(request.body)
-      const snippet = await createSnippet(request.userId!, params.profileId, body)
+      const snippet = await createSnippet(request.userId!, body)
       return reply.code(201).send({ snippet })
     } catch (error) {
       const handled = handleAuthError(error)
@@ -33,34 +31,26 @@ export async function registerSnippetRoutes(app: FastifyInstance) {
     }
   })
 
-  app.put(
-    '/profiles/:profileId/snippets/:snippetId',
-    { preHandler: requireAuth },
-    async (request, reply) => {
-      try {
-        const params = request.params as { profileId: string; snippetId: string }
-        const body = snippetInputSchema.partial().parse(request.body)
-        const snippet = await updateSnippet(request.userId!, params.profileId, params.snippetId, body)
-        return { snippet }
-      } catch (error) {
-        const handled = handleAuthError(error)
-        return reply.code(handled.statusCode).send({ error: handled.message })
-      }
-    },
-  )
+  app.put('/snippets/:snippetId', { preHandler: requireAuth }, async (request, reply) => {
+    try {
+      const params = request.params as { snippetId: string }
+      const body = snippetInputSchema.partial().parse(request.body)
+      const snippet = await updateSnippet(request.userId!, params.snippetId, body)
+      return { snippet }
+    } catch (error) {
+      const handled = handleAuthError(error)
+      return reply.code(handled.statusCode).send({ error: handled.message })
+    }
+  })
 
-  app.delete(
-    '/profiles/:profileId/snippets/:snippetId',
-    { preHandler: requireAuth },
-    async (request, reply) => {
-      try {
-        const params = request.params as { profileId: string; snippetId: string }
-        await deleteSnippet(request.userId!, params.profileId, params.snippetId)
-        return { ok: true }
-      } catch (error) {
-        const handled = handleAuthError(error)
-        return reply.code(handled.statusCode).send({ error: handled.message })
-      }
-    },
-  )
+  app.delete('/snippets/:snippetId', { preHandler: requireAuth }, async (request, reply) => {
+    try {
+      const params = request.params as { snippetId: string }
+      await deleteSnippet(request.userId!, params.snippetId)
+      return { ok: true }
+    } catch (error) {
+      const handled = handleAuthError(error)
+      return reply.code(handled.statusCode).send({ error: handled.message })
+    }
+  })
 }

@@ -1,4 +1,4 @@
-import type { ProfileSnippet, SaveSnippetRequest } from '@shared/contracts/snippet'
+import type { SaveSnippetRequest, Snippet } from '@shared/contracts/snippet'
 
 import { authStore } from './auth-store'
 import { cloudSnippetService } from './cloud-snippet-service'
@@ -9,28 +9,28 @@ class SnippetManager {
     return authStore.isAuthenticated()
   }
 
-  list(profileId: string): Promise<ProfileSnippet[]> {
+  list(): Promise<Snippet[]> {
     if (this.isCloudMode()) {
-      return cloudSnippetService.list(profileId)
+      return cloudSnippetService.list()
     }
 
-    return Promise.resolve(snippetStore.list(profileId))
+    return Promise.resolve(snippetStore.list())
   }
 
-  save(request: SaveSnippetRequest): Promise<ProfileSnippet> {
+  save(request: SaveSnippetRequest): Promise<Snippet> {
     if (this.isCloudMode()) {
-      return cloudSnippetService.save(request.profileId, request)
+      return cloudSnippetService.save(request)
     }
 
     return Promise.resolve(snippetStore.save(request))
   }
 
-  remove(profileId: string, snippetId: string): Promise<void> {
+  remove(snippetId: string): Promise<void> {
     if (this.isCloudMode()) {
-      return cloudSnippetService.remove(profileId, snippetId)
+      return cloudSnippetService.remove(snippetId)
     }
 
-    snippetStore.remove(profileId, snippetId)
+    snippetStore.remove(snippetId)
     return Promise.resolve()
   }
 }

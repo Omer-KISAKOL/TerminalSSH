@@ -1,24 +1,22 @@
 import 'package:flutter/material.dart';
 
-import '../models/profile_snippet.dart';
+import '../models/snippet.dart';
 import '../services/snippet_service.dart';
 import '../theme/app_theme.dart';
 import 'snippet_editor_sheet.dart';
 
-enum SnippetPanelMode { profile, terminal }
+enum SnippetPanelMode { settings, terminal }
 
 class SnippetPanel extends StatefulWidget {
   const SnippetPanel({
     super.key,
-    required this.profileId,
     required this.snippetService,
-    this.mode = SnippetPanelMode.profile,
+    this.mode = SnippetPanelMode.settings,
     this.onApply,
     this.onClose,
     this.compact = false,
   });
 
-  final String profileId;
   final SnippetService snippetService;
   final SnippetPanelMode mode;
   final void Function(String content, {required bool appendNewline})? onApply;
@@ -30,7 +28,7 @@ class SnippetPanel extends StatefulWidget {
 }
 
 class _SnippetPanelState extends State<SnippetPanel> {
-  List<ProfileSnippet> _snippets = [];
+  List<Snippet> _snippets = [];
   bool _loading = true;
   String? _error;
   String _query = '';
@@ -48,7 +46,7 @@ class _SnippetPanelState extends State<SnippetPanel> {
     });
 
     try {
-      final snippets = await widget.snippetService.listSnippets(widget.profileId);
+      final snippets = await widget.snippetService.listSnippets();
       if (!mounted) return;
       setState(() => _snippets = snippets);
     } catch (error) {
@@ -59,7 +57,7 @@ class _SnippetPanelState extends State<SnippetPanel> {
     }
   }
 
-  List<ProfileSnippet> get _filteredSnippets {
+  List<Snippet> get _filteredSnippets {
     final q = _query.trim().toLowerCase();
     if (q.isEmpty) return _snippets;
     return _snippets.where((snippet) {
@@ -68,12 +66,11 @@ class _SnippetPanelState extends State<SnippetPanel> {
     }).toList();
   }
 
-  Future<void> _openEditor({ProfileSnippet? snippet}) async {
+  Future<void> _openEditor({Snippet? snippet}) async {
     final result = await SnippetEditorSheet.show(context, snippet: snippet);
     if (result == null || !mounted) return;
 
     await widget.snippetService.saveSnippet(
-      profileId: widget.profileId,
       id: result.id,
       name: result.name,
       content: result.content,
@@ -81,7 +78,7 @@ class _SnippetPanelState extends State<SnippetPanel> {
     await _loadSnippets();
   }
 
-  Future<void> _deleteSnippet(ProfileSnippet snippet) async {
+  Future<void> _deleteSnippet(Snippet snippet) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -96,7 +93,7 @@ class _SnippetPanelState extends State<SnippetPanel> {
 
     if (confirmed != true || !mounted) return;
 
-    await widget.snippetService.deleteSnippet(widget.profileId, snippet.id);
+    await widget.snippetService.deleteSnippet(snippet.id);
     await _loadSnippets();
   }
 
@@ -230,7 +227,7 @@ class _SnippetCard extends StatelessWidget {
     this.onPaste,
   });
 
-  final ProfileSnippet snippet;
+  final Snippet snippet;
   final SnippetPanelMode mode;
   final VoidCallback onEdit;
   final VoidCallback onDelete;

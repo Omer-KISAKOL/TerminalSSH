@@ -123,12 +123,13 @@ const desktopApi: DesktopApi = {
     sync: () => ipcRenderer.invoke(IPC_CHANNELS.profiles.sync),
     listLocalOnly: () => ipcRenderer.invoke(IPC_CHANNELS.profiles.listLocalOnly),
     importLocal: () => ipcRenderer.invoke(IPC_CHANNELS.profiles.importLocal),
+    exportToFile: (input) => ipcRenderer.invoke(IPC_CHANNELS.profiles.exportToFile, input),
+    importFromFile: () => ipcRenderer.invoke(IPC_CHANNELS.profiles.importFromFile),
   },
   snippets: {
-    list: (profileId) => ipcRenderer.invoke(IPC_CHANNELS.snippets.list, profileId),
+    list: () => ipcRenderer.invoke(IPC_CHANNELS.snippets.list),
     save: (input) => ipcRenderer.invoke(IPC_CHANNELS.snippets.save, input),
-    remove: (profileId, snippetId) =>
-      ipcRenderer.invoke(IPC_CHANNELS.snippets.remove, { profileId, snippetId }),
+    remove: (snippetId) => ipcRenderer.invoke(IPC_CHANNELS.snippets.remove, snippetId),
   },
   files: {
     selectPrivateKey: () => ipcRenderer.invoke(IPC_CHANNELS.files.selectPrivateKey),

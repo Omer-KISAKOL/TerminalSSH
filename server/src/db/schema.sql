@@ -43,9 +43,8 @@ CREATE TABLE IF NOT EXISTS server_profiles (
 CREATE INDEX IF NOT EXISTS server_profiles_user_id_idx ON server_profiles(user_id);
 CREATE INDEX IF NOT EXISTS server_profiles_updated_at_idx ON server_profiles(updated_at);
 
-CREATE TABLE IF NOT EXISTS profile_snippets (
+CREATE TABLE IF NOT EXISTS user_snippets (
   id UUID PRIMARY KEY,
-  profile_id UUID NOT NULL REFERENCES server_profiles(id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   encrypted_content TEXT NOT NULL,
@@ -55,5 +54,19 @@ CREATE TABLE IF NOT EXISTS profile_snippets (
   deleted_at TIMESTAMPTZ
 );
 
-CREATE INDEX IF NOT EXISTS profile_snippets_profile_id_idx ON profile_snippets(profile_id);
-CREATE INDEX IF NOT EXISTS profile_snippets_user_id_idx ON profile_snippets(user_id);
+CREATE INDEX IF NOT EXISTS user_snippets_user_id_idx ON user_snippets(user_id);
+
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'profile_snippets'
+  ) THEN
+    INSERT INTO user_snippets (id, user_id, name, encrypted_content, sort_order, created_at, updated_at, deleted_at)
+    SELECT id, user_id, name, encrypted_content, sort_order, created_at, updated_at, deleted_at
+    FROM profile_snippets
+    ON CONFLICT (id) DO NOTHING;
+
+    DROP TABLE profile_snippets;
+  END IF;
+END $$;

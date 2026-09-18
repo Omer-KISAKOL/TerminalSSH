@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 
-import type { ProfileSnippet, SaveSnippetRequest } from '@shared/contracts/snippet'
+import type { SaveSnippetRequest, Snippet } from '@shared/contracts/snippet'
 
 import { Button } from '@/components/ui/Button'
 import { useSnippets } from '@/hooks/useSnippets'
@@ -8,17 +8,16 @@ import { useSnippets } from '@/hooks/useSnippets'
 import { SnippetEditorDialog } from './SnippetEditorDialog'
 
 type SnippetPanelProps = {
-  profileId: string
-  mode: 'profile' | 'terminal'
+  mode: 'settings' | 'terminal'
   embedded?: boolean
   onApply?: (content: string, appendNewline: boolean) => void
 }
 
-export function SnippetPanel({ profileId, mode, embedded = false, onApply }: SnippetPanelProps) {
-  const { snippets, isLoading, error, save, remove } = useSnippets(profileId)
+export function SnippetPanel({ mode, embedded = false, onApply }: SnippetPanelProps) {
+  const { snippets, isLoading, error, save, remove } = useSnippets()
   const [query, setQuery] = useState('')
   const [editorOpen, setEditorOpen] = useState(false)
-  const [editingSnippet, setEditingSnippet] = useState<ProfileSnippet | null>(null)
+  const [editingSnippet, setEditingSnippet] = useState<Snippet | null>(null)
 
   const filteredSnippets = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -34,7 +33,7 @@ export function SnippetPanel({ profileId, mode, embedded = false, onApply }: Sni
     setEditorOpen(true)
   }
 
-  const openEdit = (snippet: ProfileSnippet) => {
+  const openEdit = (snippet: Snippet) => {
     setEditingSnippet(snippet)
     setEditorOpen(true)
   }
@@ -43,7 +42,7 @@ export function SnippetPanel({ profileId, mode, embedded = false, onApply }: Sni
     await save(input)
   }
 
-  const handleDelete = async (snippet: ProfileSnippet) => {
+  const handleDelete = async (snippet: Snippet) => {
     const confirmed = window.confirm(`"${snippet.name}" snippet'ini silmek istiyor musunuz?`)
     if (!confirmed) return
     await remove(snippet.id)
@@ -137,7 +136,6 @@ export function SnippetPanel({ profileId, mode, embedded = false, onApply }: Sni
       </div>
 
       <SnippetEditorDialog
-        profileId={profileId}
         snippet={editingSnippet}
         open={editorOpen}
         onClose={() => setEditorOpen(false)}

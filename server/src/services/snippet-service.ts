@@ -4,10 +4,10 @@ import { pool } from '../db/pool.js'
 import type { SnippetInput, SnippetResponse, SnippetRow } from '../types.js'
 import { getUserDataKey } from './auth-service.js'
 import { decryptSecret, encryptSecret } from './crypto-service.js'
+
 function mapSnippetRow(row: SnippetRow, dataKey: Buffer): SnippetResponse {
   return {
     id: row.id,
-    profileId: row.profile_id,
     name: row.name,
     content: decryptSecret(dataKey, row.encrypted_content) ?? '',
     sortOrder: row.sort_order,
@@ -16,66 +16,40 @@ function mapSnippetRow(row: SnippetRow, dataKey: Buffer): SnippetResponse {
   }
 }
 
-async function getSnippetRow(userId: string, profileId: string, snippetId: string): Promise<SnippetRow | null> {
+async function getSnippetRow(userId: string, snippetId: string): Promise<SnippetRow | null> {
   const result = await pool.query<SnippetRow>(
-    `SELECT * FROM profile_snippets
-     WHERE user_id = $1 AND profile_id = $2 AND id = $3 AND deleted_at IS NULL`,
-    [userId, profileId, snippetId],
+    `SELECT * FROM user_snippets
+     WHERE user_id = $1 AND id = $2 AND deleted_at IS NULL`,
+    [userId, snippetId],
   )
 
   return result.rows[0] ?? null
 }
 
-async function assertProfileAccess(userId: string, profileId: string): Promise<void> {
-  const result = await pool.query(
-    `SELECT id FROM server_profiles
-     WHERE user_id = $1 AND id = $2 AND deleted_at IS NULL`,
-    [userId, profileId],
-  )
-
-  if (result.rowCount === 0) {
-    throw new Error('Profil bulunamadı.')
-  }
-}
-
-export async function listSnippets(userId: string, profileId: string): Promise<SnippetResponse[]> {
-  await assertProfileAccess(userId, profileId)
+export async function listSnippets(userId: string): Promise<SnippetResponse[]> {
   const dataKey = await getUserDataKey(userId)
 
   const result = await pool.query<SnippetRow>(
-    `SELECT * FROM profile_snippets
-     WHERE user_id = $1 AND profile_id = $2 AND deleted_at IS NULL
+    `SELECT * FROM user_snippets
+     WHERE user_id = $1 AND deleted_at IS NULL
      ORDER BY sort_order ASC, name ASC`,
-    [userId, profileId],
+    [userId],
   )
 
   return result.rows.map((row) => mapSnippetRow(row, dataKey))
 }
 
-export async function createSnippet(
-  userId: string,
-  profileId: string,
-  input: SnippetInput,
-): Promise<SnippetResponse> {
-  await assertProfileAccess(userId, profileId)
+export async function createSnippet(userId: string, input: SnippetInput): Promise<SnippetResponse> {
   const dataKey = await getUserDataKey(userId)
   const id = input.id ?? randomUUID()
   const now = new Date()
 
   const result = await pool.query<SnippetRow>(
-    `INSERT INTO profile_snippets (
-      id, profile_id, user_id, name, encrypted_content, sort_order, created_at, updated_at
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $7)
+    `INSERT INTO user_snippets (
+      id, user_id, name, encrypted_content, sort_order, created_at, updated_at
+    ) VALUES ($1, $2, $3, $4, $5, $6, $6)
     RETURNING *`,
-    [
-      id,
-      profileId,
-      userId,
-      input.name,
-      encryptSecret(dataKey, input.content),
-      input.sortOrder ?? 0,
-      now,
-    ],
+    [id, userId, input.name, encryptSecret(dataKey, input.content), input.sortOrder ?? 0, now],
   )
 
   return mapSnippetRow(result.rows[0]!, dataKey)
@@ -83,11 +57,10 @@ export async function createSnippet(
 
 export async function updateSnippet(
   userId: string,
-  profileId: string,
   snippetId: string,
   input: Partial<SnippetInput>,
 ): Promise<SnippetResponse> {
-  const existing = await getSnippetRow(userId, profileId, snippetId)
+  const existing = await getSnippetRow(userId, snippetId)
 
   if (!existing) {
     throw new Error('Snippet bulunamadı.')
@@ -99,22 +72,22 @@ export async function updateSnippet(
   const sortOrder = input.sortOrder ?? existing.sort_order
 
   const result = await pool.query<SnippetRow>(
-    `UPDATE profile_snippets
-     SET name = $4, encrypted_content = $5, sort_order = $6, updated_at = NOW()
-     WHERE user_id = $1 AND profile_id = $2 AND id = $3 AND deleted_at IS NULL
+    `UPDATE user_snippets
+     SET name = $3, encrypted_content = $4, sort_order = $5, updated_at = NOW()
+     WHERE user_id = $1 AND id = $2 AND deleted_at IS NULL
      RETURNING *`,
-    [userId, profileId, snippetId, name, encryptSecret(dataKey, content), sortOrder],
+    [userId, snippetId, name, encryptSecret(dataKey, content), sortOrder],
   )
 
   return mapSnippetRow(result.rows[0]!, dataKey)
 }
 
-export async function deleteSnippet(userId: string, profileId: string, snippetId: string): Promise<void> {
+export async function deleteSnippet(userId: string, snippetId: string): Promise<void> {
   const result = await pool.query(
-    `UPDATE profile_snippets
+    `UPDATE user_snippets
      SET deleted_at = NOW(), updated_at = NOW()
-     WHERE user_id = $1 AND profile_id = $2 AND id = $3 AND deleted_at IS NULL`,
-    [userId, profileId, snippetId],
+     WHERE user_id = $1 AND id = $2 AND deleted_at IS NULL`,
+    [userId, snippetId],
   )
 
   if (result.rowCount === 0) {

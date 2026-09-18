@@ -23,6 +23,9 @@ import {
   publicProfileToFormValues,
   validateConnectionForm,
 } from '@/lib/connection-form'
+import { dismissMigrationPrompt, isMigrationPromptDismissed } from '@/lib/migration-prompt'
+
+import { SettingsDialog } from '@/components/settings/SettingsDialog'
 
 import { Sidebar } from './Sidebar'
 
@@ -55,6 +58,7 @@ export function AppShell({ appVersion }: AppShellProps) {
   const [migrationLoading, setMigrationLoading] = useState(false)
   const [syncingProfiles, setSyncingProfiles] = useState(false)
   const [migrationChecked, setMigrationChecked] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
   const handleTerminalData = useCallback((tabId: string, data: string) => {
     terminalApisRef.current.get(tabId)?.write(data)
@@ -249,20 +253,25 @@ export function AppShell({ appVersion }: AppShellProps) {
   }, [auth.isAuthenticated, auth.isLoading, profiles.refresh])
 
   useEffect(() => {
-    if (!auth.isAuthenticated || offlineMode || migrationChecked) {
+    if (!auth.isAuthenticated || !auth.user || offlineMode || migrationChecked) {
       return
     }
 
     void (async () => {
-      const localProfiles = await window.desktopApi.profiles.listLocalOnly()
       setMigrationChecked(true)
+
+      if (isMigrationPromptDismissed(auth.user!.id)) {
+        return
+      }
+
+      const localProfiles = await window.desktopApi.profiles.listLocalOnly()
 
       if (localProfiles.length > 0) {
         setMigrationCandidates(localProfiles)
         setShowMigrationDialog(true)
       }
     })()
-  }, [auth.isAuthenticated, migrationChecked, offlineMode])
+  }, [auth.isAuthenticated, auth.user, migrationChecked, offlineMode])
 
   const handleImportLocalProfiles = useCallback(async () => {
     setMigrationLoading(true)
@@ -270,6 +279,9 @@ export function AppShell({ appVersion }: AppShellProps) {
     try {
       await window.desktopApi.profiles.importLocal()
       await profiles.refresh()
+      if (auth.user) {
+        dismissMigrationPrompt(auth.user.id)
+      }
       setShowMigrationDialog(false)
       setMigrationCandidates([])
     } catch (error) {
@@ -279,7 +291,15 @@ export function AppShell({ appVersion }: AppShellProps) {
     } finally {
       setMigrationLoading(false)
     }
-  }, [profiles.refresh])
+  }, [auth.user, profiles.refresh])
+
+  const handleSkipMigration = useCallback(() => {
+    if (auth.user) {
+      dismissMigrationPrompt(auth.user.id)
+    }
+    setShowMigrationDialog(false)
+    setMigrationCandidates([])
+  }, [auth.user])
 
   const handleSyncProfiles = useCallback(async () => {
     setSyncingProfiles(true)
@@ -354,6 +374,7 @@ export function AppShell({ appVersion }: AppShellProps) {
         onSftpConnectProfile={(profile) => void handleProfileSftpConnect(profile)}
         onEditProfile={openProfile}
         onDeleteProfile={(profile) => void handleProfileDelete(profile)}
+        onOpenSettings={() => setSettingsOpen(true)}
       />
 
       <main className="relative flex min-h-0 min-w-0 flex-1 flex-col">
@@ -467,10 +488,15 @@ export function AppShell({ appVersion }: AppShellProps) {
           profiles={migrationCandidates}
           loading={migrationLoading}
           onImport={() => void handleImportLocalProfiles()}
-          onSkip={() => {
-            setShowMigrationDialog(false)
-            setMigrationCandidates([])
-          }}
+          onSkip={handleSkipMigration}
+        />
+      ) : null}
+
+      {settingsOpen ? (
+        <SettingsDialog
+          open
+          onClose={() => setSettingsOpen(false)}
+          onProfilesChanged={() => void profiles.refresh()}
         />
       ) : null}
 

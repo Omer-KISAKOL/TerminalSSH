@@ -60,18 +60,18 @@ Updates `lastConnectedAt`.
 
 All snippet routes require `Authorization: Bearer <accessToken>`.
 
-Snippets are scoped to a profile. Content is encrypted at rest with the user's data key.
+Snippets are scoped to the authenticated user and shared across all server profiles. Content is encrypted at rest with the user's data key.
 
-### GET /profiles/:profileId/snippets
+### GET /snippets
 Returns `{ "snippets": [...] }` with decrypted content.
 
-### POST /profiles/:profileId/snippets
+### POST /snippets
 ```json
 { "name": "deploy", "content": "npm run deploy", "sortOrder": 0 }
 ```
 
-### PUT /profiles/:profileId/snippets/:snippetId
+### PUT /snippets/:snippetId
 Partial update of `name`, `content`, or `sortOrder`.
 
-### DELETE /profiles/:profileId/snippets/:snippetId
-Permanently deletes the snippet.
+### DELETE /snippets/:snippetId
+Soft-deletes the snippet.

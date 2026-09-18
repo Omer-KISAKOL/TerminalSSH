@@ -26,6 +26,8 @@ export const IPC_CHANNELS = {
     sync: 'profiles:sync',
     listLocalOnly: 'profiles:list-local-only',
     importLocal: 'profiles:import-local',
+    exportToFile: 'profiles:export-to-file',
+    importFromFile: 'profiles:import-from-file',
   },
   snippets: {
     list: 'snippets:list',
