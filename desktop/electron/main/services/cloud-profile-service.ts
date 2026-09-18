@@ -6,11 +6,13 @@ import type { CloudProfile, SaveCloudProfileInput, SyncCloudProfileInput } from 
 
 import type { SaveProfileRequest, ServerProfile } from '@shared/contracts/profile'
 
+import { resolveApiBaseUrl } from '@shared/constants/api'
+
 import { authStore } from './auth-store'
 import { assertCanStoreSecrets, encryptSecret } from './secret-store'
 
 function getApiBaseUrl(): string {
-  return process.env.TERMINALSSH_API_URL ?? 'http://localhost:8787'
+  return resolveApiBaseUrl()
 }
 
 function createApiClient(): TerminalSshApiClient {

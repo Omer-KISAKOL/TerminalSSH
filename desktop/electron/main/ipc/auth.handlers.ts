@@ -1,5 +1,6 @@
 import { ipcMain } from 'electron'
 
+import { resolveApiBaseUrl } from '@shared/constants/api'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
 import { assertLoginRequest, assertRegisterRequest } from '@shared/validation/auth'
 
@@ -10,7 +11,7 @@ import { createIpcHandler } from './ipc-utils'
 
 function getApiClient(): TerminalSshApiClient {
   return new TerminalSshApiClient({
-    baseUrl: process.env.TERMINALSSH_API_URL ?? 'http://localhost:8787',
+    baseUrl: resolveApiBaseUrl(),
     getAccessToken: () => authStore.getSession()?.accessToken ?? null,
     getRefreshToken: () => authStore.getSession()?.refreshToken ?? null,
     onSessionUpdate: (session) => {

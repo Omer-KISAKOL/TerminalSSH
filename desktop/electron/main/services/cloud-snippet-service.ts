@@ -3,11 +3,13 @@ import type { CloudSnippet, SaveCloudSnippetInput } from '@terminalssh/api-clien
 
 import type { SaveSnippetRequest, Snippet } from '@shared/contracts/snippet'
 
+import { resolveApiBaseUrl } from '@shared/constants/api'
+
 import { authStore } from './auth-store'
 
 function getApiClient(): TerminalSshApiClient {
   return new TerminalSshApiClient({
-    baseUrl: process.env.TERMINALSSH_API_URL ?? 'http://localhost:8787',
+    baseUrl: resolveApiBaseUrl(),
     getAccessToken: () => authStore.getSession()?.accessToken ?? null,
     getRefreshToken: () => authStore.getSession()?.refreshToken ?? null,
     onSessionUpdate: (session) => {
