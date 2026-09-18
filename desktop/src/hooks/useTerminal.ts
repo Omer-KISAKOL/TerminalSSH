@@ -85,16 +85,6 @@ export function useTerminal({ onInput, onResize }: UseTerminalOptions): UseTermi
         return true
       }
 
-      if (event.ctrlKey && key === 'v') {
-        void navigator.clipboard.readText().then((text) => {
-          if (text) {
-            onInputRef.current(text)
-          }
-        })
-
-        return false
-      }
-
       return true
     })
 
