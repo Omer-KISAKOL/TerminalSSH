@@ -51,16 +51,24 @@ fi
 echo "Konteyner: $CONTAINER ($RUNTIME)"
 echo "Beklenen DATABASE_URL: postgresql://${PG_USER}:****@localhost:5433/${PG_DB}"
 
-if [[ "$DATABASE_URL" != *"@localhost:5433/"* ]] && [[ "$DATABASE_URL" != *"@127.0.0.1:5433/"* ]]; then
-  echo "Uyarı: DATABASE_URL port/host docker-compose (127.0.0.1:5433) ile uyuşmuyor olabilir."
-  echo "  Mevcut: $DATABASE_URL"
+EXPECTED_URL="postgresql://${PG_USER}:${PG_PASSWORD}@127.0.0.1:5433/${PG_DB}"
+if [[ "$DATABASE_URL" != *":5433/"* ]]; then
+  echo "DATABASE_URL port 5433 değil; docker-compose ile eşleştiriliyor..."
+  echo "  Eski: $DATABASE_URL"
+  if grep -qE '^DATABASE_URL=' "$ENV_FILE"; then
+    sed -i "s|^DATABASE_URL=.*|DATABASE_URL=${EXPECTED_URL}|" "$ENV_FILE"
+  else
+    echo "DATABASE_URL=${EXPECTED_URL}" >>"$ENV_FILE"
+  fi
+  DATABASE_URL="$EXPECTED_URL"
+  echo "  Yeni: postgresql://${PG_USER}:****@127.0.0.1:5433/${PG_DB}"
 fi
 
 echo "Postgres kullanıcı parolası senkronize ediliyor..."
 "$RUNTIME" exec "$CONTAINER" psql -U "$PG_USER" -d "$PG_DB" -c \
   "ALTER USER ${PG_USER} WITH PASSWORD '${PG_PASSWORD}';"
 
-export DATABASE_URL="postgresql://${PG_USER}:${PG_PASSWORD}@127.0.0.1:5433/${PG_DB}"
+export DATABASE_URL="$EXPECTED_URL"
 if command -v psql >/dev/null 2>&1; then
   psql "$DATABASE_URL" -c 'SELECT 1 AS ok;'
 else
@@ -77,6 +85,6 @@ fi
 echo "Test:"
 curl -sf -X POST http://127.0.0.1:8787/auth/login \
   -H 'Content-Type: application/json' \
-  -d '{"email":"health-check@invalid.local","password":"x"}' | head -c 200 || true
+  -d '{"email":"nobody@example.com","password":"x"}' || true
 echo
 echo "Beklenen: {\"error\":\"E-posta veya parola hatalı.\"} (DB bağlantısı çalışıyorsa)"
