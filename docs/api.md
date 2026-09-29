@@ -1,6 +1,6 @@
 # TerminalSSH API
 
-Base URL: `http://localhost:8787` (development)
+Base URL (canlı): `http://188.34.155.223:8787` — yerel backend geliştirmesi: `http://localhost:8787`
 
 ## Auth
 
@@ -11,6 +11,8 @@ Base URL: `http://localhost:8787` (development)
 
 ### POST /auth/login
 Same body as register.
+
+Each successful login creates an independent refresh session. Multiple devices can stay signed in at the same time; signing in on one device does not revoke other devices.
 
 Response:
 ```json

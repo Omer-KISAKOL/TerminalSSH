@@ -85,8 +85,14 @@ export function registerAuthHandlers(): void {
       const me = await getApiClient().me()
       return { isAuthenticated: true, user: me.user }
     } catch {
-      authStore.clearSession()
-      return { isAuthenticated: false, user: null }
+      try {
+        const refreshed = await getApiClient().refresh(session.refreshToken)
+        authStore.setSession(refreshed)
+        return { isAuthenticated: true, user: refreshed.user }
+      } catch {
+        authStore.clearSession()
+        return { isAuthenticated: false, user: null }
+      }
     }
   })
 }

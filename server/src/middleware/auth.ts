@@ -1,7 +1,14 @@
 import type { FastifyReply, FastifyRequest } from 'fastify'
 
+import { config } from '../config.js'
 import { AuthError } from '../services/auth-service.js'
 import { verifyAccessToken } from '../services/token-service.js'
+
+function isInfrastructureError(error: Error): boolean {
+  return /password authentication failed|ECONNREFUSED|connection refused|getaddrinfo|timeout expired/i.test(
+    error.message,
+  )
+}
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -34,6 +41,16 @@ export function handleAuthError(error: unknown): { statusCode: number; message: 
   }
 
   if (error instanceof Error) {
+    if (isInfrastructureError(error)) {
+      return {
+        statusCode: 503,
+        message:
+          config.nodeEnv === 'production'
+            ? 'Sunucu geçici olarak kullanılamıyor. Lütfen daha sonra tekrar deneyin.'
+            : error.message,
+      }
+    }
+
     return { statusCode: 400, message: error.message }
   }
 

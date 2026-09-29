@@ -130,9 +130,23 @@ export async function refreshSession(refreshToken: string): Promise<{
     throw new AuthError('Oturum süresi doldu. Lütfen tekrar giriş yapın.')
   }
 
-  await pool.query('UPDATE refresh_sessions SET revoked_at = NOW() WHERE id = $1', [session.id])
+  const accessToken = createAccessToken({ sub: session.user_id, email: session.email })
+  const nextRefreshToken = createRefreshToken()
+  const nextRefreshHash = hashToken(nextRefreshToken)
+  const expiresAt = getRefreshExpiryDate()
 
-  return createSession(session.user_id, session.email)
+  await pool.query(
+    `UPDATE refresh_sessions
+     SET token_hash = $1, expires_at = $2
+     WHERE id = $3`,
+    [nextRefreshHash, expiresAt.toISOString(), session.id],
+  )
+
+  return {
+    accessToken,
+    refreshToken: nextRefreshToken,
+    user: { id: session.user_id, email: session.email },
+  }
 }
 
 export async function logoutSession(refreshToken: string): Promise<void> {

@@ -55,17 +55,15 @@ pnpm dev:server
 
 Varsayılan: `http://localhost:8787`
 
+Canlı API (`188.34.155.223`) girişinde Postgres hatası alırsanız: [`deploy/README.md`](deploy/README.md)
+
 ### Masaüstü uygulama
 
 ```bash
 pnpm dev
 ```
 
-Ortam değişkeni (isteğe bağlı):
-
-```bash
-TERMINALSSH_API_URL=http://localhost:8787 pnpm dev
-```
+Desktop ve mobil istemciler varsayılan olarak **canlı API** (`http://188.34.155.223:8787`) kullanır. `pnpm dev:server` yalnızca backend geliştirmesi içindir.
 
 ### Test ve derleme
 
@@ -158,7 +156,7 @@ pnpm exec electron-builder --config electron-builder.yml --mac
 - İlk paketlemede ikonlar otomatik üretilir (`pnpm icons` script’i `dist:*` komutlarına dahil).
 - Windows `.exe` üretmek için en sorunsuz yol **Windows 10/11 üzerinde** `pnpm dist:win` çalıştırmaktır.
 - Linux’tan Windows paketi almak isterseniz Wine ve ek bağımlılıklar gerekebilir; resmi yol Windows ortamıdır.
-- Paketlenmiş uygulama varsayılan API adresini build zamanındaki ortamdan alır; farklı sunucu için `TERMINALSSH_API_URL=… pnpm dist:win` ile derleyin.
+- Paketlenmiş uygulama canlı API adresine (`desktop/shared/constants/api.ts`) bağlanır.
 
 ---
 

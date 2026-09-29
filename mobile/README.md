@@ -6,7 +6,7 @@ Flutter + dartssh2 tabanlı Android istemcisi (iOS sonraki faz).
 
 1. **Flutter SDK** (stable)
 2. **Android Studio** veya en azından Android SDK + platform-tools
-3. Çalışan **backend** (`pnpm dev:server`, varsayılan `:8787`)
+3. Erişilebilir **canlı API** (`http://188.34.155.223:8787`)
 
 ### Fedora'da Flutter kurulumu
 
@@ -76,27 +76,11 @@ SSH bağlantısı Linux hedefinde çalışır; asıl dağıtım hedefi yine Andr
 
 ### API adresi
 
-Platform otomatik seçilir (`lib/services/api_config.dart`):
+Dev ve release aynı canlı backend kullanılır (`lib/services/api_config.dart`):
 
-| Ortam | Doğru URL |
-|-------|-----------|
-| **Chrome / Flutter web** | `http://localhost:8787` |
-| Linux/macOS desktop | `http://localhost:8787` |
-| Android emülatör | `http://10.0.2.2:8787` |
-| Fiziksel Android (aynı Wi‑Fi) | `http://<bilgisayar-ip>:8787` |
+`http://188.34.155.223:8787`
 
-**Chrome'da API çalışmıyorsa:** `10.0.2.2` yalnızca Android emülatör içindir; web'de `localhost` kullanılmalıdır (artık otomatik).
-
-Fiziksel telefonda test için `api_config.dart` içinde Android satırını bilgisayar IP'nizle güncelleyin:
-
-```bash
-hostname -I | awk '{print $1}'   # örn. 192.168.1.42
-# → http://192.168.1.42:8787
-```
-
-Backend'in çalıştığından emin olun: `pnpm dev:server` → `http://localhost:8787/health`
-
-Backend CORS mobil için gerekmez; doğrudan HTTP istekleri kullanılır.
+Mobil istemci doğrudan HTTP istekleri yapar; tarayıcı CORS kuralları geçerli değildir.
 
 ## Release APK
 

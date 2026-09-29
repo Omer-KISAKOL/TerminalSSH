@@ -27,8 +27,8 @@ export const config = {
   port: Number.parseInt(process.env.PORT ?? '8787', 10),
   databaseUrl: required('DATABASE_URL'),
   jwtSecret: required('JWT_SECRET'),
-  jwtAccessTtl: process.env.JWT_ACCESS_TTL ?? '15m',
-  jwtRefreshTtl: process.env.JWT_REFRESH_TTL ?? '30d',
+  jwtAccessTtl: process.env.JWT_ACCESS_TTL ?? '90d',
+  jwtRefreshTtl: process.env.JWT_REFRESH_TTL ?? '365d',
   serverMasterKey: parseMasterKey(required('SERVER_MASTER_KEY')),
   corsOrigins: (process.env.CORS_ORIGINS ?? 'http://localhost:5173')
     .split(',')
