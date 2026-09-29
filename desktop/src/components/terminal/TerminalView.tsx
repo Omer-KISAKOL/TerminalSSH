@@ -2,8 +2,10 @@ import '@xterm/xterm/css/xterm.css'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 
+import { useCommandQueue, type CommandQueueInputOptions } from '@/hooks/useCommandQueue'
 import { useTerminal } from '@/hooks/useTerminal'
 
+import { CommandQueueBanner } from './CommandQueueBanner'
 import { TerminalContextMenu } from './TerminalContextMenu'
 
 export type TerminalApi = {
@@ -11,6 +13,7 @@ export type TerminalApi = {
   writeln: (message: string) => void
   clear: () => void
   focus: () => void
+  submit: (data: string, options?: CommandQueueInputOptions) => void
 }
 
 type TerminalViewProps = {
@@ -25,16 +28,27 @@ type ContextMenuState = {
 }
 
 export function TerminalView({ onReady, onInput, onResize }: TerminalViewProps) {
-  const terminal = useTerminal({ onInput, onResize })
+  const { snapshot, handleInput, observeOutput, begin, cancel, dropPending, setWriteLocal } =
+    useCommandQueue(onInput)
+  const terminal = useTerminal({ onInput: handleInput, onResize })
+  const { clear, containerRef, copySelection, focus, pasteFromClipboard, write, writeln } = terminal
   const apiRef = useRef<TerminalApi | null>(null)
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null)
 
   useEffect(() => {
+    setWriteLocal(write)
+  }, [setWriteLocal, write])
+
+  useEffect(() => {
     const api: TerminalApi = {
-      write: terminal.write,
-      writeln: terminal.writeln,
-      clear: terminal.clear,
-      focus: terminal.focus,
+      write: (data) => {
+        observeOutput(data)
+        write(data)
+      },
+      writeln,
+      clear,
+      focus,
+      submit: handleInput,
     }
 
     apiRef.current = api
@@ -44,7 +58,7 @@ export function TerminalView({ onReady, onInput, onResize }: TerminalViewProps) 
       apiRef.current = null
       onReady(null)
     }
-  }, [onReady, terminal.clear, terminal.focus, terminal.write, terminal.writeln])
+  }, [clear, focus, handleInput, observeOutput, onReady, write, writeln])
 
   const handleContextMenu = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
     event.preventDefault()
@@ -54,20 +68,36 @@ export function TerminalView({ onReady, onInput, onResize }: TerminalViewProps) 
   return (
     <div className="relative min-h-0 flex-1 overflow-hidden bg-[#0f1117] p-2">
       <div
-        ref={terminal.containerRef}
+        ref={containerRef}
         className="h-full w-full"
         onContextMenu={handleContextMenu}
         role="application"
         aria-label="SSH terminali"
       />
 
+      <CommandQueueBanner
+        snapshot={snapshot}
+        onBegin={() => {
+          begin()
+          focus()
+        }}
+        onCancel={() => {
+          cancel()
+          focus()
+        }}
+        onDropPending={() => {
+          dropPending()
+          focus()
+        }}
+      />
+
       {contextMenu ? (
         <TerminalContextMenu
           x={contextMenu.x}
           y={contextMenu.y}
-          onCopy={() => void terminal.copySelection()}
-          onPaste={() => terminal.pasteFromClipboard()}
-          onClear={terminal.clear}
+          onCopy={() => void copySelection()}
+          onPaste={() => pasteFromClipboard()}
+          onClear={clear}
           onClose={() => setContextMenu(null)}
         />
       ) : null}

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../models/snippet.dart';
@@ -99,51 +101,57 @@ class _SnippetPanelState extends State<SnippetPanel> {
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.sizeOf(context).height;
+    final panelHeight = widget.compact
+        ? math.min(screenHeight * 0.5, 520.0)
+        : math.min(screenHeight * 0.55, 560.0);
+
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (widget.compact)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 8, 8, 0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text('Snippet\'ler', style: Theme.of(context).textTheme.titleMedium),
-                ),
-                if (widget.onClose != null)
-                  IconButton(
-                    onPressed: widget.onClose,
-                    icon: const Icon(Icons.close),
-                    color: AppColors.greenMuted,
-                  ),
-              ],
-            ),
-          ),
         Padding(
-          padding: EdgeInsets.fromLTRB(20, widget.compact ? 12 : 0, 20, 12),
+          padding: const EdgeInsets.fromLTRB(12, 6, 4, 6),
           child: Row(
             children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () => _openEditor(),
-                  icon: const Text('{}', style: TextStyle(fontWeight: FontWeight.w700)),
-                  label: const Text('Yeni Snippet'),
+              if (widget.compact)
+                Expanded(
+                  child: Text('Snippet\'ler', style: Theme.of(context).textTheme.titleSmall),
+                )
+              else
+                const Spacer(),
+              TextButton.icon(
+                onPressed: () => _openEditor(),
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
                 ),
+                icon: const Icon(Icons.add, size: 18),
+                label: const Text('Yeni'),
               ),
+              if (widget.onClose != null)
+                IconButton(
+                  tooltip: 'Kapat',
+                  onPressed: widget.onClose,
+                  icon: const Icon(Icons.close, size: 20),
+                  color: AppColors.greenMuted,
+                  visualDensity: VisualDensity.compact,
+                ),
             ],
           ),
         ),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
+          padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
           child: TextField(
             onChanged: (value) => setState(() => _query = value),
+            style: Theme.of(context).textTheme.bodyMedium,
             decoration: const InputDecoration(
               hintText: 'Snippet ara…',
-              prefixIcon: Icon(Icons.search),
+              prefixIcon: Icon(Icons.search, size: 18),
+              isDense: true,
+              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             ),
           ),
         ),
-        const SizedBox(height: 12),
         if (_loading)
           const Expanded(
             child: Center(child: CircularProgressIndicator(color: AppColors.green)),
@@ -171,9 +179,9 @@ class _SnippetPanelState extends State<SnippetPanel> {
         else
           Expanded(
             child: ListView.separated(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
               itemCount: _filteredSnippets.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 10),
+              separatorBuilder: (_, __) => const SizedBox(height: 6),
               itemBuilder: (context, index) {
                 final snippet = _filteredSnippets[index];
                 return _SnippetCard(
@@ -196,7 +204,7 @@ class _SnippetPanelState extends State<SnippetPanel> {
 
     if (widget.compact) {
       return Container(
-        height: 320,
+        height: panelHeight,
         decoration: const BoxDecoration(
           color: AppColors.card,
           border: Border(top: BorderSide(color: AppColors.border)),
@@ -211,8 +219,7 @@ class _SnippetPanelState extends State<SnippetPanel> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.border),
       ),
-      padding: const EdgeInsets.only(top: 16, bottom: 8),
-      child: SizedBox(height: 360, child: content),
+      child: SizedBox(height: panelHeight, child: content),
     );
   }
 }
@@ -236,48 +243,60 @@ class _SnippetCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final actionStyle = TextButton.styleFrom(
+      minimumSize: const Size(40, 32),
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      visualDensity: VisualDensity.compact,
+    );
+
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: AppColors.background,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: AppColors.border),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            children: [
-              const Text('{}', style: TextStyle(color: AppColors.greenMuted, fontWeight: FontWeight.w700)),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
+          const Text('{}', style: TextStyle(color: AppColors.greenMuted, fontWeight: FontWeight.w700, fontSize: 12)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
                   snippet.name,
-                  style: Theme.of(context).textTheme.titleSmall,
+                  style: Theme.of(context).textTheme.labelLarge,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-              ),
-              if (mode == SnippetPanelMode.terminal) ...[
-                TextButton(onPressed: onRun, child: const Text('RUN')),
-                TextButton(onPressed: onPaste, child: const Text('PASTE')),
+                Text(
+                  snippet.content,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(fontFamily: 'monospace', height: 1.2),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ],
-            ],
+            ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            snippet.content,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(fontFamily: 'monospace'),
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
+          if (mode == SnippetPanelMode.terminal) ...[
+            TextButton(style: actionStyle, onPressed: onRun, child: const Text('RUN')),
+            TextButton(style: actionStyle, onPressed: onPaste, child: const Text('PASTE')),
+          ],
+          IconButton(
+            tooltip: 'Düzenle',
+            onPressed: onEdit,
+            icon: const Icon(Icons.edit_outlined, size: 18),
+            visualDensity: VisualDensity.compact,
+            color: AppColors.greenMuted,
           ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              OutlinedButton(onPressed: onEdit, child: const Text('Düzenle')),
-              const SizedBox(width: 8),
-              TextButton(onPressed: onDelete, child: const Text('Sil')),
-            ],
+          IconButton(
+            tooltip: 'Sil',
+            onPressed: onDelete,
+            icon: const Icon(Icons.delete_outline, size: 18),
+            visualDensity: VisualDensity.compact,
+            color: AppColors.greenMuted,
           ),
         ],
       ),

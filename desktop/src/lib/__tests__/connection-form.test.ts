@@ -5,10 +5,16 @@ import { MAX_PORT, MIN_PORT } from '@shared/constants/validation'
 import { DEFAULT_CONNECTION_FORM, validateConnectionForm } from '../connection-form'
 
 describe('validateConnectionForm', () => {
+  it('yeni bağlantıda sunucu ve parola kaydını açık tutar', () => {
+    expect(DEFAULT_CONNECTION_FORM.saveProfile).toBe(true)
+    expect(DEFAULT_CONNECTION_FORM.savePassword).toBe(true)
+  })
+
   it('geçerli parola bağlantısını kabul eder', () => {
     expect(
       validateConnectionForm({
         ...DEFAULT_CONNECTION_FORM,
+        name: 'sunucu',
         host: 'example.com',
         port: '22',
         username: 'user',
@@ -21,6 +27,7 @@ describe('validateConnectionForm', () => {
     expect(
       validateConnectionForm({
         ...DEFAULT_CONNECTION_FORM,
+        name: 'sunucu',
         host: 'example.com',
         port: String(MIN_PORT - 1),
         username: 'user',
@@ -31,6 +38,7 @@ describe('validateConnectionForm', () => {
     expect(
       validateConnectionForm({
         ...DEFAULT_CONNECTION_FORM,
+        name: 'sunucu',
         host: 'example.com',
         port: String(MAX_PORT + 1),
         username: 'user',
@@ -43,6 +51,7 @@ describe('validateConnectionForm', () => {
     expect(
       validateConnectionForm({
         ...DEFAULT_CONNECTION_FORM,
+        name: 'sunucu',
         host: 'example.com',
         port: 'abc',
         username: 'user',

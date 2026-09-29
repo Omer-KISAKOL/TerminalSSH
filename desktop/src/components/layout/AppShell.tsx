@@ -8,11 +8,11 @@ import { ProfileMigrationDialog } from '@/components/auth/ProfileMigrationDialog
 import { RegisterForm } from '@/components/auth/RegisterForm'
 import { ConnectionForm } from '@/components/connection/ConnectionForm'
 import { HostFingerprintDialog } from '@/components/connection/HostFingerprintDialog'
+import { ServerHome } from '@/components/profiles/ServerHome'
 import { SftpTabPanel } from '@/components/sftp/SftpTabPanel'
 import { TerminalTabPanel } from '@/components/workspace/TerminalTabPanel'
 import { WorkspaceTabBar } from '@/components/workspace/WorkspaceTabBar'
 import { Button } from '@/components/ui/Button'
-import { EmptyState } from '@/components/ui/EmptyState'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { useAuth } from '@/hooks/useAuth'
 import { useHostVerification } from '@/hooks/useHostVerification'
@@ -41,7 +41,7 @@ export function AppShell({ appVersion }: AppShellProps) {
   const auth = useAuth()
   const profiles = useProfiles()
   const terminalApisRef = useRef<Map<string, TerminalApi>>(new Map())
-  const [view, setView] = useState<'form' | 'workspace'>('form')
+  const [view, setView] = useState<'servers' | 'form' | 'workspace'>('servers')
   const [formMode, setFormMode] = useState<'create' | 'edit'>('create')
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null)
   const [connectingProfileId, setConnectingProfileId] = useState<string | null>(null)
@@ -210,7 +210,7 @@ export function AppShell({ appVersion }: AppShellProps) {
       if (selectedProfileId === profile.id) {
         setSelectedProfileId(null)
         resetForm('create', DEFAULT_CONNECTION_FORM)
-        setView('form')
+        setView('servers')
       }
     },
     [profiles, resetForm, selectedProfileId],
@@ -225,8 +225,8 @@ export function AppShell({ appVersion }: AppShellProps) {
     terminalApisRef.current.delete(tabId)
   }, [])
 
-  const handleBackToForm = useCallback(() => {
-    setView('form')
+  const handleBackToServers = useCallback(() => {
+    setView('servers')
   }, [])
 
   const handleCloseTab = useCallback(
@@ -236,7 +236,7 @@ export function AppShell({ appVersion }: AppShellProps) {
       terminalApisRef.current.delete(tabId)
 
       if (willBeEmpty) {
-        setView('form')
+        setView('servers')
       }
     },
     [workspace],
@@ -411,7 +411,7 @@ export function AppShell({ appVersion }: AppShellProps) {
                   onReconnect={(tabId) => void workspace.reconnectTab(tabId)}
                   onDisconnect={(tabId) => void workspace.disconnectTab(tabId)}
                   onClear={(tabId) => terminalApisRef.current.get(tabId)?.clear()}
-                  onBackToForm={handleBackToForm}
+                  onBackToForm={handleBackToServers}
                   onOpenSidebar={() => setSidebarOpen(true)}
                 />
               ) : (
@@ -431,7 +431,7 @@ export function AppShell({ appVersion }: AppShellProps) {
           </div>
         ) : null}
 
-        {!showWorkspace ? (
+        {!showWorkspace && view === 'form' ? (
           <>
             <header className="flex items-center justify-between gap-3 border-b border-border px-4 py-4 md:px-6">
               <div className="flex items-center gap-3">
@@ -445,25 +445,22 @@ export function AppShell({ appVersion }: AppShellProps) {
                 </Button>
                 <div>
                   <h2 className="text-base font-medium text-text">
-                    {formMode === 'edit' ? 'Profili Düzenle' : 'Bağlantı'}
+                    {formMode === 'edit' ? 'Profili Düzenle' : 'Yeni Bağlantı'}
                   </h2>
                   <p className="text-sm text-text-muted">
-                    SSH terminali veya SFTP oturumu başlatmak için bağlantı bilgilerini girin.
+                    Bağlantı bilgilerini girin. Sunucu ve parola kaydı açık gelir.
                   </p>
                 </div>
               </div>
-              <StatusBadge status="idle" />
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" onClick={handleBackToServers}>
+                  Sunucular
+                </Button>
+                <StatusBadge status="idle" />
+              </div>
             </header>
 
             <section className="flex flex-1 flex-col overflow-y-auto p-4 md:p-8">
-              {profiles.profiles.length === 0 && formMode === 'create' ? (
-                <EmptyState
-                  title="Hoş geldiniz"
-                  description="Kayıtlı sunuculara terminal veya SFTP sekmesi ile bağlanabilir, yeni profil oluşturabilirsiniz."
-                  icon={<span className="text-xl">&gt;_</span>}
-                />
-              ) : null}
-
               <div className="mx-auto w-full max-w-xl">
                 <ConnectionForm
                   key={formKey}
@@ -480,6 +477,25 @@ export function AppShell({ appVersion }: AppShellProps) {
               </div>
             </section>
           </>
+        ) : null}
+
+        {!showWorkspace && view !== 'form' ? (
+          <ServerHome
+            appVersion={appVersion}
+            profiles={profiles.profiles}
+            selectedProfileId={selectedProfileId}
+            lastConnectedProfileId={profiles.lastConnectedProfileId}
+            connectingProfileId={connectingProfileId}
+            connectDisabled={isConnectBusy}
+            profilesLoading={profiles.isLoading}
+            profilesError={profiles.error}
+            onNewConnection={handleNewConnection}
+            onConnect={(profile) => void handleProfileConnect(profile)}
+            onSftpConnect={(profile) => void handleProfileSftpConnect(profile)}
+            onEdit={openProfile}
+            onDelete={(profile) => void handleProfileDelete(profile)}
+            onOpenSidebar={() => setSidebarOpen(true)}
+          />
         ) : null}
       </main>
 
