@@ -11,9 +11,9 @@ export const DEFAULT_CONNECTION_FORM: ConnectionFormValues = {
   password: '',
   privateKeyPath: '',
   passphrase: '',
-  savePassword: false,
+  savePassword: true,
   savePassphrase: false,
-  saveProfile: false,
+  saveProfile: true,
   hasSavedPassword: false,
   hasSavedPassphrase: false,
 }

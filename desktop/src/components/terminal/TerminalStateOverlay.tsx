@@ -53,7 +53,7 @@ export function TerminalStateOverlay({
                 Yeniden Dene
               </Button>
               <Button variant="secondary" onClick={onBackToForm}>
-                Bağlantı Formuna Dön
+                Sunuculara Dön
               </Button>
             </div>
           }
@@ -72,7 +72,7 @@ export function TerminalStateOverlay({
               Yeniden Bağlan
             </Button>
             <Button variant="secondary" onClick={onBackToForm}>
-              Yeni Bağlantı
+              Sunuculara Dön
             </Button>
           </div>
         </div>

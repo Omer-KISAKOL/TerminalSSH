@@ -35,9 +35,11 @@ export function TerminalTabPanel({
   onOpenSidebar,
 }: TerminalTabPanelProps) {
   const mountedRef = useRef(false)
+  const apiRef = useRef<TerminalApi | null>(null)
 
   const handleReady = useCallback(
     (api: TerminalApi | null) => {
+      apiRef.current = api
       onReady(tab.id, api)
     },
     [onReady, tab.id],
@@ -76,7 +78,9 @@ export function TerminalTabPanel({
   const showSnippets = tab.status === 'connected'
 
   const handleApplySnippet = (content: string, appendNewline: boolean) => {
-    handleInput(appendNewline ? `${content}\n` : content)
+    apiRef.current?.submit(appendNewline ? `${content}\n` : content, {
+      autoStart: appendNewline,
+    })
   }
 
   return (
@@ -102,9 +106,7 @@ export function TerminalTabPanel({
           />
         ) : null}
       </div>
-      {showSnippets ? (
-        <SnippetPanel mode="terminal" onApply={handleApplySnippet} />
-      ) : null}
+      {showSnippets ? <SnippetPanel mode="terminal" onApply={handleApplySnippet} /> : null}
     </div>
   )
 }

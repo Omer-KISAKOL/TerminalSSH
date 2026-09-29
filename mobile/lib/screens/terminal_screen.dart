@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:xterm/xterm.dart';
 
 import '../models/server_profile.dart';
+import '../services/command_queue.dart';
 import '../services/snippet_service.dart';
 import '../services/ssh_service.dart';
 import '../widgets/snippet_panel.dart';
@@ -24,7 +25,9 @@ class TerminalScreen extends StatefulWidget {
 
 class _TerminalScreenState extends State<TerminalScreen> {
   final _terminal = Terminal();
+  final _terminalFocus = FocusNode();
   final _sshService = SshService();
+  late final CommandQueue _queue;
   bool _connecting = true;
   bool _snippetPanelOpen = false;
   String? _error;
@@ -32,6 +35,12 @@ class _TerminalScreenState extends State<TerminalScreen> {
   @override
   void initState() {
     super.initState();
+    _queue = CommandQueue(
+      onChanged: () {
+        if (mounted) setState(() {});
+      },
+    );
+    _queue.bindSend(_sshService.write);
     _connect();
   }
 
@@ -44,7 +53,10 @@ class _TerminalScreenState extends State<TerminalScreen> {
         port: widget.profile.port,
         username: widget.profile.username,
         password: widget.profile.password ?? '',
-        onOutput: _terminal.write,
+        onOutput: (data) {
+          _queue.observeOutput(data);
+          _terminal.write(data);
+        },
         cols: _terminal.viewWidth,
         rows: _terminal.viewHeight,
       );
@@ -56,7 +68,7 @@ class _TerminalScreenState extends State<TerminalScreen> {
         _sshService.resizeTerminal(width, height, pixelWidth, pixelHeight);
       };
 
-      _terminal.onOutput = _sshService.write;
+      _terminal.onOutput = (data) => _queue.handleInput(data);
 
       setState(() => _connecting = false);
     } catch (error) {
@@ -68,11 +80,11 @@ class _TerminalScreenState extends State<TerminalScreen> {
   }
 
   void _sendCtrl(String key) {
-    _sshService.write(String.fromCharCode(key.codeUnitAt(0) - 96));
+    _queue.handleInput(String.fromCharCode(key.codeUnitAt(0) - 96));
   }
 
   void _applySnippet(String content, {required bool appendNewline}) {
-    _sshService.write(appendNewline ? '$content\n' : content);
+    _queue.handleInput(appendNewline ? '$content\n' : content, autoStart: appendNewline);
   }
 
   void _toggleSnippets() {
@@ -82,6 +94,8 @@ class _TerminalScreenState extends State<TerminalScreen> {
 
   @override
   void dispose() {
+    _queue.dispose();
+    _terminalFocus.dispose();
     _sshService.disconnect();
     super.dispose();
   }
@@ -108,12 +122,36 @@ class _TerminalScreenState extends State<TerminalScreen> {
                             child: Text(_error!, style: const TextStyle(color: AppColors.green)),
                           ),
                         )
-                      : TerminalView(
-                          _terminal,
-                          autofocus: true,
-                          theme: greenTerminalTheme,
-                          textStyle: greenTerminalStyle,
-                          backgroundOpacity: 1,
+                      : Stack(
+                          children: [
+                            TerminalView(
+                              _terminal,
+                              focusNode: _terminalFocus,
+                              autofocus: true,
+                              theme: greenTerminalTheme,
+                              textStyle: greenTerminalStyle,
+                              backgroundOpacity: 1,
+                            ),
+                            if (_queue.phase != CommandQueuePhase.idle)
+                              Align(
+                                alignment: Alignment.bottomCenter,
+                                child: _CommandQueueBanner(
+                                  queue: _queue,
+                                  onBegin: () {
+                                    _queue.begin();
+                                    _terminalFocus.requestFocus();
+                                  },
+                                  onCancel: () {
+                                    _queue.cancel();
+                                    _terminalFocus.requestFocus();
+                                  },
+                                  onDropPending: () {
+                                    _queue.dropPending();
+                                    _terminalFocus.requestFocus();
+                                  },
+                                ),
+                              ),
+                          ],
                         ),
             ),
             if (!_connecting && _error == null && _snippetPanelOpen && widget.snippetService != null)
@@ -127,10 +165,86 @@ class _TerminalScreenState extends State<TerminalScreen> {
             if (!_connecting && _error == null)
               _TerminalToolbar(
                 onCtrl: _sendCtrl,
-                onInsert: _sshService.write,
+                onInsert: (data) => _queue.handleInput(data),
                 onOpenSnippets: widget.snippetService == null ? null : _toggleSnippets,
                 snippetsOpen: _snippetPanelOpen,
               ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CommandQueueBanner extends StatelessWidget {
+  const _CommandQueueBanner({
+    required this.queue,
+    required this.onBegin,
+    required this.onCancel,
+    required this.onDropPending,
+  });
+
+  final CommandQueue queue;
+  final VoidCallback onBegin;
+  final VoidCallback onCancel;
+  final VoidCallback onDropPending;
+
+  @override
+  Widget build(BuildContext context) {
+    final running = queue.phase == CommandQueuePhase.running;
+
+    return Material(
+      color: const Color(0xF014161C),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxHeight: 220),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+              child: Text(
+                running
+                    ? 'Komut çalışıyor. Bitince sıradaki gönderilecek.'
+                    : 'Komutlar hazır. Enter ile sırayla çalışır.',
+                style: const TextStyle(color: AppColors.greenSoft, fontSize: 12),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  if (running)
+                    TextButton(onPressed: onDropPending, child: const Text('Sırayı iptal et'))
+                  else ...[
+                    TextButton(onPressed: onCancel, child: const Text('İptal')),
+                    FilledButton(onPressed: onBegin, child: const Text('Çalıştır')),
+                  ],
+                ],
+              ),
+            ),
+            Flexible(
+              child: ListView.builder(
+                shrinkWrap: true,
+                padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+                itemCount: queue.lines.length,
+                itemBuilder: (context, index) {
+                  final active = running && index == queue.activeIndex;
+                  final done = running && index < queue.activeIndex;
+                  return Text(
+                    '${done ? '✓' : active ? '›' : '·'}  ${queue.lines[index]}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 12,
+                      color: active ? AppColors.green : AppColors.greenSoft,
+                    ),
+                  );
+                },
+              ),
+            ),
           ],
         ),
       ),
