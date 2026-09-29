@@ -27,7 +27,14 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
   }
 
   Future<void> _bootstrap() async {
-    final restored = await _authService.restoreSession();
+    var restored = false;
+
+    try {
+      restored = await _authService.restoreSession().timeout(const Duration(seconds: 15));
+    } catch (_) {
+      restored = false;
+    }
+
     if (!mounted) return;
 
     if (restored) {

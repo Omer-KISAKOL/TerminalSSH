@@ -14,12 +14,10 @@ class HostsScreen extends StatefulWidget {
     super.key,
     required this.authService,
     required this.snippetService,
-    this.showConnectionsMode = false,
   });
 
   final AuthService authService;
   final SnippetService snippetService;
-  final bool showConnectionsMode;
 
   @override
   State<HostsScreen> createState() => _HostsScreenState();
@@ -103,16 +101,12 @@ class _HostsScreenState extends State<HostsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final title = widget.showConnectionsMode ? 'Bağlantılar' : 'Tüm kasalar';
-
     return Scaffold(
       backgroundColor: AppColors.background,
-      floatingActionButton: widget.showConnectionsMode
-          ? null
-          : FloatingActionButton(
-              onPressed: _addServer,
-              child: const Icon(Icons.add),
-            ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _addServer,
+        child: const Icon(Icons.add),
+      ),
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _loadProfiles,
@@ -129,15 +123,15 @@ class _HostsScreenState extends State<HostsScreen> {
                         IconButton(
                           onPressed: () => Navigator.of(context).maybePop(),
                           icon: const Icon(Icons.arrow_back),
-                          color: AppColors.greenDark,
+                          color: AppColors.text,
                         ),
                       Expanded(
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.shield_outlined, color: AppColors.greenDark, size: 20),
+                            const Icon(Icons.shield_outlined, color: AppColors.greenSoft, size: 20),
                             const SizedBox(width: 8),
-                            Text(title, style: Theme.of(context).textTheme.titleMedium),
+                            Text('Tüm kasalar', style: Theme.of(context).textTheme.titleMedium),
                             const SizedBox(width: 4),
                             const Icon(Icons.expand_more, color: AppColors.greenMuted, size: 20),
                           ],
@@ -146,7 +140,7 @@ class _HostsScreenState extends State<HostsScreen> {
                       IconButton(
                         onPressed: () {},
                         icon: const Icon(Icons.search),
-                        color: AppColors.greenDark,
+                        color: AppColors.text,
                       ),
                       Container(
                         decoration: BoxDecoration(
@@ -173,7 +167,7 @@ class _HostsScreenState extends State<HostsScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: TextField(
                     onChanged: (value) => setState(() => _query = value),
-                    style: const TextStyle(color: AppColors.greenDark),
+                    style: const TextStyle(color: AppColors.text),
                     decoration: InputDecoration(
                       hintText: 'Sunucu ara…',
                       prefixIcon: const Icon(Icons.search, color: AppColors.greenMuted),
@@ -187,35 +181,10 @@ class _HostsScreenState extends State<HostsScreen> {
                   ),
                 ),
               ),
-              // if (!widget.showConnectionsMode)
-              //   SliverToBoxAdapter(
-              //     child: Padding(
-              //       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              //       child: Text('Gruplar', style: Theme.of(context).textTheme.titleMedium),
-              //     ),
-              //   ),
-              // if (!widget.showConnectionsMode)
-              //   SliverToBoxAdapter(
-              //     child: SizedBox(
-              //       height: 92,
-              //       child: ListView(
-              //         scrollDirection: Axis.horizontal,
-              //         padding: const EdgeInsets.symmetric(horizontal: 16),
-              //         children: [
-              //           _GroupCard(title: 'Production', count: _profiles.length),
-              //           const SizedBox(width: 12),
-              //           _GroupCard(title: 'Development', count: 0),
-              //         ],
-              //       ),
-              //     ),
-              //   ),
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                  child: Text(
-                    widget.showConnectionsMode ? 'Aktif oturumlar' : 'Sunucular',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
+                  child: Text('Sunucular', style: Theme.of(context).textTheme.titleMedium),
                 ),
               ),
               if (_loading)
@@ -245,9 +214,7 @@ class _HostsScreenState extends State<HostsScreen> {
                   hasScrollBody: false,
                   child: Center(
                     child: Text(
-                      widget.showConnectionsMode
-                          ? 'Henüz açık bağlantı yok.'
-                          : 'Kayıtlı sunucu bulunamadı.',
+                      'Kayıtlı sunucu bulunamadı.',
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                   ),
@@ -275,42 +242,6 @@ class _HostsScreenState extends State<HostsScreen> {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _GroupCard extends StatelessWidget {
-  const _GroupCard({required this.title, required this.count});
-
-  final String title;
-  final int count;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 160,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: AppColors.greenDark,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(Icons.grid_view_rounded, color: AppColors.greenSoft, size: 20),
-          ),
-          const Spacer(),
-          Text(title, style: Theme.of(context).textTheme.titleSmall),
-          Text('Sunucu: $count', style: Theme.of(context).textTheme.bodySmall),
-        ],
       ),
     );
   }

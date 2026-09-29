@@ -8,6 +8,8 @@ import 'api_config.dart';
 
 typedef SessionPersister = Future<void> Function(String accessToken, String refreshToken);
 
+const _requestTimeout = Duration(seconds: 12);
+
 class ApiService {
   ApiService({String? baseUrl}) : baseUrl = baseUrl ?? resolveApiBaseUrl();
 
@@ -40,6 +42,10 @@ class ApiService {
     await _rotateTokens();
   }
 
+  Future<http.Response> _send(Future<http.Response> request) {
+    return request.timeout(_requestTimeout);
+  }
+
   Future<void> _rotateTokens() async {
     final currentRefreshToken = refreshToken;
 
@@ -47,11 +53,11 @@ class ApiService {
       throw Exception('Oturum süresi doldu.');
     }
 
-    final response = await http.post(
+    final response = await _send(http.post(
       Uri.parse('$baseUrl/auth/refresh'),
       headers: _headers(),
       body: jsonEncode({'refreshToken': currentRefreshToken}),
-    );
+    ));
 
     final body = jsonDecode(response.body) as Map<String, dynamic>;
 
@@ -71,7 +77,7 @@ class ApiService {
     Future<http.Response> Function() send, {
     bool allowRefresh = true,
   }) async {
-    var response = await send();
+    var response = await _send(send());
 
     if (response.statusCode == 401 && allowRefresh && refreshToken != null) {
       await _rotateTokens();
@@ -96,15 +102,15 @@ class ApiService {
       return;
     }
 
-    await http.post(
+    await _send(http.post(
       Uri.parse('$baseUrl/auth/logout'),
       headers: _headers(),
       body: jsonEncode({'refreshToken': currentRefreshToken}),
-    );
+    ));
   }
 
   Future<Map<String, dynamic>> login(String email, String password) async {
-    final response = await http.post(
+    final response = await _send(http.post(
       Uri.parse('$baseUrl/auth/login'),
       headers: _headers(),
       body: jsonEncode({
@@ -112,7 +118,7 @@ class ApiService {
         'password': password,
         'deviceName': 'Android',
       }),
-    );
+    ));
 
     final body = await _decodeJson(response, fallback: 'Giriş başarısız');
 

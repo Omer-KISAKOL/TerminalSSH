@@ -201,7 +201,7 @@ class _SettingsTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         child: ListTile(
           onTap: onTap,
-          leading: Icon(icon, color: AppColors.greenDark),
+          leading: Icon(icon, color: AppColors.greenSoft),
           title: Text(title, style: Theme.of(context).textTheme.titleMedium),
           subtitle: Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
           trailing: Icon(Icons.chevron_right, color: AppColors.greenMuted.withValues(alpha: 0.7)),

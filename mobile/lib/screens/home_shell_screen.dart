@@ -33,7 +33,6 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
   Widget build(BuildContext context) {
     final pages = [
       HostsScreen(authService: widget.authService, snippetService: _snippetService),
-      HostsScreen(authService: widget.authService, showConnectionsMode: true, snippetService: _snippetService),
       SettingsScreen(
         authService: widget.authService,
         profileService: _profileService,
@@ -62,11 +61,6 @@ class _HomeShellScreenState extends State<HomeShellScreen> {
             icon: Icon(Icons.inventory_2_outlined),
             selectedIcon: Icon(Icons.inventory_2),
             label: 'Kasalar',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.link_outlined),
-            selectedIcon: Icon(Icons.link),
-            label: 'Bağlantılar',
           ),
           NavigationDestination(
             icon: Icon(Icons.settings_outlined),

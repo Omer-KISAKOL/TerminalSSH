@@ -48,7 +48,7 @@ class HostCard extends StatelessWidget {
                 child: Text(
                   _initial,
                   style: TextStyle(
-                    color: AppColors.greenDark,
+                    color: _accentColor,
                     fontWeight: FontWeight.w700,
                     fontSize: 18,
                   ),

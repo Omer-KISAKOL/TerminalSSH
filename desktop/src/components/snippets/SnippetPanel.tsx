@@ -50,7 +50,7 @@ export function SnippetPanel({ mode, embedded = false, onApply }: SnippetPanelPr
 
   const rootClass = embedded
     ? 'flex max-h-96 flex-col bg-surface-raised'
-    : 'flex w-80 shrink-0 flex-col border-l border-border bg-surface-raised'
+    : 'flex w-96 shrink-0 flex-col border-l border-border bg-surface-raised'
 
   return (
     <aside className={rootClass}>
@@ -89,47 +89,68 @@ export function SnippetPanel({ mode, embedded = false, onApply }: SnippetPanelPr
                     <h4 className="truncate text-sm font-medium text-text">{snippet.name}</h4>
                   </div>
                 </div>
-                <div className="flex shrink-0 gap-1">
-                  {mode === 'terminal' ? (
-                    <>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        className="px-2 py-1 text-[11px]"
-                        onClick={() => onApply?.(snippet.content, true)}
-                      >
-                        RUN
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        className="px-2 py-1 text-[11px]"
-                        onClick={() => onApply?.(snippet.content, false)}
-                      >
-                        PASTE
-                      </Button>
-                    </>
-                  ) : null}
-                </div>
+                {mode === 'terminal' ? (
+                  <div className="flex shrink-0 gap-0.5">
+                    <button
+                      type="button"
+                      aria-label="Düzenle"
+                      title="Düzenle"
+                      className="rounded p-1 text-text-muted hover:bg-surface-muted hover:text-text"
+                      onClick={() => openEdit(snippet)}
+                    >
+                      <PencilIcon />
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Sil"
+                      title="Sil"
+                      className="rounded p-1 text-text-muted hover:bg-status-error/10 hover:text-status-error"
+                      onClick={() => void handleDelete(snippet)}
+                    >
+                      <TrashIcon />
+                    </button>
+                  </div>
+                ) : null}
               </div>
 
               <pre className="mt-2 overflow-hidden text-ellipsis whitespace-pre-wrap font-mono text-xs text-text-muted">
                 {snippet.content}
               </pre>
 
-              <div className="mt-3 flex gap-2">
-                <Button type="button" variant="secondary" className="px-2 py-1 text-xs" onClick={() => openEdit(snippet)}>
-                  Düzenle
-                </Button>
-                <Button
-                  type="button"
-                  variant="danger"
-                  className="px-2 py-1 text-xs"
-                  onClick={() => void handleDelete(snippet)}
-                >
-                  Sil
-                </Button>
-              </div>
+              {mode === 'terminal' ? (
+                <div className="mt-3 flex gap-2">
+                  <Button
+                    type="button"
+                    variant="primary"
+                    className="flex-1 px-2 py-1.5 text-xs"
+                    onClick={() => onApply?.(snippet.content, true)}
+                  >
+                    RUN
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="flex-1 px-2 py-1.5 text-xs"
+                    onClick={() => onApply?.(snippet.content, false)}
+                  >
+                    PASTE
+                  </Button>
+                </div>
+              ) : (
+                <div className="mt-3 flex gap-2">
+                  <Button type="button" variant="secondary" className="px-2 py-1 text-xs" onClick={() => openEdit(snippet)}>
+                    Düzenle
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="danger"
+                    className="px-2 py-1 text-xs"
+                    onClick={() => void handleDelete(snippet)}
+                  >
+                    Sil
+                  </Button>
+                </div>
+              )}
             </article>
           ))}
         </div>
@@ -142,5 +163,24 @@ export function SnippetPanel({ mode, embedded = false, onApply }: SnippetPanelPr
         onSave={handleSave}
       />
     </aside>
+  )
+}
+
+function PencilIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-3.5 w-3.5 fill-none stroke-current stroke-2">
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+    </svg>
+  )
+}
+
+function TrashIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-3.5 w-3.5 fill-none stroke-current stroke-2">
+      <path d="M3 6h18" />
+      <path d="M8 6V4h8v2" />
+      <path d="M19 6l-1 14H6L5 6" />
+    </svg>
   )
 }

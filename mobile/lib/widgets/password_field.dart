@@ -29,7 +29,7 @@ class _PasswordFieldState extends State<PasswordField> {
       controller: widget.controller,
       obscureText: _obscure,
       autofillHints: widget.autofillHints,
-      style: const TextStyle(color: AppColors.greenDark),
+      style: const TextStyle(color: AppColors.text),
       decoration: InputDecoration(
         labelText: widget.labelText,
         hintText: widget.hintText,
