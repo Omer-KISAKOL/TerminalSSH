@@ -22,7 +22,7 @@ export function CommandQueueBanner({
   const running = snapshot.phase === 'running'
 
   return (
-    <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 p-2">
+    <div className="pointer-events-none absolute inset-x-0 top-0 z-20 p-2">
       <div
         className="pointer-events-auto overflow-hidden rounded-lg border border-border bg-[#0f1117]/95 shadow-lg shadow-black/40"
         role="status"

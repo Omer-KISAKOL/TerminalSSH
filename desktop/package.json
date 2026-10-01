@@ -4,7 +4,7 @@
   "description": "Electron tabanlı sade ve güvenli SSH terminal istemcisi",
   "author": "TerminalSSH",
   "private": true,
-  "version": "0.1.0",
+  "version": "2.0.0",
   "type": "module",
   "desktopName": "TerminalSSH",
   "homepage": "https://github.com/Omer-KISAKOL/TerminalSSH",
