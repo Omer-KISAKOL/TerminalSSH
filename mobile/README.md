@@ -76,9 +76,9 @@ SSH bağlantısı Linux hedefinde çalışır; asıl dağıtım hedefi yine Andr
 
 ### API adresi
 
-Dev ve release aynı canlı backend kullanılır (`lib/services/api_config.dart`):
+`lib/services/api_config.dart`: **debug/profile** → yerel backend (`localhost`; Android emülatörde `10.0.2.2:8787`); **release build** → `http://188.34.155.223:8787`.
 
-`http://188.34.155.223:8787`
+Fiziksel cihazda yerel API: `flutter run --dart-define=API_BASE_URL=http://<bilgisayar-ip>:8787`
 
 Mobil istemci doğrudan HTTP istekleri yapar; tarayıcı CORS kuralları geçerli değildir.
 

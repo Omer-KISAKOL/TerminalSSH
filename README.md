@@ -63,7 +63,7 @@ Canlı API (`188.34.155.223`) girişinde Postgres hatası alırsanız: [`deploy/
 pnpm dev
 ```
 
-Desktop ve mobil istemciler varsayılan olarak **canlı API** (`http://188.34.155.223:8787`) kullanır. `pnpm dev:server` yalnızca backend geliştirmesi içindir.
+Geliştirme modunda (`pnpm dev`, `flutter run`) desktop ve mobil **yerel API** (`http://localhost:8787`) kullanır. Paketlenmiş masaüstü (`pnpm dist:*`) ve release mobil derlemeleri **canlı API** (`http://188.34.155.223:8787`) adresine bağlanır.
 
 ### Test ve derleme
 
@@ -204,4 +204,4 @@ flutter build appbundle --release
 
 Çıktı: `build/app/outputs/bundle/release/app-release.aab`
 
-**Fiziksel cihazda test:** Telefon bilgisayarla aynı ağda olmalı; API adresi `mobile/lib/services/api_config.dart` içinde bilgisayar IP’nize göre ayarlanmalıdır (emülatörde `10.0.2.2` kullanılır). Backend: `pnpm dev:server`.
+**Fiziksel cihazda test:** Telefon bilgisayarla aynı ağda olmalı; yerel backend için `flutter run --dart-define=API_BASE_URL=http://<bilgisayar-ip>:8787`. Backend: `pnpm dev:server`.
