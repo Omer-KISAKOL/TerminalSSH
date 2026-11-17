@@ -205,4 +205,3 @@ flutter build appbundle --release
 Çıktı: `build/app/outputs/bundle/release/app-release.aab`
 
 **Fiziksel cihazda test:** Telefon bilgisayarla aynı ağda olmalı; API adresi `mobile/lib/services/api_config.dart` içinde bilgisayar IP’nize göre ayarlanmalıdır (emülatörde `10.0.2.2` kullanılır). Backend: `pnpm dev:server`.
-test
