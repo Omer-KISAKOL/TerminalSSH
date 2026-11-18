@@ -1,6 +1,7 @@
 import type { ProfileMigrationCandidate } from '@shared/contracts/profile'
 
 import { Button } from '@/components/ui/Button'
+import { useLocale } from '@/hooks/useLocale'
 
 type ProfileMigrationDialogProps = {
   profiles: ProfileMigrationCandidate[]
@@ -15,6 +16,8 @@ export function ProfileMigrationDialog({
   onImport,
   onSkip,
 }: ProfileMigrationDialogProps) {
+  const { t } = useLocale()
+
   if (profiles.length === 0) {
     return null
   }
@@ -22,9 +25,9 @@ export function ProfileMigrationDialog({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
       <div className="w-full max-w-lg rounded-xl border border-border bg-surface-raised p-5 shadow-2xl">
-        <h3 className="text-lg font-semibold text-text">Yerel profilleri buluta taşı</h3>
+        <h3 className="text-lg font-semibold text-text">{t('migration.title')}</h3>
         <p className="mt-2 text-sm text-text-muted">
-          Bu cihazda {profiles.length} kayıtlı sunucu bulundu. Hesabınıza aktarmak ister misiniz?
+          {t('migration.description', { count: profiles.length })}
         </p>
 
         <ul className="mt-4 max-h-48 space-y-2 overflow-auto text-sm">
@@ -40,10 +43,10 @@ export function ProfileMigrationDialog({
 
         <div className="mt-5 flex justify-end gap-2">
           <Button variant="ghost" onClick={onSkip} disabled={loading}>
-            Atla
+            {t('migration.skip')}
           </Button>
           <Button variant="primary" loading={loading} onClick={onImport}>
-            Buluta aktar
+            {t('migration.import')}
           </Button>
         </div>
       </div>

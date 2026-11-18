@@ -20,6 +20,11 @@ export interface ServerProfile {
   syncSource?: 'local' | 'cloud'
 }
 
+export interface ProfileEditSecrets {
+  password: string | null
+  passphrase: string | null
+}
+
 export interface PublicServerProfile {
   id: string
   name: string

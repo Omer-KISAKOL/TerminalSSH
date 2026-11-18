@@ -1,5 +1,6 @@
 import type { ConnectionStatus } from '@shared/contracts/ssh'
 
+import { useLocale } from '@/hooks/useLocale'
 import { STATUS_COLORS } from '@/components/ui/StatusBadge'
 
 export type ServerTab = {
@@ -14,6 +15,8 @@ type ServerTabBarProps = {
 }
 
 export function ServerTabBar({ tabs }: ServerTabBarProps) {
+  const { t } = useLocale()
+
   if (tabs.length === 0) {
     return null
   }
@@ -22,7 +25,7 @@ export function ServerTabBar({ tabs }: ServerTabBarProps) {
     <div
       className="flex items-end gap-1 border-b border-border bg-surface-raised px-3 pt-2 md:px-4"
       role="tablist"
-      aria-label="Sunucu sekmeleri"
+      aria-label={t('terminal.serverTabs')}
     >
       {tabs.map((tab) => (
         <div

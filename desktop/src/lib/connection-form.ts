@@ -1,6 +1,11 @@
 import { MAX_PORT, MIN_PORT } from '@shared/constants/validation'
-import type { PublicServerProfile } from '@shared/contracts/profile'
+import type { ProfileEditSecrets, PublicServerProfile } from '@shared/contracts/profile'
 import type { ConnectionFormValues } from '@shared/contracts/ssh'
+
+import {
+  validationMessagesTr,
+  type ValidationMessages,
+} from '@shared/i18n/validation-messages'
 
 export const DEFAULT_CONNECTION_FORM: ConnectionFormValues = {
   name: '',
@@ -18,7 +23,13 @@ export const DEFAULT_CONNECTION_FORM: ConnectionFormValues = {
   hasSavedPassphrase: false,
 }
 
-export function publicProfileToFormValues(profile: PublicServerProfile): ConnectionFormValues {
+export function publicProfileToFormValues(
+  profile: PublicServerProfile,
+  secrets?: ProfileEditSecrets,
+): ConnectionFormValues {
+  const password = secrets?.password ?? ''
+  const passphrase = secrets?.passphrase ?? ''
+
   return {
     profileId: profile.id,
     name: profile.name,
@@ -26,59 +37,64 @@ export function publicProfileToFormValues(profile: PublicServerProfile): Connect
     port: String(profile.port),
     username: profile.username,
     authType: profile.authType,
-    password: '',
+    password,
     privateKeyPath: profile.privateKeyPath ?? '',
-    passphrase: '',
+    passphrase,
     savePassword: profile.savePassword,
     savePassphrase: profile.savePassphrase,
     saveProfile: true,
-    hasSavedPassword: profile.hasSavedPassword,
-    hasSavedPassphrase: profile.hasSavedPassphrase,
+    hasSavedPassword: profile.hasSavedPassword || password.length > 0,
+    hasSavedPassphrase: profile.hasSavedPassphrase || passphrase.length > 0,
   }
 }
 
-export function validateConnectionForm(values: ConnectionFormValues): string | null {
+export function validateConnectionForm(
+  values: ConnectionFormValues,
+  validation: ValidationMessages = validationMessagesTr,
+): string | null {
   if (values.saveProfile && values.name.trim().length === 0) {
-    return 'Profil adı boş olamaz.'
+    return validation.profileNameRequired
   }
 
   if (values.host.trim().length === 0) {
-    return 'Sunucu adresi boş olamaz.'
+    return validation.hostRequired
   }
 
   const portText = values.port.trim()
 
   if (!/^\d+$/.test(portText)) {
-    return 'Port geçerli bir sayı olmalı.'
+    return validation.portNumeric
   }
 
   const port = Number.parseInt(portText, 10)
 
   if (Number.isNaN(port) || port < MIN_PORT || port > MAX_PORT) {
-    return `Port ${MIN_PORT}–${MAX_PORT} arasında olmalı.`
+    return validation.portRange
+      .replace('{min}', String(MIN_PORT))
+      .replace('{max}', String(MAX_PORT))
   }
 
   if (values.username.trim().length === 0) {
-    return 'Kullanıcı adı boş olamaz.'
+    return validation.usernameRequired
   }
 
   if (values.authType === 'password') {
     if (!values.hasSavedPassword && values.password.length === 0) {
-      return 'Parola boş olamaz.'
+      return validation.passwordRequired
     }
 
     if (values.savePassword && values.password.length === 0 && !values.hasSavedPassword) {
-      return 'Parolayı kaydetmek için parola girilmeli.'
+      return validation.passwordSaveRequired
     }
   }
 
   if (values.authType === 'privateKey') {
     if (values.privateKeyPath.trim().length === 0) {
-      return 'Özel anahtar dosyası seçilmeli.'
+      return validation.privateKeyRequired
     }
 
     if (values.savePassphrase && values.passphrase.length === 0 && !values.hasSavedPassphrase) {
-      return 'Passphrase kaydetmek için passphrase girilmeli.'
+      return validation.passphraseSaveRequired
     }
   }
 

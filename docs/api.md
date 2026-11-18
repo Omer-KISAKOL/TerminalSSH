@@ -1,6 +1,6 @@
 # TerminalSSH API
 
-Base URL (canlı): `http://188.34.155.223:8787` — yerel backend geliştirmesi: `http://localhost:8787`
+Base URL (canlı / release build): `http://188.34.155.223:8787` — geliştirme modu (desktop `pnpm dev`, mobil debug): `http://localhost:8787`
 
 ## Auth
 

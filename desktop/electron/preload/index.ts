@@ -52,6 +52,21 @@ function ensureSftpStatusBridge(): void {
 const desktopApi: DesktopApi = {
   app: {
     getVersion: () => ipcRenderer.invoke(IPC_CHANNELS.app.getVersion),
+    syncLocale: (locale) => ipcRenderer.invoke(IPC_CHANNELS.app.syncLocale, locale),
+    onOpenSftpTab: (callback) => {
+      const listener = () => callback()
+      ipcRenderer.on(IPC_CHANNELS.app.openSftpTab, listener)
+      return () => {
+        ipcRenderer.removeListener(IPC_CHANNELS.app.openSftpTab, listener)
+      }
+    },
+    onFocusSftpTab: (callback) => {
+      const listener = () => callback()
+      ipcRenderer.on(IPC_CHANNELS.app.focusSftpTab, listener)
+      return () => {
+        ipcRenderer.removeListener(IPC_CHANNELS.app.focusSftpTab, listener)
+      }
+    },
   },
   ssh: {
     connect: (input) => ipcRenderer.invoke(IPC_CHANNELS.ssh.connect, input),
@@ -125,6 +140,7 @@ const desktopApi: DesktopApi = {
     importLocal: () => ipcRenderer.invoke(IPC_CHANNELS.profiles.importLocal),
     exportToFile: (input) => ipcRenderer.invoke(IPC_CHANNELS.profiles.exportToFile, input),
     importFromFile: () => ipcRenderer.invoke(IPC_CHANNELS.profiles.importFromFile),
+    getEditSecrets: (id) => ipcRenderer.invoke(IPC_CHANNELS.profiles.getEditSecrets, id),
   },
   snippets: {
     list: () => ipcRenderer.invoke(IPC_CHANNELS.snippets.list),

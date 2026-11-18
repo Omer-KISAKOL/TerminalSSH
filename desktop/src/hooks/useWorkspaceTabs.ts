@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ConnectionFormValues, ConnectionStatus } from '@shared/contracts/ssh'
 import type { WorkspaceTab } from '@shared/contracts/workspace'
 
+import { useLocale } from '@/hooks/useLocale'
 import { toUserErrorMessage } from '@/lib/user-error'
 import {
   createSftpTab,
@@ -23,6 +24,12 @@ export function useWorkspaceTabs({
   onTerminalData,
   onTerminalMessage,
 }: UseWorkspaceTabsOptions) {
+  const { messages, t } = useLocale()
+  const messagesRef = useRef(messages)
+  messagesRef.current = messages
+  const tRef = useRef(t)
+  tRef.current = t
+
   const [tabs, setTabs] = useState<WorkspaceTab[]>([])
   const [activeTabId, setActiveTabId] = useState<string | null>(null)
 
@@ -97,17 +104,22 @@ export function useWorkspaceTabs({
       }
 
       if (event.status === 'error') {
-        onTerminalMessageRef.current(tab.id, `[Hata: ${event.message ?? 'Bağlantı kurulamadı.'}]`)
+        const fallback = messagesRef.current.errors.connectionFailed
+        const message = event.message ?? fallback
+        onTerminalMessageRef.current(
+          tab.id,
+          tRef.current('errors.errorLine', { message }),
+        )
         updateTab(tab.id, {
           status: event.status,
-          errorMessage: event.message ?? 'Bağlantı kurulamadı.',
+          errorMessage: message,
           sessionId: null,
         })
         return
       }
 
       if (event.status === 'disconnected') {
-        onTerminalMessageRef.current(tab.id, '[Bağlantı kesildi]')
+        onTerminalMessageRef.current(tab.id, tRef.current('errors.disconnectedLine'))
         updateTab(tab.id, {
           status: event.status,
           sessionId: null,
@@ -186,6 +198,17 @@ export function useWorkspaceTabs({
     return tab.id
   }, [])
 
+  const focusOrOpenSftpTab = useCallback(async () => {
+    const existing = tabsRef.current.find((tab) => tab.type === 'sftp')
+
+    if (existing) {
+      setActiveTabId(existing.id)
+      return existing.id
+    }
+
+    return addSftpTab()
+  }, [addSftpTab])
+
   const closeTab = useCallback(
     async (tabId: string) => {
       const tab = tabsRef.current.find((item) => item.id === tabId)
@@ -236,13 +259,13 @@ export function useWorkspaceTabs({
           errorMessage: null,
         })
       } catch (error) {
-        const message = toUserErrorMessage(error)
+        const message = toUserErrorMessage(error, messagesRef.current.errors.connectionFailed)
         updateTab(tabId, {
           status: 'error',
           errorMessage: message,
           sessionId: null,
         })
-        onTerminalMessageRef.current(tabId, `[Hata: ${message}]`)
+        onTerminalMessageRef.current(tabId, tRef.current('errors.errorLine', { message }))
       }
     },
     [updateTab],
@@ -420,6 +443,7 @@ export function useWorkspaceTabs({
     setActiveTabId,
     addTerminalTab,
     addSftpTab,
+    focusOrOpenSftpTab,
     closeTab,
     openTerminalSession,
     openSftpSession,

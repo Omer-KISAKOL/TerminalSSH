@@ -1,6 +1,7 @@
 import type { PublicServerProfile } from '@shared/contracts/profile'
 
 import { Button } from '@/components/ui/Button'
+import { useLocale } from '@/hooks/useLocale'
 
 type SftpHostPickerProps = {
   profiles: PublicServerProfile[]
@@ -15,22 +16,20 @@ export function SftpHostPicker({
   disabled,
   onConnectProfile,
 }: SftpHostPickerProps) {
+  const { t } = useLocale()
+
   return (
     <section className="flex min-h-0 min-w-0 flex-1 flex-col border border-border bg-surface-muted">
       <header className="border-b border-border px-4 py-3">
-        <h3 className="text-sm font-medium text-text">Sunucu Seç</h3>
-        <p className="mt-1 text-xs text-text-muted">
-          SFTP oturumu için kayıtlı bir sunucu seçin veya sol panelden yerel dosyalarınızı yönetin.
-        </p>
+        <h3 className="text-sm font-medium text-text">{t('sftp.pickServerTitle')}</h3>
+        <p className="mt-1 text-xs text-text-muted">{t('sftp.pickServerHelp')}</p>
       </header>
 
       <div className="min-h-0 flex-1 overflow-y-auto p-4">
         {loading ? (
-          <p className="text-sm text-text-muted">Profiller yükleniyor…</p>
+          <p className="text-sm text-text-muted">{t('profile.loading')}</p>
         ) : profiles.length === 0 ? (
-          <p className="text-sm text-text-muted">
-            Kayıtlı sunucu yok. Önce bir profil oluşturup ardından SFTP sekmesinden bağlanın.
-          </p>
+          <p className="text-sm text-text-muted">{t('sftp.noProfiles')}</p>
         ) : (
           <div className="space-y-2">
             {profiles.map((profile) => (
@@ -50,7 +49,7 @@ export function SftpHostPicker({
                   disabled={disabled}
                   onClick={() => onConnectProfile(profile)}
                 >
-                  Bağlan
+                  {t('sftp.connect')}
                 </Button>
               </div>
             ))}

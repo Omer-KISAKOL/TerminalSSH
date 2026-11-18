@@ -26,6 +26,17 @@ export function registerProfileHandlers(): void {
   })
 
   ipcMain.handle(
+    IPC_CHANNELS.profiles.getEditSecrets,
+    createIpcHandler(assertProfileId, async (_event, profileId) => {
+      try {
+        return profileManager.getEditSecrets(profileId)
+      } catch (error) {
+        handleProfileError(error)
+      }
+    }),
+  )
+
+  ipcMain.handle(
     IPC_CHANNELS.profiles.save,
     createIpcHandler(assertSaveProfileRequest, async (_event, request) => {
       try {

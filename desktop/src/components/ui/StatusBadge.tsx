@@ -1,13 +1,6 @@
 import type { ConnectionStatus } from '@shared/contracts/ssh'
 
-const STATUS_LABELS: Record<ConnectionStatus, string> = {
-  idle: 'Bağlı değil',
-  connecting: 'Bağlanıyor',
-  connected: 'Bağlı',
-  disconnecting: 'Bağlantı kesiliyor',
-  disconnected: 'Bağlantı kesildi',
-  error: 'Hata',
-}
+import { useLocale } from '@/hooks/useLocale'
 
 const STATUS_COLORS: Record<ConnectionStatus, string> = {
   idle: 'bg-status-idle',
@@ -24,6 +17,21 @@ type StatusBadgeProps = {
 }
 
 export function StatusBadge({ status, className = '' }: StatusBadgeProps) {
+  const { t } = useLocale()
+
+  const label =
+    status === 'idle'
+      ? t('status.notConnected')
+      : status === 'connecting'
+        ? t('status.connecting')
+        : status === 'connected'
+          ? t('status.connected')
+          : status === 'disconnecting'
+            ? t('status.disconnecting')
+            : status === 'disconnected'
+              ? t('status.disconnected')
+              : t('status.error')
+
   return (
     <span
       role="status"
@@ -34,9 +42,9 @@ export function StatusBadge({ status, className = '' }: StatusBadgeProps) {
         className={`inline-block h-2 w-2 rounded-full ${STATUS_COLORS[status]}`}
         aria-hidden="true"
       />
-      {STATUS_LABELS[status]}
+      {label}
     </span>
   )
 }
 
-export { STATUS_LABELS, STATUS_COLORS }
+export { STATUS_COLORS }

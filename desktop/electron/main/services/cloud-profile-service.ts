@@ -6,7 +6,7 @@ import type { CloudProfile, SaveCloudProfileInput, SyncCloudProfileInput } from 
 
 import type { SaveProfileRequest, ServerProfile } from '@shared/contracts/profile'
 
-import { resolveApiBaseUrl } from '@shared/constants/api'
+import { getApiBaseUrl as resolveApiBaseUrl } from '../api-base-url'
 
 import { authStore } from './auth-store'
 import { assertCanStoreSecrets, encryptSecret } from './secret-store'

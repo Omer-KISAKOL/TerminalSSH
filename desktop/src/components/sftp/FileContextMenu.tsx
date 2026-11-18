@@ -2,6 +2,8 @@ import { useEffect, useRef } from 'react'
 
 import type { FileEntry } from '@shared/contracts/sftp'
 
+import { useLocale } from '@/hooks/useLocale'
+
 export type FileContextMenuAction = 'open' | 'upload' | 'download'
 
 type FileContextMenuProps = {
@@ -23,6 +25,7 @@ export function FileContextMenu({
   onAction,
   onClose,
 }: FileContextMenuProps) {
+  const { t } = useLocale()
   const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -61,6 +64,7 @@ export function FileContextMenu({
     <div
       ref={menuRef}
       role="menu"
+      aria-label={t('sftp.fileMenu')}
       className="fixed z-50 min-w-44 rounded-lg border border-border bg-surface-raised py-1 shadow-xl"
       style={{ left: x, top: y }}
     >
@@ -71,7 +75,7 @@ export function FileContextMenu({
           className="block w-full px-3 py-2 text-left text-sm text-text hover:bg-surface-muted"
           onClick={() => onAction('open')}
         >
-          Aç
+          {t('sftp.open')}
         </button>
       ) : null}
 
@@ -82,7 +86,9 @@ export function FileContextMenu({
           className="block w-full px-3 py-2 text-left text-sm text-text hover:bg-surface-muted"
           onClick={() => onAction('upload')}
         >
-          Yükle {transferableCount > 1 ? `(${transferableCount} dosya)` : ''}
+          {transferableCount > 1
+            ? t('sftp.uploadCount', { count: transferableCount })
+            : t('sftp.upload')}
         </button>
       ) : null}
 
@@ -93,16 +99,18 @@ export function FileContextMenu({
           className="block w-full px-3 py-2 text-left text-sm text-text hover:bg-surface-muted"
           onClick={() => onAction('download')}
         >
-          İndir {transferableCount > 1 ? `(${transferableCount} dosya)` : ''}
+          {transferableCount > 1
+            ? t('sftp.downloadCount', { count: transferableCount })
+            : t('sftp.download')}
         </button>
       ) : null}
 
       {entries.length === 0 ? (
-        <p className="px-3 py-2 text-sm text-text-muted">İşlem yok</p>
+        <p className="px-3 py-2 text-sm text-text-muted">{t('sftp.noActions')}</p>
       ) : null}
 
       {!singleDirectory && directoryCount > 0 && transferableCount === 0 ? (
-        <p className="px-3 py-2 text-sm text-text-muted">Klasörler sürükle-bırak ile taşınamaz.</p>
+        <p className="px-3 py-2 text-sm text-text-muted">{t('sftp.foldersNoDrag')}</p>
       ) : null}
     </div>
   )

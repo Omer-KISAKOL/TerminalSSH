@@ -1,6 +1,7 @@
 import type { HostVerifyRequestEvent } from '@shared/contracts/host'
 
 import { Button } from '@/components/ui/Button'
+import { useLocale } from '@/hooks/useLocale'
 
 type HostFingerprintDialogProps = {
   request: HostVerifyRequestEvent
@@ -17,6 +18,7 @@ export function HostFingerprintDialog({
   onReject,
   onDismiss,
 }: HostFingerprintDialogProps) {
+  const { t } = useLocale()
   const isMismatch = request.kind === 'mismatch'
 
   return (
@@ -34,29 +36,27 @@ export function HostFingerprintDialog({
           id="host-verify-title"
           className={`text-base font-medium ${isMismatch ? 'text-status-error' : 'text-text'}`}
         >
-          {isMismatch ? 'Güvenlik uyarısı: Sunucu kimliği değişti' : 'Bilinmeyen sunucu kimliği'}
+          {isMismatch ? t('hostVerify.mismatchTitle') : t('hostVerify.unknownTitle')}
         </h2>
 
         <p className="mt-2 text-sm text-text-muted">
-          {isMismatch
-            ? 'Bu sunucunun anahtar parmak izi daha önce kaydedilenden farklı. Bağlantı güvenlik nedeniyle durduruldu.'
-            : 'Bu sunucuya ilk kez bağlanıyorsunuz. Devam etmeden önce parmak izini doğrulayın.'}
+          {isMismatch ? t('hostVerify.mismatchBody') : t('hostVerify.unknownBody')}
         </p>
 
         <dl className="mt-4 space-y-3 rounded-lg border border-border bg-surface px-4 py-3 text-sm">
           <div>
-            <dt className="text-text-muted">Sunucu</dt>
+            <dt className="text-text-muted">{t('hostVerify.server')}</dt>
             <dd className="font-mono text-text">
               {request.host}:{request.port}
             </dd>
           </div>
           <div>
-            <dt className="text-text-muted">Parmak izi</dt>
+            <dt className="text-text-muted">{t('hostVerify.fingerprint')}</dt>
             <dd className="break-all font-mono text-text">{request.fingerprint}</dd>
           </div>
           {isMismatch && request.expectedFingerprint ? (
             <div>
-              <dt className="text-text-muted">Kayıtlı parmak izi</dt>
+              <dt className="text-text-muted">{t('hostVerify.savedFingerprint')}</dt>
               <dd className="break-all font-mono text-text">{request.expectedFingerprint}</dd>
             </div>
           ) : null}
@@ -65,15 +65,15 @@ export function HostFingerprintDialog({
         <div className="mt-6 flex justify-end gap-3">
           {isMismatch ? (
             <Button variant="primary" loading={isResponding} onClick={onDismiss}>
-              Kapat
+              {t('common.close')}
             </Button>
           ) : (
             <>
               <Button variant="secondary" disabled={isResponding} onClick={onReject}>
-                Reddet
+                {t('hostVerify.reject')}
               </Button>
               <Button variant="primary" loading={isResponding} onClick={onApprove}>
-                Güven ve devam et
+                {t('hostVerify.trust')}
               </Button>
             </>
           )}

@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef } from 'react'
 
+import type { PublicServerProfile } from '@shared/contracts/profile'
 import type { TerminalWorkspaceTab } from '@shared/contracts/workspace'
 
+import { TerminalHostPicker } from '@/components/terminal/TerminalHostPicker'
 import { SnippetPanel } from '@/components/snippets/SnippetPanel'
 import { TerminalStateOverlay } from '@/components/terminal/TerminalStateOverlay'
 import { TerminalToolbar } from '@/components/terminal/TerminalToolbar'
@@ -19,6 +21,18 @@ type TerminalTabPanelProps = {
   onClear: (tabId: string) => void
   onBackToForm: () => void
   onOpenSidebar?: () => void
+  profiles: PublicServerProfile[]
+  selectedProfileId: string | null
+  lastConnectedProfileId: string | null
+  connectingProfileId: string | null
+  connectDisabled: boolean
+  profilesLoading: boolean
+  profilesError: string | null
+  onNewConnection: () => void
+  onConnectProfile: (profile: PublicServerProfile) => void
+  onSftpConnectProfile: (profile: PublicServerProfile) => void
+  onEditProfile: (profile: PublicServerProfile) => void
+  onDeleteProfile: (profile: PublicServerProfile) => void
 }
 
 export function TerminalTabPanel({
@@ -33,6 +47,18 @@ export function TerminalTabPanel({
   onClear,
   onBackToForm,
   onOpenSidebar,
+  profiles,
+  selectedProfileId,
+  lastConnectedProfileId,
+  connectingProfileId,
+  connectDisabled,
+  profilesLoading,
+  profilesError,
+  onNewConnection,
+  onConnectProfile,
+  onSftpConnectProfile,
+  onEditProfile,
+  onDeleteProfile,
 }: TerminalTabPanelProps) {
   const mountedRef = useRef(false)
   const apiRef = useRef<TerminalApi | null>(null)
@@ -76,6 +102,7 @@ export function TerminalTabPanel({
     tab.status === 'disconnected'
 
   const showSnippets = tab.status === 'connected'
+  const showHostPicker = tab.status === 'idle' && tab.sessionId === null
 
   const handleApplySnippet = (content: string, appendNewline: boolean) => {
     apiRef.current?.submit(appendNewline ? `${content}\n` : content, {
@@ -83,9 +110,30 @@ export function TerminalTabPanel({
     })
   }
 
+  if (showHostPicker) {
+    return (
+      <div className={isActive ? 'flex min-h-0 flex-1 flex-col' : 'hidden'}>
+        <TerminalHostPicker
+          profiles={profiles}
+          selectedProfileId={selectedProfileId}
+          lastConnectedProfileId={lastConnectedProfileId}
+          connectingProfileId={connectingProfileId}
+          connectDisabled={connectDisabled}
+          profilesLoading={profilesLoading}
+          profilesError={profilesError}
+          onNewConnection={onNewConnection}
+          onConnect={onConnectProfile}
+          onSftpConnect={onSftpConnectProfile}
+          onEdit={onEditProfile}
+          onDelete={onDeleteProfile}
+        />
+      </div>
+    )
+  }
+
   return (
-    <div className={isActive ? 'relative flex min-h-0 flex-1' : 'hidden'}>
-      <div className="relative flex min-w-0 flex-1 flex-col">
+    <div className={isActive ? 'relative flex min-h-0 min-w-0 flex-1' : 'hidden'}>
+      <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
         <TerminalToolbar
           serverLabel={tab.label}
           status={tab.status}

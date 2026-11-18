@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react'
 import type { SaveSnippetRequest, Snippet } from '@shared/contracts/snippet'
 
 import { Button } from '@/components/ui/Button'
+import { useLocale } from '@/hooks/useLocale'
 import { useSnippets } from '@/hooks/useSnippets'
 
 import { SnippetEditorDialog } from './SnippetEditorDialog'
@@ -14,6 +15,7 @@ type SnippetPanelProps = {
 }
 
 export function SnippetPanel({ mode, embedded = false, onApply }: SnippetPanelProps) {
+  const { t } = useLocale()
   const { snippets, isLoading, error, save, remove } = useSnippets()
   const [query, setQuery] = useState('')
   const [editorOpen, setEditorOpen] = useState(false)
@@ -43,37 +45,50 @@ export function SnippetPanel({ mode, embedded = false, onApply }: SnippetPanelPr
   }
 
   const handleDelete = async (snippet: Snippet) => {
-    const confirmed = window.confirm(`"${snippet.name}" snippet'ini silmek istiyor musunuz?`)
+    const confirmed = window.confirm(t('snippets.deleteConfirm', { name: snippet.name }))
     if (!confirmed) return
     await remove(snippet.id)
   }
 
   const rootClass = embedded
     ? 'flex max-h-96 flex-col bg-surface-raised'
-    : 'flex w-96 shrink-0 flex-col border-l border-border bg-surface-raised'
+    : mode === 'terminal'
+      ? 'flex min-h-0 w-80 shrink-0 flex-col border-l border-border bg-surface-raised lg:w-96'
+      : 'flex w-96 shrink-0 flex-col border-l border-border bg-surface-raised'
 
   return (
     <aside className={rootClass}>
-      <div className="border-b border-border p-3">
+      <div
+        className={
+          mode === 'terminal' && !embedded
+            ? 'shrink-0 border-b border-border px-3 py-2.5'
+            : 'border-b border-border p-3'
+        }
+      >
         <div className="flex items-center gap-2">
-          <Button type="button" variant="secondary" className="flex-1 justify-start" onClick={openCreate}>
-            {'{ }'} Yeni Snippet
+          <Button
+            type="button"
+            variant="secondary"
+            className="h-8 flex-1 justify-start text-xs font-medium"
+            onClick={openCreate}
+          >
+            {'{ }'} {t('snippets.new')}
           </Button>
         </div>
         <input
-          className="field-input mt-2"
-          placeholder="Snippet ara…"
+          className="field-input mt-2 text-sm"
+          placeholder={t('snippets.searchPlaceholder')}
           value={query}
           onChange={(event) => setQuery(event.target.value)}
         />
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto p-3">
-        {isLoading ? <p className="text-sm text-text-muted">Yükleniyor…</p> : null}
+        {isLoading ? <p className="text-sm text-text-muted">{t('common.loading')}</p> : null}
         {error ? <p className="text-sm text-status-error">{error}</p> : null}
 
         {!isLoading && filteredSnippets.length === 0 ? (
-          <p className="text-sm text-text-muted">Henüz snippet yok.</p>
+          <p className="text-sm text-text-muted">{t('snippets.empty')}</p>
         ) : null}
 
         <div className="space-y-3">
@@ -93,8 +108,8 @@ export function SnippetPanel({ mode, embedded = false, onApply }: SnippetPanelPr
                   <div className="flex shrink-0 gap-0.5">
                     <button
                       type="button"
-                      aria-label="Düzenle"
-                      title="Düzenle"
+                      aria-label={t('snippets.edit')}
+                      title={t('snippets.edit')}
                       className="rounded p-1 text-text-muted hover:bg-surface-muted hover:text-text"
                       onClick={() => openEdit(snippet)}
                     >
@@ -102,8 +117,8 @@ export function SnippetPanel({ mode, embedded = false, onApply }: SnippetPanelPr
                     </button>
                     <button
                       type="button"
-                      aria-label="Sil"
-                      title="Sil"
+                      aria-label={t('snippets.delete')}
+                      title={t('snippets.delete')}
                       className="rounded p-1 text-text-muted hover:bg-status-error/10 hover:text-status-error"
                       onClick={() => void handleDelete(snippet)}
                     >
@@ -139,7 +154,7 @@ export function SnippetPanel({ mode, embedded = false, onApply }: SnippetPanelPr
               ) : (
                 <div className="mt-3 flex gap-2">
                   <Button type="button" variant="secondary" className="px-2 py-1 text-xs" onClick={() => openEdit(snippet)}>
-                    Düzenle
+                    {t('snippets.edit')}
                   </Button>
                   <Button
                     type="button"
@@ -147,7 +162,7 @@ export function SnippetPanel({ mode, embedded = false, onApply }: SnippetPanelPr
                     className="px-2 py-1 text-xs"
                     onClick={() => void handleDelete(snippet)}
                   >
-                    Sil
+                    {t('snippets.delete')}
                   </Button>
                 </div>
               )}

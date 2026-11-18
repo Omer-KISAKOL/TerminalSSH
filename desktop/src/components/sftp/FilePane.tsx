@@ -11,6 +11,7 @@ import {
 } from '@/lib/file-selection'
 
 import { Button } from '@/components/ui/Button'
+import { useLocale } from '@/hooks/useLocale'
 
 type FilePaneProps = {
   side: FilePaneSide
@@ -37,12 +38,12 @@ type FilePaneProps = {
   actionDisabled?: boolean
 }
 
-function formatDate(value: string | null): string {
+function formatDate(value: string | null, locale: 'tr' | 'en'): string {
   if (!value) {
     return '—'
   }
 
-  return new Date(value).toLocaleString('tr-TR', {
+  return new Date(value).toLocaleString(locale === 'tr' ? 'tr-TR' : 'en-US', {
     dateStyle: 'short',
     timeStyle: 'short',
   })
@@ -85,6 +86,7 @@ export function FilePane({
   onAction,
   actionDisabled = false,
 }: FilePaneProps) {
+  const { locale, t } = useLocale()
   const [dragDepth, setDragDepth] = useState(0)
   const isDropTarget = dropActive || dragDepth > 0
 
@@ -154,9 +156,9 @@ export function FilePane({
           <h3 className="text-sm font-medium text-text">{title}</h3>
           <p className="truncate font-mono text-xs text-text-muted">{path || '—'}</p>
         </div>
-        <div className="flex shrink-0 gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           <Button variant="ghost" className="px-2 py-1 text-xs" onClick={onGoUp}>
-            Üst dizin
+            {t('filePane.parentDir')}
           </Button>
           {actionLabel && onAction ? (
             <Button
@@ -179,7 +181,7 @@ export function FilePane({
 
       {isDropTarget ? (
         <p className="border-b border-accent/30 bg-accent/10 px-3 py-2 text-sm text-accent">
-          {side === 'local' ? 'Dosyaları buraya bırakarak indirin' : 'Dosyaları buraya bırakarak yükleyin'}
+          {side === 'local' ? t('sftp.dropDownload') : t('sftp.dropUpload')}
         </p>
       ) : null}
 
@@ -187,23 +189,23 @@ export function FilePane({
         <table className="w-full text-left text-sm">
           <thead className="sticky top-0 bg-surface-raised text-xs text-text-muted">
             <tr>
-              <th className="px-3 py-2 font-medium">Ad</th>
-              <th className="px-3 py-2 font-medium">Değiştirilme</th>
-              <th className="px-3 py-2 font-medium">Boyut</th>
-              <th className="px-3 py-2 font-medium">Tür</th>
+              <th className="px-3 py-2 font-medium">{t('filePane.name')}</th>
+              <th className="px-3 py-2 font-medium">{t('filePane.modified')}</th>
+              <th className="px-3 py-2 font-medium">{t('filePane.size')}</th>
+              <th className="px-3 py-2 font-medium">{t('filePane.type')}</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
                 <td colSpan={4} className="px-3 py-8 text-center text-text-muted">
-                  Yükleniyor…
+                  {t('common.loading')}
                 </td>
               </tr>
             ) : entries.length === 0 ? (
               <tr>
                 <td colSpan={4} className="px-3 py-8 text-center text-text-muted">
-                  Bu dizin boş.
+                  {t('filePane.emptyDir')}
                 </td>
               </tr>
             ) : (
@@ -250,14 +252,16 @@ export function FilePane({
                         <div className="font-mono text-[11px] text-text-muted">{entry.permissions}</div>
                       ) : null}
                     </td>
-                    <td className="px-3 py-2 text-text-muted">{formatDate(entry.modifiedAt)}</td>
+                    <td className="px-3 py-2 text-text-muted">
+                      {formatDate(entry.modifiedAt, locale)}
+                    </td>
                     <td className="px-3 py-2 text-text-muted">{formatSize(entry.size)}</td>
                     <td className="px-3 py-2 text-text-muted">
                       {entry.kind === 'directory'
-                        ? 'klasör'
+                        ? t('filePane.kindFolder')
                         : entry.kind === 'symlink'
-                          ? 'bağlantı'
-                          : 'dosya'}
+                          ? t('filePane.kindSymlink')
+                          : t('filePane.kindFile')}
                     </td>
                   </tr>
                 )

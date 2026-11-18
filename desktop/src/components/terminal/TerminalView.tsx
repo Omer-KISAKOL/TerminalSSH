@@ -5,6 +5,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useCommandQueue, type CommandQueueInputOptions } from '@/hooks/useCommandQueue'
 import { useTerminal } from '@/hooks/useTerminal'
 
+import { useLocale } from '@/hooks/useLocale'
+
 import { CommandQueueBanner } from './CommandQueueBanner'
 import { TerminalContextMenu } from './TerminalContextMenu'
 
@@ -28,6 +30,7 @@ type ContextMenuState = {
 }
 
 export function TerminalView({ onReady, onInput, onResize }: TerminalViewProps) {
+  const { t } = useLocale()
   const { snapshot, handleInput, observeOutput, begin, cancel, dropPending, setWriteLocal } =
     useCommandQueue(onInput)
   const terminal = useTerminal({ onInput: handleInput, onResize })
@@ -66,13 +69,13 @@ export function TerminalView({ onReady, onInput, onResize }: TerminalViewProps) 
   }, [])
 
   return (
-    <div className="relative min-h-0 flex-1 overflow-hidden bg-[#0f1117] p-2">
+    <div className="terminal-host relative min-h-0 flex-1 overflow-hidden">
       <div
         ref={containerRef}
-        className="h-full w-full"
+        className="terminal-surface h-full min-h-0 w-full"
         onContextMenu={handleContextMenu}
         role="application"
-        aria-label="SSH terminali"
+        aria-label={t('terminal.ariaLabel')}
       />
 
       <CommandQueueBanner

@@ -4,6 +4,7 @@ import type { ConnectionFormValues } from '@shared/contracts/ssh'
 
 import { Button } from '@/components/ui/Button'
 import { PasswordInput } from '@/components/ui/PasswordInput'
+import { useLocale } from '@/hooks/useLocale'
 import { DEFAULT_CONNECTION_FORM, validateConnectionForm } from '@/lib/connection-form'
 import { toUserErrorMessage } from '@/lib/user-error'
 
@@ -20,6 +21,7 @@ export function ConnectionForm({
   initialValues = DEFAULT_CONNECTION_FORM,
   onSubmit,
 }: ConnectionFormProps) {
+  const { t, messages } = useLocale()
   const [values, setValues] = useState<ConnectionFormValues>(initialValues)
   const [validationError, setValidationError] = useState<string | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -48,7 +50,7 @@ export function ConnectionForm({
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
-    const error = validateConnectionForm(values)
+    const error = validateConnectionForm(values, messages.validation)
 
     if (error) {
       setValidationError(error)
@@ -61,7 +63,7 @@ export function ConnectionForm({
     try {
       await onSubmit(values)
     } catch (error) {
-      setSubmitError(toUserErrorMessage(error))
+      setSubmitError(toUserErrorMessage(error, t('errors.connectionFailed')))
     } finally {
       setIsSubmitting(false)
     }
@@ -79,7 +81,7 @@ export function ConnectionForm({
         {showProfileFields ? (
           <div>
             <label htmlFor="name" className="mb-1.5 block text-sm font-medium text-text">
-              Sunucu adı
+              {t('connection.serverName')}
             </label>
             <input
               id="name"
@@ -96,7 +98,7 @@ export function ConnectionForm({
 
         <div>
           <label htmlFor="host" className="mb-1.5 block text-sm font-medium text-text">
-            Sunucu adresi
+            {t('connection.serverHost')}
           </label>
           <input
             id="host"
@@ -105,7 +107,7 @@ export function ConnectionForm({
             disabled={isDisabled}
             value={values.host}
             onChange={(event) => updateField('host', event.target.value)}
-            placeholder="192.168.1.10 veya sunucu.example.com"
+            placeholder={t('connection.hostPlaceholder')}
             className="field-input"
           />
         </div>
@@ -113,23 +115,26 @@ export function ConnectionForm({
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label htmlFor="port" className="mb-1.5 block text-sm font-medium text-text">
-              Port
+              {t('common.port')}
             </label>
             <input
               id="port"
-              type="number"
-              min={1}
-              max={65535}
+              type="tel"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              autoComplete="off"
               disabled={isDisabled}
               value={values.port}
-              onChange={(event) => updateField('port', event.target.value)}
-              className="field-input"
+              onChange={(event) =>
+                updateField('port', event.target.value.replace(/\D/g, '').slice(0, 5))
+              }
+              className="field-input port-input"
             />
           </div>
 
           <div>
             <label htmlFor="username" className="mb-1.5 block text-sm font-medium text-text">
-              Kullanıcı adı
+              {t('connection.username')}
             </label>
             <input
               id="username"
@@ -144,7 +149,7 @@ export function ConnectionForm({
         </div>
 
         <fieldset>
-          <legend className="mb-1.5 block text-sm font-medium text-text">Kimlik doğrulama</legend>
+          <legend className="mb-1.5 block text-sm font-medium text-text">{t('connection.authLegend')}</legend>
           <div className="flex flex-wrap gap-4">
             <label className="flex items-center gap-2 text-sm text-text">
               <input
@@ -155,7 +160,7 @@ export function ConnectionForm({
                 checked={values.authType === 'password'}
                 onChange={() => updateField('authType', 'password')}
               />
-              Parola
+              {t('connection.password')}
             </label>
             <label className="flex items-center gap-2 text-sm text-text">
               <input
@@ -166,7 +171,7 @@ export function ConnectionForm({
                 checked={values.authType === 'privateKey'}
                 onChange={() => updateField('authType', 'privateKey')}
               />
-              Özel anahtar
+              {t('connection.privateKey')}
             </label>
           </div>
         </fieldset>
@@ -174,7 +179,7 @@ export function ConnectionForm({
         {values.authType === 'password' ? (
           <div>
             <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-text">
-              Parola
+              {t('connection.password')}
             </label>
             <PasswordInput
               id="password"
@@ -182,11 +187,15 @@ export function ConnectionForm({
               disabled={isDisabled}
               value={values.password}
               onChange={(value) => updateField('password', value)}
-              placeholder={values.hasSavedPassword ? 'Kayıtlı parola kullanılacak' : undefined}
+              placeholder={
+                mode !== 'edit' && values.hasSavedPassword
+                  ? t('connection.savedPasswordHint')
+                  : undefined
+              }
             />
-            {values.hasSavedPassword ? (
+            {mode !== 'edit' && values.hasSavedPassword ? (
               <p className="mt-1 text-xs text-text-muted">
-                Bu profilde kayıtlı parola var. Değiştirmek için yeni parola girin.
+                {t('connection.savedPasswordHelp')}
               </p>
             ) : null}
             {showProfileFields ? (
@@ -197,7 +206,7 @@ export function ConnectionForm({
                   checked={values.savePassword}
                   onChange={(event) => updateField('savePassword', event.target.checked)}
                 />
-                Parolayı kaydet
+                {t('connection.savePassword')}
               </label>
             ) : null}
           </div>
@@ -205,7 +214,7 @@ export function ConnectionForm({
           <>
             <div>
               <label htmlFor="privateKeyPath" className="mb-1.5 block text-sm font-medium text-text">
-                Özel anahtar dosyası
+                {t('connection.privateKeyFile')}
               </label>
               <div className="flex gap-2">
                 <input
@@ -214,23 +223,23 @@ export function ConnectionForm({
                   readOnly
                   disabled={isDisabled}
                   value={values.privateKeyPath}
-                  placeholder="Dosya seçilmedi"
+                  placeholder={t('connection.privateKeyPlaceholder')}
                   className="field-input min-w-0 flex-1"
                 />
                 <Button
                   type="button"
                   disabled={isDisabled}
                   onClick={() => void handleSelectPrivateKey()}
-                  aria-label="Özel anahtar dosyası seç"
+                  aria-label={t('connection.privateKeyAria')}
                 >
-                  Seç
+                  {t('common.select')}
                 </Button>
               </div>
             </div>
 
             <div>
               <label htmlFor="passphrase" className="mb-1.5 block text-sm font-medium text-text">
-                Passphrase (isteğe bağlı)
+                {t('connection.passphraseOptional')}
               </label>
               <PasswordInput
                 id="passphrase"
@@ -239,12 +248,14 @@ export function ConnectionForm({
                 value={values.passphrase}
                 onChange={(value) => updateField('passphrase', value)}
                 placeholder={
-                  values.hasSavedPassphrase ? 'Kayıtlı passphrase kullanılacak' : undefined
+                  mode !== 'edit' && values.hasSavedPassphrase
+                    ? t('connection.savedPassphraseHint')
+                    : undefined
                 }
               />
-              {values.hasSavedPassphrase ? (
+              {mode !== 'edit' && values.hasSavedPassphrase ? (
                 <p className="mt-1 text-xs text-text-muted">
-                  Bu profilde kayıtlı passphrase var. Değiştirmek için yeni passphrase girin.
+                  {t('connection.savedPassphraseHelp')}
                 </p>
               ) : null}
               {showProfileFields ? (
@@ -255,7 +266,7 @@ export function ConnectionForm({
                     checked={values.savePassphrase}
                     onChange={(event) => updateField('savePassphrase', event.target.checked)}
                   />
-                  Passphrase kaydet
+                  {t('connection.savePassphrase')}
                 </label>
               ) : null}
             </div>
@@ -270,7 +281,7 @@ export function ConnectionForm({
               checked={values.saveProfile}
               onChange={(event) => updateField('saveProfile', event.target.checked)}
             />
-            Bu sunucuyu kaydet
+            {t('connection.saveServer')}
           </label>
         ) : null}
       </div>
@@ -288,7 +299,7 @@ export function ConnectionForm({
         loading={isSubmitting}
         className="mt-6 w-full py-2.5"
       >
-        {mode === 'edit' ? 'Güncelle ve Bağlan' : 'Bağlan'}
+        {mode === 'edit' ? t('connection.updateAndConnect') : t('connection.connect')}
       </Button>
     </form>
   )
