@@ -52,18 +52,31 @@ export function SnippetPanel({ mode, embedded = false, onApply }: SnippetPanelPr
 
   const rootClass = embedded
     ? 'flex max-h-96 flex-col bg-surface-raised'
-    : 'flex w-96 shrink-0 flex-col border-l border-border bg-surface-raised'
+    : mode === 'terminal'
+      ? 'flex min-h-0 w-80 shrink-0 flex-col border-l border-border bg-surface-raised lg:w-96'
+      : 'flex w-96 shrink-0 flex-col border-l border-border bg-surface-raised'
 
   return (
     <aside className={rootClass}>
-      <div className="border-b border-border p-3">
+      <div
+        className={
+          mode === 'terminal' && !embedded
+            ? 'shrink-0 border-b border-border px-3 py-2.5'
+            : 'border-b border-border p-3'
+        }
+      >
         <div className="flex items-center gap-2">
-          <Button type="button" variant="secondary" className="flex-1 justify-start" onClick={openCreate}>
+          <Button
+            type="button"
+            variant="secondary"
+            className="h-8 flex-1 justify-start text-xs font-medium"
+            onClick={openCreate}
+          >
             {'{ }'} {t('snippets.new')}
           </Button>
         </div>
         <input
-          className="field-input mt-2"
+          className="field-input mt-2 text-sm"
           placeholder={t('snippets.searchPlaceholder')}
           value={query}
           onChange={(event) => setQuery(event.target.value)}

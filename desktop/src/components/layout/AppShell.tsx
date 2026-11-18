@@ -295,13 +295,26 @@ export function AppShell({ appVersion }: AppShellProps) {
 
   const showWorkspace = view === 'workspace' && workspace.hasOpenTabs
   const isConnectBusy = workspace.isBusy || connectingProfileId !== null
-  const serversModeActive = view === 'servers' || view === 'form'
-  const sftpModeActive = view === 'workspace' && workspace.activeTab?.type === 'sftp'
+  const serversModeActive =
+    !settingsOpen && (view === 'servers' || view === 'form')
+  const sftpModeActive =
+    !settingsOpen && view === 'workspace' && workspace.activeTab?.type === 'sftp'
+  const settingsModeActive = settingsOpen
 
   const handleSelectSftpMode = useCallback(() => {
+    setSettingsOpen(false)
     void workspace.focusOrOpenSftpTab()
     setView('workspace')
   }, [workspace])
+
+  const handleSelectServersMode = useCallback(() => {
+    setSettingsOpen(false)
+    handleBackToServers()
+  }, [handleBackToServers])
+
+  const handleSelectSettingsMode = useCallback(() => {
+    setSettingsOpen(true)
+  }, [])
   const showAuthGate = !auth.isLoading && !auth.isAuthenticated && !offlineMode
 
   useEffect(() => {
@@ -432,16 +445,17 @@ export function AppShell({ appVersion }: AppShellProps) {
         onSftpConnectProfile={(profile) => void handleProfileSftpConnect(profile)}
         onEditProfile={openProfile}
         onDeleteProfile={(profile) => void handleProfileDelete(profile)}
-        onOpenSettings={() => setSettingsOpen(true)}
       />
 
       <main className="relative flex min-h-0 min-w-0 flex-1 flex-col">
         <MainModeBar
           serversActive={serversModeActive}
           sftpActive={sftpModeActive}
+          settingsActive={settingsModeActive}
           onOpenSidebar={() => setSidebarOpen(true)}
-          onSelectServers={handleBackToServers}
+          onSelectServers={handleSelectServersMode}
           onSelectSftp={handleSelectSftpMode}
+          onSelectSettings={handleSelectSettingsMode}
           onNewConnection={handleNewConnection}
           onAddTerminalTab={() => {
             workspace.addTerminalTab()
@@ -460,16 +474,9 @@ export function AppShell({ appVersion }: AppShellProps) {
               activeTabId={workspace.activeTabId}
               onSelectTab={workspace.setActiveTabId}
               onCloseTab={(tabId) => void handleCloseTab(tabId)}
-              onAddTerminalTab={() => {
-                workspace.addTerminalTab()
-                setView('workspace')
-              }}
-              onAddSftpTab={() => {
-                void workspace.addSftpTab()
-                setView('workspace')
-              }}
             />
 
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
             {workspace.tabs.map((tab) =>
               tab.type === 'terminal' ? (
                 <TerminalTabPanel
@@ -488,6 +495,18 @@ export function AppShell({ appVersion }: AppShellProps) {
                   onClear={(tabId) => terminalApisRef.current.get(tabId)?.clear()}
                   onBackToForm={handleBackToServers}
                   onOpenSidebar={() => setSidebarOpen(true)}
+                  profiles={profiles.profiles}
+                  selectedProfileId={selectedProfileId}
+                  lastConnectedProfileId={profiles.lastConnectedProfileId}
+                  connectingProfileId={connectingProfileId}
+                  connectDisabled={isConnectBusy}
+                  profilesLoading={profiles.isLoading}
+                  profilesError={profiles.error}
+                  onNewConnection={handleNewConnection}
+                  onConnectProfile={(profile) => void handleProfileConnect(profile)}
+                  onSftpConnectProfile={(profile) => void handleProfileSftpConnect(profile)}
+                  onEditProfile={openProfile}
+                  onDeleteProfile={(profile) => void handleProfileDelete(profile)}
                 />
               ) : (
                 <SftpTabPanel
@@ -503,6 +522,7 @@ export function AppShell({ appVersion }: AppShellProps) {
                 />
               ),
             )}
+            </div>
           </div>
         ) : null}
 

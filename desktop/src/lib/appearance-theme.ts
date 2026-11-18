@@ -418,6 +418,7 @@ export function applyAppearanceTheme(id: AppearanceThemeId): AppearanceTheme {
   root.style.setProperty('--color-on-connected', foregroundOn(colors.statusConnected))
   root.style.setProperty('--color-status-error', statusError)
   root.style.setProperty('--color-on-danger', '#ffffff')
+  root.style.setProperty('--color-terminal-background', colors.terminalBackground)
   root.dataset.appearanceTheme = id
 
   return theme

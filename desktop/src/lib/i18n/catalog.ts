@@ -169,6 +169,15 @@ export const messagesTr = {
     paste: 'Yapıştır',
     serverTabs: 'Sunucu sekmeleri',
     contextMenu: 'Terminal menüsü',
+    ariaLabel: 'SSH terminal oturumu',
+    actionsGroup: 'Terminal işlemleri',
+  },
+  commandQueue: {
+    runningHint: 'Komut çalışıyor. Bitince sıradaki gönderilecek.',
+    readyHint: 'Komutlar hazır. Enter ile sırayla çalışır.',
+    cancel: 'İptal',
+    run: 'Çalıştır',
+    dropQueue: 'Sırayı iptal et',
   },
   snippets: {
     new: 'Yeni Snippet',
@@ -425,6 +434,15 @@ export const messagesEn = {
     paste: 'Paste',
     serverTabs: 'Server tabs',
     contextMenu: 'Terminal menu',
+    ariaLabel: 'SSH terminal session',
+    actionsGroup: 'Terminal actions',
+  },
+  commandQueue: {
+    runningHint: 'Running a command. The next one will run when it finishes.',
+    readyHint: 'Commands are queued. Press Enter to run them in order.',
+    cancel: 'Cancel',
+    run: 'Run',
+    dropQueue: 'Cancel queue',
   },
   snippets: {
     new: 'New snippet',

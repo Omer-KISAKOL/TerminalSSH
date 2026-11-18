@@ -50,8 +50,11 @@ export function useTerminal({ onInput, onResize }: UseTerminalOptions): UseTermi
 
     const terminal = new Terminal({
       cursorBlink: true,
-      fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-      fontSize: 14,
+      fontFamily:
+        'ui-monospace, "Cascadia Mono", "Cascadia Code", SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+      fontSize: 13,
+      lineHeight: 1.2,
+      letterSpacing: 0,
       theme: {
         background: palette.terminalBackground,
         foreground: palette.terminalForeground,

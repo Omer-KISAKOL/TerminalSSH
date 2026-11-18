@@ -27,7 +27,6 @@ type SidebarProps = {
   onSftpConnectProfile: (profile: PublicServerProfile) => void
   onEditProfile: (profile: PublicServerProfile) => void
   onDeleteProfile: (profile: PublicServerProfile) => void
-  onOpenSettings: () => void
 }
 
 export function Sidebar({
@@ -49,7 +48,6 @@ export function Sidebar({
   onSftpConnectProfile,
   onEditProfile,
   onDeleteProfile,
-  onOpenSettings,
 }: SidebarProps) {
   const { t } = useLocale()
 
@@ -99,13 +97,7 @@ export function Sidebar({
           </Button>
         </div>
 
-        <div className="px-4 pb-3">
-          <Button variant="secondary" className="w-full py-2" onClick={onOpenSettings}>
-            {t('sidebar.settings')}
-          </Button>
-        </div>
-
-        <section className="flex min-h-0 flex-1 flex-col px-4 pb-4">
+        <section className="flex min-h-0 flex-1 flex-col px-4 pb-4 pt-1">
           <h2 className="mb-2 px-1 text-xs font-medium uppercase tracking-wide text-text-muted">
             {t('sidebar.savedServers')}
           </h2>
