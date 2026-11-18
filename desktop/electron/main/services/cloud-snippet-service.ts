@@ -3,7 +3,7 @@ import type { CloudSnippet, SaveCloudSnippetInput } from '@terminalssh/api-clien
 
 import type { SaveSnippetRequest, Snippet } from '@shared/contracts/snippet'
 
-import { resolveApiBaseUrl } from '@shared/constants/api'
+import { getApiBaseUrl as resolveApiBaseUrl } from '../api-base-url'
 
 import { authStore } from './auth-store'
 

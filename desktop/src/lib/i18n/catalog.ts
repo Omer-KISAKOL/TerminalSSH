@@ -531,7 +531,11 @@ export const messagesEn = {
   },
 } as const
 
-export type Messages = typeof messagesTr
+type WidenStrings<T> = T extends string
+  ? string
+  : { -readonly [K in keyof T]: WidenStrings<T[K]> }
+
+export type Messages = WidenStrings<typeof messagesTr>
 export type MessageKey = {
   [K in keyof Messages]: Messages[K] extends string
     ? K

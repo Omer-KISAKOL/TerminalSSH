@@ -22,4 +22,6 @@ export const validationMessagesEn = {
   passphraseSaveRequired: 'Enter a passphrase to save it.',
 } as const
 
-export type ValidationMessages = typeof validationMessagesTr
+export type ValidationMessages = {
+  -readonly [K in keyof typeof validationMessagesTr]: string
+}

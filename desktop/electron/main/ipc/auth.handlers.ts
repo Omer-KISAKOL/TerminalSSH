@@ -1,6 +1,6 @@
 import { ipcMain } from 'electron'
 
-import { resolveApiBaseUrl } from '@shared/constants/api'
+import { getApiBaseUrl as resolveApiBaseUrl } from '../api-base-url'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
 import { assertLoginRequest, assertRegisterRequest } from '@shared/validation/auth'
 
