@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import type { SaveSnippetRequest, Snippet } from '@shared/contracts/snippet'
 
 import { Button } from '@/components/ui/Button'
+import { useLocale } from '@/hooks/useLocale'
 
 type SnippetEditorDialogProps = {
   snippet?: Snippet | null
@@ -17,6 +18,7 @@ export function SnippetEditorDialog({
   onClose,
   onSave,
 }: SnippetEditorDialogProps) {
+  const { t } = useLocale()
   const [name, setName] = useState('')
   const [content, setContent] = useState('')
   const [saving, setSaving] = useState(false)
@@ -40,7 +42,7 @@ export function SnippetEditorDialog({
     event.preventDefault()
 
     if (!name.trim()) {
-      setError('Snippet adı gerekli.')
+      setError(t('snippets.nameRequired'))
       return
     }
 
@@ -55,7 +57,7 @@ export function SnippetEditorDialog({
       })
       onClose()
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : 'Snippet kaydedilemedi.')
+      setError(saveError instanceof Error ? saveError.message : t('snippets.saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -68,12 +70,12 @@ export function SnippetEditorDialog({
         onSubmit={(event) => void handleSubmit(event)}
       >
         <h3 className="text-lg font-semibold text-text">
-          {snippet ? 'Snippet düzenle' : 'Yeni snippet'}
+          {snippet ? t('snippets.editTitle') : t('snippets.createTitle')}
         </h3>
 
         <div className="mt-4 space-y-3">
           <label className="block text-sm">
-            <span className="mb-1 block text-text-muted">Ad</span>
+            <span className="mb-1 block text-text-muted">{t('snippets.nameLabel')}</span>
             <input
               className="field-input"
               value={name}
@@ -83,7 +85,7 @@ export function SnippetEditorDialog({
           </label>
 
           <label className="block text-sm">
-            <span className="mb-1 block text-text-muted">İçerik</span>
+            <span className="mb-1 block text-text-muted">{t('snippets.contentLabel')}</span>
             <textarea
               className="field-input min-h-32 font-mono"
               value={content}
@@ -96,10 +98,10 @@ export function SnippetEditorDialog({
 
         <div className="mt-5 flex justify-end gap-2">
           <Button type="button" variant="ghost" onClick={onClose} disabled={saving}>
-            İptal
+            {t('common.cancel')}
           </Button>
           <Button type="submit" variant="primary" loading={saving}>
-            Kaydet
+            {t('common.save')}
           </Button>
         </div>
       </form>

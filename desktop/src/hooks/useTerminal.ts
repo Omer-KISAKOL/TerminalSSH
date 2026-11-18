@@ -2,6 +2,7 @@ import { FitAddon } from '@xterm/addon-fit'
 import { Terminal } from '@xterm/xterm'
 import { useCallback, useEffect, useRef } from 'react'
 
+import { useAppearanceTheme } from '@/hooks/useAppearanceTheme'
 import { debounce } from '@/lib/debounce'
 
 type UseTerminalOptions = {
@@ -21,11 +22,17 @@ type UseTerminalResult = {
 }
 
 export function useTerminal({ onInput, onResize }: UseTerminalOptions): UseTerminalResult {
+  const { theme } = useAppearanceTheme()
   const containerRef = useRef<HTMLDivElement | null>(null)
   const terminalRef = useRef<Terminal | null>(null)
   const fitAddonRef = useRef<FitAddon | null>(null)
   const onInputRef = useRef(onInput)
   const onResizeRef = useRef(onResize)
+  const themeRef = useRef(theme)
+
+  useEffect(() => {
+    themeRef.current = theme
+  }, [theme])
 
   useEffect(() => {
     onInputRef.current = onInput
@@ -39,14 +46,16 @@ export function useTerminal({ onInput, onResize }: UseTerminalOptions): UseTermi
       return
     }
 
+    const palette = themeRef.current.colors
+
     const terminal = new Terminal({
       cursorBlink: true,
       fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
       fontSize: 14,
       theme: {
-        background: '#0f1117',
-        foreground: '#22c55e',
-        cursor: '#22c55e',
+        background: palette.terminalBackground,
+        foreground: palette.terminalForeground,
+        cursor: palette.terminalCursor,
       },
       scrollback: 5000,
     })
@@ -124,6 +133,20 @@ export function useTerminal({ onInput, onResize }: UseTerminalOptions): UseTermi
       fitAddonRef.current = null
     }
   }, [])
+
+  useEffect(() => {
+    const terminal = terminalRef.current
+
+    if (!terminal) {
+      return
+    }
+
+    terminal.options.theme = {
+      background: theme.colors.terminalBackground,
+      foreground: theme.colors.terminalForeground,
+      cursor: theme.colors.terminalCursor,
+    }
+  }, [theme])
 
   const clear = useCallback(() => {
     terminalRef.current?.clear()

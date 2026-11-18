@@ -1,5 +1,7 @@
 import { useState } from 'react'
 
+import { useLocale } from '@/hooks/useLocale'
+
 type PasswordInputProps = {
   id?: string
   value: string
@@ -8,6 +10,7 @@ type PasswordInputProps = {
   autoComplete?: string
   placeholder?: string
   className?: string
+  defaultVisible?: boolean
 }
 
 function EyeIcon({ open }: { open: boolean }) {
@@ -38,8 +41,10 @@ export function PasswordInput({
   autoComplete,
   placeholder,
   className = 'field-input',
+  defaultVisible = false,
 }: PasswordInputProps) {
-  const [visible, setVisible] = useState(false)
+  const { t } = useLocale()
+  const [visible, setVisible] = useState(defaultVisible)
 
   return (
     <div className="relative">
@@ -56,7 +61,7 @@ export function PasswordInput({
       <button
         type="button"
         disabled={disabled}
-        aria-label={visible ? 'Parolayı gizle' : 'Parolayı göster'}
+        aria-label={visible ? t('passwordInput.hide') : t('passwordInput.show')}
         aria-pressed={visible}
         onClick={() => setVisible((current) => !current)}
         className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-text-muted transition hover:text-text disabled:cursor-not-allowed disabled:opacity-50"

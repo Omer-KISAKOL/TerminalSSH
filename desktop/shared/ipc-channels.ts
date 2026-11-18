@@ -1,6 +1,9 @@
 export const IPC_CHANNELS = {
   app: {
     getVersion: 'app:get-version',
+    openSftpTab: 'app:open-sftp-tab',
+    focusSftpTab: 'app:focus-sftp-tab',
+    syncLocale: 'app:sync-locale',
   },
   ssh: {
     connect: 'ssh:connect',
@@ -28,6 +31,7 @@ export const IPC_CHANNELS = {
     importLocal: 'profiles:import-local',
     exportToFile: 'profiles:export-to-file',
     importFromFile: 'profiles:import-from-file',
+    getEditSecrets: 'profiles:get-edit-secrets',
   },
   snippets: {
     list: 'snippets:list',

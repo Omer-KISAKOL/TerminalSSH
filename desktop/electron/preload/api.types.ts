@@ -1,6 +1,7 @@
 import type { AuthUser } from '@shared/contracts/auth'
 import type { HostVerifyRequestEvent } from '@shared/contracts/host'
 import type {
+  ProfileEditSecrets,
   ProfileExportResult,
   ProfileImportResult,
   ProfileMigrationCandidate,
@@ -24,6 +25,9 @@ import type {
 export interface DesktopApi {
   app: {
     getVersion(): Promise<string>
+    syncLocale(locale: 'tr' | 'en'): Promise<boolean>
+    onOpenSftpTab(callback: () => void): () => void
+    onFocusSftpTab(callback: () => void): () => void
   }
   ssh: {
     connect(input: ConnectRequest): Promise<ConnectResponse>
@@ -65,6 +69,7 @@ export interface DesktopApi {
     importLocal(): Promise<PublicServerProfile[]>
     exportToFile(input: { includeSecrets: boolean }): Promise<ProfileExportResult>
     importFromFile(): Promise<ProfileImportResult>
+    getEditSecrets(id: string): Promise<ProfileEditSecrets>
   }
   snippets: {
     list(): Promise<ProfileSnippet[]>

@@ -1,5 +1,7 @@
 import { useEffect, useRef } from 'react'
 
+import { useLocale } from '@/hooks/useLocale'
+
 type TerminalContextMenuProps = {
   x: number
   y: number
@@ -17,6 +19,7 @@ export function TerminalContextMenu({
   onClear,
   onClose,
 }: TerminalContextMenuProps) {
+  const { t } = useLocale()
   const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -50,7 +53,7 @@ export function TerminalContextMenu({
       ref={menuRef}
       role="menu"
       tabIndex={-1}
-      aria-label="Terminal menüsü"
+      aria-label={t('terminal.contextMenu')}
       className="fixed z-50 min-w-40 rounded-lg border border-border bg-surface-raised py-1 shadow-xl focus:outline-none"
       style={{ left: x, top: y }}
     >
@@ -63,7 +66,7 @@ export function TerminalContextMenu({
           onClose()
         }}
       >
-        Kopyala
+        {t('terminal.copy')}
       </button>
       <button
         type="button"
@@ -74,7 +77,7 @@ export function TerminalContextMenu({
           onClose()
         }}
       >
-        Yapıştır
+        {t('terminal.paste')}
       </button>
       <button
         type="button"
@@ -85,7 +88,7 @@ export function TerminalContextMenu({
           onClose()
         }}
       >
-        Temizle
+        {t('terminal.clear')}
       </button>
     </div>
   )

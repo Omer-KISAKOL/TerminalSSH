@@ -2,6 +2,7 @@ import type { ConnectionStatus } from '@shared/contracts/ssh'
 
 import { Button } from '@/components/ui/Button'
 import { StatusBadge } from '@/components/ui/StatusBadge'
+import { useLocale } from '@/hooks/useLocale'
 
 type TerminalToolbarProps = {
   serverLabel: string | null
@@ -22,6 +23,7 @@ export function TerminalToolbar({
   onClear,
   onOpenSidebar,
 }: TerminalToolbarProps) {
+  const { t } = useLocale()
   const canReconnect = status === 'disconnected' || status === 'error'
   const canDisconnect = status === 'connected' || status === 'connecting' || status === 'error'
 
@@ -33,20 +35,22 @@ export function TerminalToolbar({
             variant="ghost"
             className="px-2 py-1.5 md:hidden"
             onClick={onOpenSidebar}
-            aria-label="Kenar çubuğunu aç"
+            aria-label={t('nav.openSidebar')}
           >
             ☰
           </Button>
         ) : null}
         <div className="min-w-0">
-          <h2 className="truncate text-sm font-medium text-text">{serverLabel ?? 'SSH Terminal'}</h2>
+          <h2 className="truncate text-sm font-medium text-text">
+            {serverLabel ?? t('terminal.defaultTitle')}
+          </h2>
           <StatusBadge status={status} className="mt-1" />
         </div>
       </div>
 
       <div className="flex shrink-0 items-center gap-2">
         <Button variant="secondary" className="px-2.5 py-1.5 text-xs" onClick={onClear}>
-          Temizle
+          {t('terminal.clear')}
         </Button>
         <Button
           variant="secondary"
@@ -55,7 +59,7 @@ export function TerminalToolbar({
           disabled={!canReconnect}
           loading={isBusy && canReconnect}
         >
-          Yeniden Bağlan
+          {t('terminal.reconnect')}
         </Button>
         <Button
           variant="danger"
@@ -64,7 +68,7 @@ export function TerminalToolbar({
           disabled={!canDisconnect}
           loading={isBusy && status === 'disconnecting'}
         >
-          Bağlantıyı Kes
+          {t('terminal.disconnect')}
         </Button>
       </div>
     </header>

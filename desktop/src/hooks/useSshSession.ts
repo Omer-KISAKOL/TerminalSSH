@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 import type { ConnectRequest, ConnectionFormValues, ConnectionStatus } from '@shared/contracts/ssh'
 
+import { useLocale } from '@/hooks/useLocale'
 import { toUserErrorMessage } from '@/lib/user-error'
 
 type UseSshSessionOptions = {
@@ -31,6 +32,12 @@ export function useSshSession({
   onData,
   onTerminalMessage,
 }: UseSshSessionOptions): UseSshSessionResult {
+  const { messages, t } = useLocale()
+  const messagesRef = useRef(messages)
+  messagesRef.current = messages
+  const tRef = useRef(t)
+  tRef.current = t
+
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [status, setStatus] = useState<ConnectionStatus>('idle')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -91,9 +98,9 @@ export function useSshSession({
       }
 
       if (event.status === 'error') {
-        const message = event.message ?? 'Bağlantı kurulamadı.'
+        const message = event.message ?? messagesRef.current.errors.connectionFailed
         setErrorMessage(message)
-        onTerminalMessageRef.current(`[Hata: ${message}]`)
+        onTerminalMessageRef.current(tRef.current('errors.errorLine', { message }))
         setSessionId(null)
         sessionIdRef.current = null
         disconnectingRef.current = false
@@ -155,12 +162,12 @@ export function useSshSession({
         setSessionId(response.sessionId)
         sessionIdRef.current = response.sessionId
       } catch (error) {
-        const message = toUserErrorMessage(error)
+        const message = toUserErrorMessage(error, messagesRef.current.errors.connectionFailed)
         setStatus('error')
         setErrorMessage(message)
 
         if (!sessionIdRef.current) {
-          onTerminalMessageRef.current(`[Hata: ${message}]`)
+          onTerminalMessageRef.current(tRef.current('errors.errorLine', { message }))
         }
       }
     },

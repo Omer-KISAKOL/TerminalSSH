@@ -16,6 +16,7 @@ import {
   type FilePaneSide,
   type TransferDragPayload,
 } from '@/lib/file-selection'
+import { useLocale } from '@/hooks/useLocale'
 import { toUserErrorMessage } from '@/lib/user-error'
 
 import { FileContextMenu, type FileContextMenuAction } from './FileContextMenu'
@@ -54,6 +55,7 @@ export function SftpTabPanel({
   onLocalPathChange,
   onRemotePathChange,
 }: SftpTabPanelProps) {
+  const { t, messages } = useLocale()
   const [localEntries, setLocalEntries] = useState<FileEntry[]>([])
   const [remoteEntries, setRemoteEntries] = useState<FileEntry[]>([])
   const [localLoading, setLocalLoading] = useState(false)
@@ -89,12 +91,12 @@ export function SftpTabPanel({
       const entries = await window.desktopApi.files.listLocalDir(directoryPath)
       setLocalEntries(entries)
     } catch (error) {
-      setLocalError(toUserErrorMessage(error, 'Yerel dizin okunamadı.'))
+      setLocalError(toUserErrorMessage(error, t('sftp.localDirError')))
       setLocalEntries([])
     } finally {
       setLocalLoading(false)
     }
-  }, [])
+  }, [t])
 
   const loadRemote = useCallback(async (sessionId: string, directoryPath: string) => {
     setRemoteLoading(true)
@@ -104,12 +106,12 @@ export function SftpTabPanel({
       const entries = await window.desktopApi.sftp.listDir(sessionId, directoryPath)
       setRemoteEntries(entries)
     } catch (error) {
-      setRemoteError(toUserErrorMessage(error, 'Uzak dizin okunamadı.'))
+      setRemoteError(toUserErrorMessage(error, t('sftp.remoteDirError')))
       setRemoteEntries([])
     } finally {
       setRemoteLoading(false)
     }
-  }, [])
+  }, [t])
 
   useEffect(() => {
     if (!isActive || !tab.localPath) {
@@ -161,18 +163,20 @@ export function SftpTabPanel({
       if (failed.length === 0) {
         setTransferMessage(
           uploaded.length === 1
-            ? `${uploaded[0]} yüklendi.`
-            : `${uploaded.length} dosya yüklendi.`,
+            ? t('sftp.uploadOne', { name: uploaded[0] })
+            : t('sftp.uploadMany', { count: uploaded.length }),
         )
       } else if (uploaded.length === 0) {
-        setTransferMessage('Dosyalar yüklenemedi.')
+        setTransferMessage(t('sftp.uploadFailed'))
       } else {
-        setTransferMessage(`${uploaded.length} dosya yüklendi, ${failed.length} dosya başarısız.`)
+        setTransferMessage(
+          t('sftp.uploadPartial', { ok: uploaded.length, fail: failed.length }),
+        )
       }
 
       setTransferring(false)
     },
-    [loadRemote, tab.remotePath, tab.sessionId],
+    [loadRemote, t, tab.remotePath, tab.sessionId],
   )
 
   const downloadFiles = useCallback(
@@ -205,25 +209,25 @@ export function SftpTabPanel({
       if (failed.length === 0) {
         setTransferMessage(
           downloaded.length === 1
-            ? `${downloaded[0]} indirildi.`
-            : `${downloaded.length} dosya indirildi.`,
+            ? t('sftp.downloadOne', { name: downloaded[0] })
+            : t('sftp.downloadMany', { count: downloaded.length }),
         )
       } else if (downloaded.length === 0) {
-        setTransferMessage('Dosyalar indirilemedi.')
+        setTransferMessage(t('sftp.downloadFailed'))
       } else {
         setTransferMessage(
-          `${downloaded.length} dosya indirildi, ${failed.length} dosya başarısız.`,
+          t('sftp.downloadPartial', { ok: downloaded.length, fail: failed.length }),
         )
       }
 
       setTransferring(false)
     },
-    [loadLocal, tab.localPath, tab.sessionId],
+    [loadLocal, t, tab.localPath, tab.sessionId],
   )
 
   const handleConnectProfile = async (profile: PublicServerProfile) => {
     const values = publicProfileToFormValues(profile)
-    const validationError = validateConnectionForm(values)
+    const validationError = validateConnectionForm(values, messages.validation)
 
     if (validationError) {
       setRemoteError(validationError)
@@ -375,7 +379,7 @@ export function SftpTabPanel({
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div className="flex min-h-0 flex-1 flex-col bg-surface-muted">
       {transferMessage ? (
         <p className="border-b border-border bg-surface-raised px-4 py-2 text-sm text-text-muted">
           {transferMessage}
@@ -385,7 +389,7 @@ export function SftpTabPanel({
       <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 p-3 lg:grid-cols-2">
         <FilePane
           side="local"
-          title="Yerel"
+          title={t('sftp.local')}
           path={tab.localPath}
           entries={localEntries}
           selectedPaths={selectedLocalPaths}
@@ -410,7 +414,7 @@ export function SftpTabPanel({
         {connected && tab.sessionId ? (
           <FilePane
             side="remote"
-            title="Uzak"
+            title={t('sftp.remote')}
             path={tab.remotePath}
             entries={remoteEntries}
             selectedPaths={selectedRemotePaths}

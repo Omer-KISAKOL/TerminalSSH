@@ -1,21 +1,21 @@
 import { useState } from 'react'
 
 import { Button } from '@/components/ui/Button'
+import { useLocale } from '@/hooks/useLocale'
 
 type ProfileExportSectionProps = {
   onChanged?: () => void
 }
 
 export function ProfileExportSection({ onChanged }: ProfileExportSectionProps) {
+  const { t } = useLocale()
   const [busy, setBusy] = useState<'export' | 'import' | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const handleExport = async (includeSecrets: boolean) => {
     if (includeSecrets) {
-      const confirmed = window.confirm(
-        'Parola ve özel anahtarlar JSON dosyasına düz metin olarak yazılır. Devam etmek istiyor musunuz?',
-      )
+      const confirmed = window.confirm(t('settings.exportSecretsConfirm'))
       if (!confirmed) return
     }
 
@@ -30,9 +30,9 @@ export function ProfileExportSection({ onChanged }: ProfileExportSectionProps) {
         return
       }
 
-      setMessage(`${result.count} profil dışa aktarıldı: ${result.path}`)
+      setMessage(t('settings.exportSuccess', { count: result.count, path: result.path }))
     } catch (exportError) {
-      setError(exportError instanceof Error ? exportError.message : 'Dışa aktarma başarısız.')
+      setError(exportError instanceof Error ? exportError.message : t('settings.exportFailed'))
     } finally {
       setBusy(null)
     }
@@ -50,10 +50,10 @@ export function ProfileExportSection({ onChanged }: ProfileExportSectionProps) {
         return
       }
 
-      setMessage(`${result.count} profil içe aktarıldı.`)
+      setMessage(t('settings.importSuccess', { count: result.count }))
       onChanged?.()
     } catch (importError) {
-      setError(importError instanceof Error ? importError.message : 'İçe aktarma başarısız.')
+      setError(importError instanceof Error ? importError.message : t('settings.importFailed'))
     } finally {
       setBusy(null)
     }
@@ -61,10 +61,8 @@ export function ProfileExportSection({ onChanged }: ProfileExportSectionProps) {
 
   return (
     <section className="border-b border-border px-5 py-4">
-      <h3 className="text-sm font-medium text-text">Sunucu profilleri</h3>
-      <p className="mt-1 text-xs text-text-muted">
-        Kayıtlı sunucu bilgilerini JSON dosyası olarak dışa veya içe aktarın.
-      </p>
+      <h3 className="text-sm font-medium text-text">{t('settings.profilesTitle')}</h3>
+      <p className="mt-1 text-xs text-text-muted">{t('settings.profilesHelp')}</p>
 
       <div className="mt-3 flex flex-wrap gap-2">
         <Button
@@ -74,7 +72,7 @@ export function ProfileExportSection({ onChanged }: ProfileExportSectionProps) {
           disabled={busy !== null}
           onClick={() => void handleExport(false)}
         >
-          Dışa aktar (güvenli)
+          {t('settings.exportSafe')}
         </Button>
         <Button
           type="button"
@@ -83,7 +81,7 @@ export function ProfileExportSection({ onChanged }: ProfileExportSectionProps) {
           disabled={busy !== null}
           onClick={() => void handleExport(true)}
         >
-          Dışa aktar (parolalı)
+          {t('settings.exportSecrets')}
         </Button>
         <Button
           type="button"
@@ -92,7 +90,7 @@ export function ProfileExportSection({ onChanged }: ProfileExportSectionProps) {
           disabled={busy !== null}
           onClick={() => void handleImport()}
         >
-          İçe aktar
+          {t('settings.import')}
         </Button>
       </div>
 

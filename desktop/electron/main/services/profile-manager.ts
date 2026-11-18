@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 
 import type {
+  ProfileEditSecrets,
   ProfileExportBundle,
   ProfileExportEntry,
   ProfileMigrationCandidate,
@@ -157,6 +158,35 @@ export class ProfileManager {
     }
 
     return profileStore.get(id)
+  }
+
+  getEditSecrets(id: string): ProfileEditSecrets {
+    const profile = this.get(id)
+
+    if (!profile) {
+      throw new Error('Profil bulunamadı.')
+    }
+
+    let password: string | null = null
+    let passphrase: string | null = null
+
+    if (profile.encryptedPassword) {
+      try {
+        password = decryptSecret(profile.encryptedPassword)
+      } catch {
+        password = null
+      }
+    }
+
+    if (profile.encryptedPassphrase) {
+      try {
+        passphrase = decryptSecret(profile.encryptedPassphrase)
+      } catch {
+        passphrase = null
+      }
+    }
+
+    return { password, passphrase }
   }
 
   async save(request: SaveProfileRequest): Promise<PublicServerProfile> {

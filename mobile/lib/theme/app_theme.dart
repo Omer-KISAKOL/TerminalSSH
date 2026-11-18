@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  static const green = Color(0xFF22C55E);
+  static const green = Color(0xFF4ADE80);
   static const greenDark = Color(0xFF14532D);
-  static const greenMuted = Color(0xFF4ADE80);
-  static const greenSoft = Color(0xFF86EFAC);
+  static const greenMuted = Color(0xFF86EFAC);
+  static const greenSoft = Color(0xFFA7F3D0);
   static const text = Color(0xFFE5E7EB);
   static const textMuted = Color(0xFF9CA3AF);
   static const background = Color(0xFF0D0D12);

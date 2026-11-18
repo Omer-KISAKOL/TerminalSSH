@@ -1,5 +1,7 @@
 import type { PublicServerProfile } from '@shared/contracts/profile'
 
+import { useLocale } from '@/hooks/useLocale'
+
 import { ProfileListItem } from './ProfileListItem'
 
 type ProfileListProps = {
@@ -29,10 +31,12 @@ export function ProfileList({
   onEdit,
   onDelete,
 }: ProfileListProps) {
+  const { t } = useLocale()
+
   if (isLoading) {
     return (
       <div className="rounded-lg border border-dashed border-border px-3 py-6 text-center text-sm text-text-muted">
-        Profiller yükleniyor…
+        {t('profile.loading')}
       </div>
     )
   }
@@ -48,7 +52,7 @@ export function ProfileList({
   if (profiles.length === 0) {
     return (
       <div className="rounded-lg border border-dashed border-border px-3 py-6 text-center text-sm text-text-muted">
-        Henüz kayıtlı sunucu yok.
+        {t('profile.listEmpty')}
       </div>
     )
   }

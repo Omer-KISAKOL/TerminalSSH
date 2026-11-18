@@ -15,6 +15,7 @@ import { WorkspaceTabBar } from '@/components/workspace/WorkspaceTabBar'
 import { Button } from '@/components/ui/Button'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { useAuth } from '@/hooks/useAuth'
+import { useLocale } from '@/hooks/useLocale'
 import { useHostVerification } from '@/hooks/useHostVerification'
 import { useProfiles } from '@/hooks/useProfiles'
 import { useWorkspaceTabs } from '@/hooks/useWorkspaceTabs'
@@ -27,6 +28,7 @@ import { dismissMigrationPrompt, isMigrationPromptDismissed } from '@/lib/migrat
 
 import { SettingsDialog } from '@/components/settings/SettingsDialog'
 
+import { MainModeBar } from './MainModeBar'
 import { Sidebar } from './Sidebar'
 
 import type { TerminalApi } from '@/components/terminal/TerminalView'
@@ -38,6 +40,7 @@ type AppShellProps = {
 type AuthScreen = 'login' | 'register'
 
 export function AppShell({ appVersion }: AppShellProps) {
+  const { t, messages } = useLocale()
   const auth = useAuth()
   const profiles = useProfiles()
   const terminalApisRef = useRef<Map<string, TerminalApi>>(new Map())
@@ -73,6 +76,24 @@ export function AppShell({ appVersion }: AppShellProps) {
     onTerminalData: handleTerminalData,
     onTerminalMessage: handleTerminalMessage,
   })
+  const workspaceRef = useRef(workspace)
+  workspaceRef.current = workspace
+
+  useEffect(() => {
+    const unsubscribeOpen = window.desktopApi.app.onOpenSftpTab(() => {
+      void workspaceRef.current.addSftpTab()
+      setView('workspace')
+    })
+    const unsubscribeFocus = window.desktopApi.app.onFocusSftpTab(() => {
+      void workspaceRef.current.focusOrOpenSftpTab()
+      setView('workspace')
+    })
+
+    return () => {
+      unsubscribeOpen()
+      unsubscribeFocus()
+    }
+  }, [])
 
   const hostVerification = useHostVerification()
 
@@ -83,9 +104,19 @@ export function AppShell({ appVersion }: AppShellProps) {
   }, [])
 
   const openProfile = useCallback(
-    (profile: PublicServerProfile) => {
+    async (profile: PublicServerProfile) => {
       setSelectedProfileId(profile.id)
-      resetForm('edit', publicProfileToFormValues(profile))
+
+      let formValues = publicProfileToFormValues(profile)
+
+      try {
+        const secrets = await window.desktopApi.profiles.getEditSecrets(profile.id)
+        formValues = publicProfileToFormValues(profile, secrets)
+      } catch {
+        // Sırlar okunamazsa profil alanları yine de açılır.
+      }
+
+      resetForm('edit', formValues)
       setView('form')
       setSidebarOpen(false)
     },
@@ -137,7 +168,7 @@ export function AppShell({ appVersion }: AppShellProps) {
   const handleProfileConnect = useCallback(
     async (profile: PublicServerProfile) => {
       const values = publicProfileToFormValues(profile)
-      const validationError = validateConnectionForm(values)
+      const validationError = validateConnectionForm(values, messages.validation)
 
       if (validationError) {
         openProfile(profile)
@@ -155,13 +186,13 @@ export function AppShell({ appVersion }: AppShellProps) {
         setConnectingProfileId(null)
       }
     },
-    [openProfile, profiles, workspace],
+    [messages.validation, openProfile, profiles, workspace],
   )
 
   const handleProfileSftpConnect = useCallback(
     async (profile: PublicServerProfile) => {
       const values = publicProfileToFormValues(profile)
-      const validationError = validateConnectionForm(values)
+      const validationError = validateConnectionForm(values, messages.validation)
 
       if (validationError) {
         openProfile(profile)
@@ -179,7 +210,7 @@ export function AppShell({ appVersion }: AppShellProps) {
         setConnectingProfileId(null)
       }
     },
-    [openProfile, profiles, workspace],
+    [messages.validation, openProfile, profiles, workspace],
   )
 
   useEffect(() => {
@@ -197,9 +228,7 @@ export function AppShell({ appVersion }: AppShellProps) {
 
   const handleProfileDelete = useCallback(
     async (profile: PublicServerProfile) => {
-      const confirmed = window.confirm(
-        `"${profile.name}" profilini silmek istediğinize emin misiniz?`,
-      )
+      const confirmed = window.confirm(t('profile.deleteConfirm', { name: profile.name }))
 
       if (!confirmed) {
         return
@@ -213,7 +242,7 @@ export function AppShell({ appVersion }: AppShellProps) {
         setView('servers')
       }
     },
-    [profiles, resetForm, selectedProfileId],
+    [profiles, resetForm, selectedProfileId, t],
   )
 
   const handleTerminalReady = useCallback((tabId: string, api: TerminalApi | null) => {
@@ -228,6 +257,28 @@ export function AppShell({ appVersion }: AppShellProps) {
   const handleBackToServers = useCallback(() => {
     setView('servers')
   }, [])
+
+  useEffect(() => {
+    if (view !== 'form') {
+      return
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') {
+        return
+      }
+
+      if (settingsOpen || showMigrationDialog || hostVerification.pendingRequest) {
+        return
+      }
+
+      event.preventDefault()
+      handleBackToServers()
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [view, settingsOpen, showMigrationDialog, hostVerification.pendingRequest, handleBackToServers])
 
   const handleCloseTab = useCallback(
     async (tabId: string) => {
@@ -244,6 +295,13 @@ export function AppShell({ appVersion }: AppShellProps) {
 
   const showWorkspace = view === 'workspace' && workspace.hasOpenTabs
   const isConnectBusy = workspace.isBusy || connectingProfileId !== null
+  const serversModeActive = view === 'servers' || view === 'form'
+  const sftpModeActive = view === 'workspace' && workspace.activeTab?.type === 'sftp'
+
+  const handleSelectSftpMode = useCallback(() => {
+    void workspace.focusOrOpenSftpTab()
+    setView('workspace')
+  }, [workspace])
   const showAuthGate = !auth.isLoading && !auth.isAuthenticated && !offlineMode
 
   useEffect(() => {
@@ -286,12 +344,12 @@ export function AppShell({ appVersion }: AppShellProps) {
       setMigrationCandidates([])
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : 'Yerel profiller buluta aktarılamadı.'
+        error instanceof Error ? error.message : t('errors.migrationFailed')
       window.alert(message)
     } finally {
       setMigrationLoading(false)
     }
-  }, [auth.user, profiles.refresh])
+  }, [auth.user, profiles.refresh, t])
 
   const handleSkipMigration = useCallback(() => {
     if (auth.user) {
@@ -321,7 +379,7 @@ export function AppShell({ appVersion }: AppShellProps) {
   if (auth.isLoading) {
     return (
       <div className="flex h-full items-center justify-center bg-surface text-text-muted">
-        Yükleniyor…
+        {t('common.loading')}
       </div>
     )
   }
@@ -378,6 +436,23 @@ export function AppShell({ appVersion }: AppShellProps) {
       />
 
       <main className="relative flex min-h-0 min-w-0 flex-1 flex-col">
+        <MainModeBar
+          serversActive={serversModeActive}
+          sftpActive={sftpModeActive}
+          onOpenSidebar={() => setSidebarOpen(true)}
+          onSelectServers={handleBackToServers}
+          onSelectSftp={handleSelectSftpMode}
+          onNewConnection={handleNewConnection}
+          onAddTerminalTab={() => {
+            workspace.addTerminalTab()
+            setView('workspace')
+          }}
+          onAddSftpTab={() => {
+            void workspace.addSftpTab()
+            setView('workspace')
+          }}
+        />
+
         {showWorkspace ? (
           <div className="flex min-h-0 flex-1 flex-col">
             <WorkspaceTabBar
@@ -439,29 +514,43 @@ export function AppShell({ appVersion }: AppShellProps) {
                   variant="ghost"
                   className="px-2 py-1.5 md:hidden"
                   onClick={() => setSidebarOpen(true)}
-                  aria-label="Kenar çubuğunu aç"
+                  aria-label={t('nav.openSidebar')}
                 >
                   ☰
                 </Button>
                 <div>
                   <h2 className="text-base font-medium text-text">
-                    {formMode === 'edit' ? 'Profili Düzenle' : 'Yeni Bağlantı'}
+                    {formMode === 'edit' ? t('profile.editProfileTitle') : t('connection.formTitleCreate')}
                   </h2>
-                  <p className="text-sm text-text-muted">
-                    Bağlantı bilgilerini girin. Sunucu ve parola kaydı açık gelir.
-                  </p>
+                  <p className="text-sm text-text-muted">{t('connection.formSubtitle')}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <Button variant="ghost" onClick={handleBackToServers}>
-                  Sunucular
+                  {t('connection.backToServers')}
                 </Button>
+                <button
+                  type="button"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border text-xl leading-none text-text-muted transition hover:bg-surface-muted hover:text-text"
+                  aria-label={t('connection.closeForm')}
+                  onClick={handleBackToServers}
+                >
+                  ×
+                </button>
                 <StatusBadge status="idle" />
               </div>
             </header>
 
-            <section className="flex flex-1 flex-col overflow-y-auto p-4 md:p-8">
-              <div className="mx-auto w-full max-w-xl">
+            <section
+              className="flex flex-1 flex-col overflow-y-auto p-4 md:p-8"
+              role="presentation"
+              onClick={handleBackToServers}
+            >
+              <div
+                className="mx-auto w-full max-w-xl"
+                role="presentation"
+                onClick={(event) => event.stopPropagation()}
+              >
                 <ConnectionForm
                   key={formKey}
                   mode={formMode}
@@ -471,7 +560,7 @@ export function AppShell({ appVersion }: AppShellProps) {
                 />
                 {appVersion ? (
                   <p className="mt-4 text-center text-xs text-text-muted">
-                    Uygulama sürümü: <span className="font-mono text-text">{appVersion}</span>
+                    {t('common.version')}: <span className="font-mono text-text">{appVersion}</span>
                   </p>
                 ) : null}
               </div>
@@ -494,7 +583,6 @@ export function AppShell({ appVersion }: AppShellProps) {
             onSftpConnect={(profile) => void handleProfileSftpConnect(profile)}
             onEdit={openProfile}
             onDelete={(profile) => void handleProfileDelete(profile)}
-            onOpenSidebar={() => setSidebarOpen(true)}
           />
         ) : null}
       </main>

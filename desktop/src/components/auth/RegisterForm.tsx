@@ -1,9 +1,13 @@
 import { useState } from 'react'
 
-import { validateAccountPassword, validateEmail } from '@shared/validation/auth'
+import {
+  validateAccountPasswordLocalized,
+  validateEmailLocalized,
+} from '@/lib/auth-validation'
 
 import { Button } from '@/components/ui/Button'
 import { PasswordInput } from '@/components/ui/PasswordInput'
+import { useLocale } from '@/hooks/useLocale'
 
 type RegisterFormProps = {
   loading: boolean
@@ -13,6 +17,7 @@ type RegisterFormProps = {
 }
 
 export function RegisterForm({ loading, error, onSubmit, onSwitchToLogin }: RegisterFormProps) {
+  const { t, messages } = useLocale()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -20,8 +25,8 @@ export function RegisterForm({ loading, error, onSubmit, onSwitchToLogin }: Regi
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
-    const emailError = validateEmail(email)
-    const passwordError = validateAccountPassword(password)
+    const emailError = validateEmailLocalized(email, messages.authValidation)
+    const passwordError = validateAccountPasswordLocalized(password, messages.authValidation)
 
     if (emailError || passwordError) {
       setFormError(emailError ?? passwordError)
@@ -29,7 +34,7 @@ export function RegisterForm({ loading, error, onSubmit, onSwitchToLogin }: Regi
     }
 
     if (password !== confirmPassword) {
-      setFormError('Parolalar eşleşmiyor.')
+      setFormError(t('auth.passwordMismatch'))
       return
     }
 
@@ -40,8 +45,8 @@ export function RegisterForm({ loading, error, onSubmit, onSwitchToLogin }: Regi
   return (
     <form className="mx-auto flex w-full max-w-md flex-col gap-4" onSubmit={(event) => void handleSubmit(event)}>
       <div>
-        <h2 className="text-xl font-semibold text-text">Hesap oluştur</h2>
-        <p className="mt-1 text-sm text-text-muted">Profilleriniz güvenli biçimde bulutta saklanır.</p>
+        <h2 className="text-xl font-semibold text-text">{t('auth.registerTitle')}</h2>
+        <p className="mt-1 text-sm text-text-muted">{t('auth.registerSubtitle')}</p>
       </div>
 
       {error || formError ? (
@@ -51,7 +56,7 @@ export function RegisterForm({ loading, error, onSubmit, onSwitchToLogin }: Regi
       ) : null}
 
       <label className="flex flex-col gap-1 text-sm">
-        <span className="text-text-muted">E-posta</span>
+        <span className="text-text-muted">{t('auth.email')}</span>
         <input
           type="email"
           autoComplete="email"
@@ -62,7 +67,7 @@ export function RegisterForm({ loading, error, onSubmit, onSwitchToLogin }: Regi
       </label>
 
       <label className="flex flex-col gap-1 text-sm">
-        <span className="text-text-muted">Parola</span>
+        <span className="text-text-muted">{t('auth.password')}</span>
         <PasswordInput
           autoComplete="new-password"
           className="rounded-lg border border-border bg-surface px-3 py-2 text-text"
@@ -72,7 +77,7 @@ export function RegisterForm({ loading, error, onSubmit, onSwitchToLogin }: Regi
       </label>
 
       <label className="flex flex-col gap-1 text-sm">
-        <span className="text-text-muted">Parola tekrar</span>
+        <span className="text-text-muted">{t('auth.confirmPassword')}</span>
         <PasswordInput
           autoComplete="new-password"
           className="rounded-lg border border-border bg-surface px-3 py-2 text-text"
@@ -82,11 +87,11 @@ export function RegisterForm({ loading, error, onSubmit, onSwitchToLogin }: Regi
       </label>
 
       <Button type="submit" variant="primary" loading={loading}>
-        Kayıt ol
+        {t('auth.registerAction')}
       </Button>
 
       <Button type="button" variant="ghost" onClick={onSwitchToLogin}>
-        Giriş ekranına dön
+        {t('auth.backToLogin')}
       </Button>
     </form>
   )

@@ -7,11 +7,16 @@
   --color-border: #2a3144;
   --color-text: #22c55e;
   --color-text-muted: #4ade80;
-  --color-accent: #3b82f6;
+  --color-accent: #2563eb;
+  --color-accent-hover: #1d4ed8;
+  --color-accent-active: #1e40af;
+  --color-accent-foreground: #ffffff;
   --color-status-idle: #6b7280;
   --color-status-connecting: #eab308;
   --color-status-connected: #22c55e;
+  --color-on-connected: #052e16;
   --color-status-error: #ef4444;
+  --color-on-danger: #ffffff;
 }
 
 @layer base {
@@ -51,10 +56,55 @@
   button:focus-visible {
     outline: none;
   }
+
+  input[type='number']::-webkit-outer-spin-button,
+  input[type='number']::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  input[type='number'] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
 }
 
 @layer components {
   .field-input {
     @apply w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text transition focus:border-accent focus-visible:ring-2 focus-visible:ring-accent/40 disabled:cursor-not-allowed disabled:opacity-60;
   }
+
+  .port-input {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+}
+
+/* Chromium/Electron number spinners — @layer dışında, tüm inputlar */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  display: none !important;
+  margin: 0 !important;
+  height: 0 !important;
+  width: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+input[type='number'] {
+  -moz-appearance: textfield !important;
+  appearance: textfield !important;
+}
+
+.tablist-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.tablist-scroll::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }

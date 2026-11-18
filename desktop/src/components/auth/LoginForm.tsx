@@ -1,9 +1,13 @@
 import { useState } from 'react'
 
-import { validateAccountPassword, validateEmail } from '@shared/validation/auth'
+import {
+  validateAccountPasswordLocalized,
+  validateEmailLocalized,
+} from '@/lib/auth-validation'
 
 import { Button } from '@/components/ui/Button'
 import { PasswordInput } from '@/components/ui/PasswordInput'
+import { useLocale } from '@/hooks/useLocale'
 
 type LoginFormProps = {
   loading: boolean
@@ -20,14 +24,15 @@ export function LoginForm({
   onSwitchToRegister,
   onContinueOffline,
 }: LoginFormProps) {
+  const { t, messages } = useLocale()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [formError, setFormError] = useState<string | null>(null)
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
-    const emailError = validateEmail(email)
-    const passwordError = validateAccountPassword(password)
+    const emailError = validateEmailLocalized(email, messages.authValidation)
+    const passwordError = validateAccountPasswordLocalized(password, messages.authValidation)
 
     if (emailError || passwordError) {
       setFormError(emailError ?? passwordError)
@@ -41,10 +46,8 @@ export function LoginForm({
   return (
     <form className="mx-auto flex w-full max-w-md flex-col gap-4" onSubmit={(event) => void handleSubmit(event)}>
       <div>
-        <h2 className="text-xl font-semibold text-text">Hesabınıza giriş yapın</h2>
-        <p className="mt-1 text-sm text-text-muted">
-          Sunucularınız tüm cihazlarınızda senkronize edilir.
-        </p>
+        <h2 className="text-xl font-semibold text-text">{t('auth.loginTitle')}</h2>
+        <p className="mt-1 text-sm text-text-muted">{t('auth.loginSubtitle')}</p>
       </div>
 
       {error || formError ? (
@@ -54,7 +57,7 @@ export function LoginForm({
       ) : null}
 
       <label className="flex flex-col gap-1 text-sm">
-        <span className="text-text-muted">E-posta</span>
+        <span className="text-text-muted">{t('auth.email')}</span>
         <input
           type="email"
           autoComplete="email"
@@ -65,7 +68,7 @@ export function LoginForm({
       </label>
 
       <label className="flex flex-col gap-1 text-sm">
-        <span className="text-text-muted">Parola</span>
+        <span className="text-text-muted">{t('auth.password')}</span>
         <PasswordInput
           autoComplete="current-password"
           className="rounded-lg border border-border bg-surface px-3 py-2 text-text"
@@ -75,15 +78,15 @@ export function LoginForm({
       </label>
 
       <Button type="submit" variant="primary" loading={loading}>
-        Giriş yap
+        {t('auth.login')}
       </Button>
 
       <div className="flex flex-col gap-2">
         <Button type="button" variant="secondary" onClick={onSwitchToRegister}>
-          Hesap oluştur
+          {t('auth.register')}
         </Button>
         <Button type="button" variant="ghost" onClick={onContinueOffline}>
-          Çevrimdışı devam et
+          {t('auth.offline')}
         </Button>
       </div>
     </form>
