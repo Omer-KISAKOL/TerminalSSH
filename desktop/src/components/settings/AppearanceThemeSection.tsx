@@ -15,7 +15,7 @@ function ThemePreviewSwatch({
 }) {
   return (
     <div
-      className={`flex h-8 w-[3.25rem] shrink-0 flex-col justify-center gap-[3px] rounded-md border-2 p-1.5 ${
+      className={`flex h-8 w-13 shrink-0 flex-col justify-center gap-0.75 rounded-md border-2 p-1.5 ${
         selected ? 'border-[#3b82f6]' : 'border-transparent'
       }`}
       style={{ backgroundColor: background }}
@@ -24,7 +24,7 @@ function ThemePreviewSwatch({
       {bars.map((color, index) => (
         <span
           key={`${color}-${index}`}
-          className="block h-[3px] rounded-full"
+          className="block h-0.75 rounded-full"
           style={{ backgroundColor: color, width: index === 0 ? '100%' : index === 1 ? '85%' : '70%' }}
         />
       ))}
