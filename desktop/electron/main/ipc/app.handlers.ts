@@ -1,8 +1,5 @@
 import { app, ipcMain } from 'electron'
 
-import { setupApplicationMenu } from '../application-menu'
-
-import type { AppLocale } from '@shared/i18n/locale'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
 
 function isAppLocale(value: unknown): value is AppLocale {
@@ -17,7 +14,6 @@ export function registerAppHandlers(): void {
       return false
     }
 
-    setupApplicationMenu(payload)
     return true
   })
 }

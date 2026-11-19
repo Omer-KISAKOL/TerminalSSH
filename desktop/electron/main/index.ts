@@ -11,7 +11,7 @@ import { registerProfileHandlers } from './ipc/profile.handlers'
 import { registerSnippetHandlers } from './ipc/snippet.handlers'
 import { registerSftpHandlers } from './ipc/sftp.handlers'
 import { registerSshHandlers } from './ipc/ssh.handlers'
-import { setupApplicationMenu } from './application-menu'
+import { clearApplicationMenu } from './application-menu'
 import { sftpSessionManager } from './services/sftp-session-manager'
 import { sshSessionManager } from './services/ssh-session-manager'
 
@@ -92,7 +92,7 @@ registerSshHandlers()
 registerSftpHandlers()
 
 app.whenReady().then(() => {
-  setupApplicationMenu()
+  clearApplicationMenu()
   createMainWindow()
 
   app.on('activate', () => {
