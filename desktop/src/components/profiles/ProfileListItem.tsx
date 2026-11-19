@@ -94,10 +94,10 @@ export function ProfileListItem({
         <Button
           variant="primary"
           className="h-8 min-w-0 px-2 py-1 text-[11px]"
-          loading={isConnecting}
-          disabled={connectDisabled}
+          disabled={connectDisabled || isConnecting}
           onClick={() => onConnect(profile)}
           aria-label={t('profile.connectTerminalAria', { name: profile.name })}
+          aria-busy={isConnecting || undefined}
         >
           {t('profile.terminal')}
         </Button>
