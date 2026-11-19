@@ -8,7 +8,12 @@ import {
 } from '@/lib/command-queue'
 
 /* oxlint-disable react/refs -- CommandQueue is a stable imperative controller. */
-export function useCommandQueue(send: (data: string) => void) {
+export function useCommandQueue(
+  send: (data: string) => void,
+  shouldBypass?: () => boolean,
+) {
+  const bypassRef = useRef(shouldBypass)
+  bypassRef.current = shouldBypass
   const sendRef = useRef(send)
   const writeLocalRef = useRef<(data: string) => void>(() => {})
   const [snapshot, setSnapshot] = useState<CommandQueueSnapshot>(IDLE_SNAPSHOT)
@@ -23,6 +28,7 @@ export function useCommandQueue(send: (data: string) => void) {
         writeLocalRef.current(data)
       },
       onChange: setSnapshot,
+      shouldBypass: () => bypassRef.current?.() ?? false,
     })
   }
 

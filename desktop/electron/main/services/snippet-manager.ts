@@ -33,6 +33,14 @@ class SnippetManager {
     snippetStore.remove(snippetId)
     return Promise.resolve()
   }
+
+  reorder(orderedIds: string[]): Promise<Snippet[]> {
+    if (this.isCloudMode()) {
+      return cloudSnippetService.reorder(orderedIds)
+    }
+
+    return Promise.resolve(snippetStore.reorder(orderedIds))
+  }
 }
 
 export const snippetManager = new SnippetManager()

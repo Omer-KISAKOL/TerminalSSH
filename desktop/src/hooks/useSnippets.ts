@@ -42,6 +42,31 @@ export function useSnippets() {
     [refresh],
   )
 
+  const reorder = useCallback(async (orderedIds: string[]) => {
+    let snapshot: Snippet[] | null = null
+
+    setSnippets((current) => {
+      snapshot = current
+      const byId = new Map(current.map((snippet) => [snippet.id, snippet]))
+      return orderedIds.flatMap((id, index) => {
+        const snippet = byId.get(id)
+        return snippet ? [{ ...snippet, sortOrder: index }] : []
+      })
+    })
+
+    try {
+      const list = await window.desktopApi.snippets.reorder(orderedIds)
+      setSnippets(list)
+      setError(null)
+    } catch (reorderError) {
+      if (snapshot) {
+        setSnippets(snapshot)
+      }
+      setError(reorderError instanceof Error ? reorderError.message : 'Snippet sırası güncellenemedi.')
+      throw reorderError
+    }
+  }, [])
+
   return {
     snippets,
     isLoading,
@@ -49,5 +74,6 @@ export function useSnippets() {
     refresh,
     save,
     remove,
+    reorder,
   }
 }

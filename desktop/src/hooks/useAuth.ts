@@ -1,30 +1,74 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
-import type { AuthUser } from '@shared/contracts/auth'
+import type { AuthUser, SessionResponse } from '@shared/contracts/auth'
+import type { SecurityQuestionId } from '@shared/constants/security-questions'
 
 type AuthState = {
   user: AuthUser | null
   isAuthenticated: boolean
   isLoading: boolean
   error: string | null
+  requiresSecuritySetup: boolean
+  securitySetupToken: string | null
+}
+
+function applySessionResponse(response: SessionResponse): Pick<
+  AuthState,
+  'user' | 'isAuthenticated' | 'requiresSecuritySetup' | 'securitySetupToken' | 'error'
+> {
+  const requiresSecuritySetup = Boolean(response.requiresSecuritySetup)
+
+  if (requiresSecuritySetup && response.user) {
+    return {
+      user: response.user,
+      isAuthenticated: Boolean(response.isAuthenticated),
+      requiresSecuritySetup: true,
+      securitySetupToken: response.securitySetupToken ?? null,
+      error: null,
+    }
+  }
+
+  if (response.isAuthenticated && response.user) {
+    return {
+      user: response.user,
+      isAuthenticated: true,
+      requiresSecuritySetup: false,
+      securitySetupToken: null,
+      error: null,
+    }
+  }
+
+  return {
+    user: null,
+    isAuthenticated: false,
+    requiresSecuritySetup: false,
+    securitySetupToken: null,
+    error: null,
+  }
 }
 
 export function useAuth() {
+  const securitySetupTokenRef = useRef<string | null>(null)
+
   const [state, setState] = useState<AuthState>({
     user: null,
     isAuthenticated: false,
     isLoading: true,
     error: null,
+    requiresSecuritySetup: false,
+    securitySetupToken: null,
   })
+
+  useEffect(() => {
+    securitySetupTokenRef.current = state.securitySetupToken
+  }, [state.securitySetupToken])
 
   const refreshSession = useCallback(async () => {
     try {
-      const session = await window.desktopApi.auth.getSession()
+      const session = (await window.desktopApi.auth.getSession()) as SessionResponse
       setState({
-        user: session.user,
-        isAuthenticated: session.isAuthenticated,
+        ...applySessionResponse(session),
         isLoading: false,
-        error: null,
       })
     } catch (error) {
       setState({
@@ -32,6 +76,8 @@ export function useAuth() {
         isAuthenticated: false,
         isLoading: false,
         error: error instanceof Error ? error.message : 'Oturum doğrulanamadı.',
+        requiresSecuritySetup: false,
+        securitySetupToken: null,
       })
     }
   }, [])
@@ -44,14 +90,33 @@ export function useAuth() {
     setState((current) => ({ ...current, isLoading: true, error: null }))
 
     try {
-      const session = await window.desktopApi.auth.login({ email, password, deviceName: 'Desktop' })
+      const response = (await window.desktopApi.auth.login({
+        email,
+        password,
+        deviceName: 'Desktop',
+      })) as SessionResponse
+
+      if (response.requiresSecuritySetup) {
+        setState({
+          user: response.user,
+          isAuthenticated: false,
+          isLoading: false,
+          error: null,
+          requiresSecuritySetup: true,
+          securitySetupToken: response.securitySetupToken ?? null,
+        })
+        return response
+      }
+
       setState({
-        user: session.user,
+        user: response.user,
         isAuthenticated: true,
         isLoading: false,
         error: null,
+        requiresSecuritySetup: false,
+        securitySetupToken: null,
       })
-      return session
+      return response
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Giriş başarısız.'
       setState((current) => ({ ...current, isLoading: false, error: message }))
@@ -59,27 +124,90 @@ export function useAuth() {
     }
   }, [])
 
-  const register = useCallback(async (email: string, password: string) => {
-    setState((current) => ({ ...current, isLoading: true, error: null }))
+  const register = useCallback(
+    async (
+      email: string,
+      password: string,
+      securityQuestionId: SecurityQuestionId,
+      securityAnswer: string,
+    ) => {
+      setState((current) => ({ ...current, isLoading: true, error: null }))
 
-    try {
-      const session = await window.desktopApi.auth.register({
-        email,
-        password,
-        deviceName: 'Desktop',
-      })
-      setState({
-        user: session.user,
-        isAuthenticated: true,
-        isLoading: false,
+      try {
+        const session = await window.desktopApi.auth.register({
+          email,
+          password,
+          securityQuestionId,
+          securityAnswer,
+          deviceName: 'Desktop',
+        })
+        setState({
+          user: session.user,
+          isAuthenticated: true,
+          isLoading: false,
+          error: null,
+          requiresSecuritySetup: false,
+          securitySetupToken: null,
+        })
+        return session
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Kayıt başarısız.'
+        setState((current) => ({ ...current, isLoading: false, error: message }))
+        throw error
+      }
+    },
+    [],
+  )
+
+  const completeSecuritySetup = useCallback(
+    async (securityQuestionId: SecurityQuestionId, securityAnswer: string) => {
+      setState((current) => ({
+        ...current,
+        isLoading: true,
         error: null,
-      })
-      return session
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Kayıt başarısız.'
-      setState((current) => ({ ...current, isLoading: false, error: message }))
-      throw error
-    }
+      }))
+
+      try {
+        const response = (await window.desktopApi.auth.completeSecuritySetup({
+          securityQuestionId,
+          securityAnswer,
+          setupToken: securitySetupTokenRef.current ?? undefined,
+          deviceName: 'Desktop',
+        })) as SessionResponse
+
+        setState({
+          user: response.user,
+          isAuthenticated: true,
+          isLoading: false,
+          error: null,
+          requiresSecuritySetup: false,
+          securitySetupToken: null,
+        })
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Güvenlik sorusu kaydedilemedi.'
+        setState((current) => ({ ...current, isLoading: false, error: message }))
+        throw error
+      }
+    },
+    [],
+  )
+
+  const clearSecuritySetupPending = useCallback(() => {
+    setState((current) => ({
+      ...current,
+      user: null,
+      requiresSecuritySetup: false,
+      securitySetupToken: null,
+      error: null,
+    }))
+  }, [])
+
+  const requestPasswordResetQuestion = useCallback(async (email: string) => {
+    return window.desktopApi.auth.getPasswordResetQuestion({ email })
+  }, [])
+
+  const resetPassword = useCallback(async (email: string, securityAnswer: string, newPassword: string) => {
+    await window.desktopApi.auth.resetPassword({ email, securityAnswer, newPassword })
   }, [])
 
   const logout = useCallback(async () => {
@@ -89,13 +217,23 @@ export function useAuth() {
       isAuthenticated: false,
       isLoading: false,
       error: null,
+      requiresSecuritySetup: false,
+      securitySetupToken: null,
     })
   }, [])
 
+  const isReadyForApp =
+    state.isAuthenticated && !state.requiresSecuritySetup && Boolean(state.user)
+
   return {
     ...state,
+    isReadyForApp,
     login,
     register,
+    completeSecuritySetup,
+    clearSecuritySetupPending,
+    requestPasswordResetQuestion,
+    resetPassword,
     logout,
     refreshSession,
   }

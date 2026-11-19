@@ -16,6 +16,7 @@ type LoginFormProps = {
   error: string | null
   onSubmit: (email: string, password: string) => Promise<void>
   onSwitchToRegister: () => void
+  onForgotPassword: () => void
   onContinueOffline: () => void
 }
 
@@ -24,6 +25,7 @@ export function LoginForm({
   error,
   onSubmit,
   onSwitchToRegister,
+  onForgotPassword,
   onContinueOffline,
 }: LoginFormProps) {
   const { t, messages } = useLocale()
@@ -76,7 +78,16 @@ export function LoginForm({
         </label>
 
         <label className="flex flex-col gap-1.5 text-sm">
-          <span className={authLabelClass}>{t('auth.password')}</span>
+          <div className="flex items-center justify-between gap-2">
+            <span className={authLabelClass}>{t('auth.password')}</span>
+            <button
+              type="button"
+              className="text-xs text-status-connected underline-offset-2 hover:underline"
+              onClick={onForgotPassword}
+            >
+              {t('auth.forgotPassword')}
+            </button>
+          </div>
           <div className="[&_button]:text-white/55 [&_button:hover]:text-white">
             <PasswordInput
               autoComplete="current-password"

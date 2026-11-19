@@ -52,7 +52,7 @@ export function ServerHome({
       </header>
 
       <section className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4 md:p-8">
-        <div className="mx-auto flex w-full max-w-xl flex-1 flex-col">
+        <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col">
           {showEmpty ? (
             <EmptyState
               title={t('serverHome.emptyTitle')}
@@ -66,6 +66,7 @@ export function ServerHome({
             />
           ) : (
             <ProfileList
+              columns={4}
               profiles={profiles}
               selectedProfileId={selectedProfileId}
               lastConnectedProfileId={lastConnectedProfileId}

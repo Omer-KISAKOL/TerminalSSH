@@ -11,6 +11,25 @@ export function assertSnippetId(snippetId: string): string {
   return snippetId
 }
 
+export function assertSnippetReorderRequest(input: unknown): string[] {
+  if (!Array.isArray(input) || input.length === 0) {
+    throw new Error('Geçersiz snippet sıralaması.')
+  }
+
+  const ids = input.map((value) => {
+    if (typeof value !== 'string') {
+      throw new Error('Geçersiz snippet sıralaması.')
+    }
+    return assertSnippetId(value)
+  })
+
+  if (new Set(ids).size !== ids.length) {
+    throw new Error('Geçersiz snippet sıralaması.')
+  }
+
+  return ids
+}
+
 export function assertSaveSnippetRequest(input: unknown): SaveSnippetRequest {
   if (!input || typeof input !== 'object') {
     throw new Error('Geçersiz snippet isteği.')

@@ -54,7 +54,7 @@ export const APPEARANCE_THEMES: AppearanceTheme[] = [
       textMuted: '#9AA0B4',
       statusConnected: '#4AF626',
       terminalBackground: '#1D2033',
-      terminalForeground: '#E9F9FA',
+      terminalForeground: '#4AF626',
       terminalCursor: '#4AF626',
     },
   },

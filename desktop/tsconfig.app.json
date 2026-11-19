@@ -27,5 +27,5 @@
       "@shared/*": ["./shared/*"]
     }
   },
-  "include": ["src", "electron/preload/api.types.ts", "shared"]
+  "include": ["src", "electron/preload/api.types.ts"]
 }

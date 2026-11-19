@@ -35,3 +35,20 @@ export function validateAccountPasswordLocalized(
 
   return null
 }
+
+export function validateSecurityAnswerLocalized(
+  securityAnswer: string,
+  messages: AuthValidationMessages,
+): string | null {
+  const trimmed = securityAnswer.trim()
+
+  if (trimmed.length < 2) {
+    return messages.securityAnswerMin
+  }
+
+  if (trimmed.length > 120) {
+    return messages.securityAnswerMax
+  }
+
+  return null
+}

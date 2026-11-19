@@ -60,6 +60,33 @@ export class SnippetStore {
       this.store.get('snippets').filter((snippet) => snippet.id !== snippetId),
     )
   }
+
+  reorder(orderedIds: string[]): Snippet[] {
+    const snippets = this.store.get('snippets')
+
+    if (orderedIds.length !== snippets.length) {
+      throw new Error('Snippet sıralaması güncellenemedi.')
+    }
+
+    const snippetIds = new Set(snippets.map((snippet) => snippet.id))
+    if (orderedIds.some((id) => !snippetIds.has(id))) {
+      throw new Error('Snippet sıralaması güncellenemedi.')
+    }
+
+    const now = new Date().toISOString()
+    const byId = new Map(snippets.map((snippet) => [snippet.id, snippet]))
+    const reordered = orderedIds.map((id, index) => {
+      const existing = byId.get(id)!
+      return {
+        ...existing,
+        sortOrder: index,
+        updatedAt: now,
+      }
+    })
+
+    this.store.set('snippets', reordered)
+    return this.list()
+  }
 }
 
 export const snippetStore = new SnippetStore()

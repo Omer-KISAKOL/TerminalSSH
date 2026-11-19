@@ -25,6 +25,8 @@ type CommandQueueOptions = {
   onChange?: (snapshot: CommandQueueSnapshot) => void
   schedule?: (callback: () => void, delayMs: number) => () => void
   idleMs?: number
+  /** true ise girdi kuyruğa alınmadan doğrudan gönderilir (ör. nano/vim gibi tam ekran uygulamalar). */
+  shouldBypass?: () => boolean
 }
 
 const IDLE_SNAPSHOT: CommandQueueSnapshot = {
@@ -37,6 +39,81 @@ export function stripAnsi(value: string): string {
   return value.replace(ANSI_PATTERN, '')
 }
 
+type HeredocMarker = { delimiter: string; stripTabs: boolean }
+
+type QuoteState = 'none' | 'single' | 'double'
+
+/**
+ * Bir komut satırını tarar: açık kalan tırnak durumunu ve satırda açılan heredoc
+ * işaretlerini (<<EOF, <<-'EOF', <<"EOF") döndürür.
+ */
+function scanCommandLine(
+  line: string,
+  initialQuote: QuoteState,
+): { quote: QuoteState; heredocs: HeredocMarker[] } {
+  const heredocs: HeredocMarker[] = []
+  let quote = initialQuote
+
+  for (let index = 0; index < line.length; index += 1) {
+    const char = line[index]
+
+    if (quote === 'single') {
+      if (char === "'") {
+        quote = 'none'
+      }
+      continue
+    }
+
+    if (char === '\\') {
+      index += 1
+      continue
+    }
+
+    if (quote === 'double') {
+      if (char === '"') {
+        quote = 'none'
+      }
+      continue
+    }
+
+    if (char === "'") {
+      quote = 'single'
+      continue
+    }
+
+    if (char === '"') {
+      quote = 'double'
+      continue
+    }
+
+    if (char === '#' && (index === 0 || /\s/u.test(line[index - 1] ?? ''))) {
+      break
+    }
+
+    if (char === '<' && line[index + 1] === '<' && line[index + 2] !== '<') {
+      const match = /^<<(-?)\s*(?:'([^']+)'|"([^"]+)"|\\?([A-Za-z_][\w.-]*))/u.exec(line.slice(index))
+
+      if (match) {
+        heredocs.push({
+          delimiter: match[2] ?? match[3] ?? match[4] ?? '',
+          stripTabs: match[1] === '-',
+        })
+        index += match[0].length - 1
+        continue
+      }
+
+      index += 1
+    }
+  }
+
+  return { quote, heredocs }
+}
+
+/**
+ * Yapıştırılan metni çalıştırılacak komut birimlerine böler. Heredoc (EOF) gövdesi,
+ * satır sonu ters bölü ile devam eden ve tırnağı kapanmayan komutlar tek birim kalır;
+ * birim içindeki satırlar satır sonu karakteriyle birleştirilir.
+ */
 export function splitPastedCommands(text: string): string[] | null {
   if (text === '\r' || text === '\n' || text === '\r\n') {
     return null
@@ -54,15 +131,57 @@ export function splitPastedCommands(text: string): string[] | null {
     rawLines.pop()
   }
 
-  const lines = rawLines
-    .map((line) => line.replace(/\s+$/u, ''))
-    .filter((line) => line.trim().length > 0)
+  const units: string[] = []
+  let current: string[] = []
+  let quote: QuoteState = 'none'
+  let pending: HeredocMarker[] = []
 
-  if (lines.length <= 1) {
+  for (const rawLine of rawLines) {
+    if (pending.length > 0) {
+      current.push(rawLine)
+      const marker = pending[0]
+      const candidate = marker.stripTabs ? rawLine.replace(/^\t+/u, '') : rawLine
+
+      if (candidate === marker.delimiter) {
+        pending = pending.slice(1)
+      }
+
+      if (pending.length === 0 && quote === 'none') {
+        units.push(current.join('\n'))
+        current = []
+      }
+      continue
+    }
+
+    const line = quote === 'none' ? rawLine.replace(/\s+$/u, '') : rawLine
+
+    if (current.length === 0 && line.trim().length === 0) {
+      continue
+    }
+
+    current.push(line)
+
+    const scanned = scanCommandLine(line, quote)
+    quote = scanned.quote
+    pending = scanned.heredocs
+
+    const continued = quote !== 'none' || /(?:^|[^\\])(?:\\\\)*\\$/u.test(line)
+
+    if (pending.length === 0 && !continued) {
+      units.push(current.join('\n'))
+      current = []
+    }
+  }
+
+  if (current.length > 0) {
+    units.push(current.join('\n'))
+  }
+
+  if (units.length === 0 || (units.length === 1 && !units[0].includes('\n'))) {
     return null
   }
 
-  return lines
+  return units
 }
 
 export function lastVisibleLine(raw: string): string {
@@ -136,6 +255,7 @@ export class CommandQueue {
   private readonly onChange?: (snapshot: CommandQueueSnapshot) => void
   private readonly schedule: (callback: () => void, delayMs: number) => () => void
   private readonly idleMs: number
+  private readonly shouldBypass: () => boolean
 
   constructor(options: CommandQueueOptions) {
     this.send = options.send
@@ -148,6 +268,7 @@ export class CommandQueue {
         return () => clearTimeout(timer)
       })
     this.idleMs = options.idleMs ?? COMMAND_QUEUE_IDLE_MS
+    this.shouldBypass = options.shouldBypass ?? (() => false)
   }
 
   getSnapshot(): CommandQueueSnapshot {
@@ -159,6 +280,11 @@ export class CommandQueue {
   }
 
   handleInput = (data: string, options?: CommandQueueInputOptions): void => {
+    if (this.phase === 'idle' && !options?.autoStart && this.shouldBypass()) {
+      this.send(data)
+      return
+    }
+
     const pasted = splitPastedCommands(data)
 
     if (pasted) {
@@ -270,7 +396,7 @@ export class CommandQueue {
       return
     }
 
-    this.send(`\u0015${line}\r`)
+    this.send(`\u0015${line.split('\n').join('\r')}\r`)
     this.emit()
   }
 
@@ -282,7 +408,7 @@ export class CommandQueue {
     }
 
     const visible = lastVisibleLine(this.output)
-    const current = this.lines[this.activeIndex] ?? ''
+    const current = (this.lines[this.activeIndex] ?? '').split('\n').pop() ?? ''
 
     if (current.length > 0 && visible.endsWith(current)) {
       return
@@ -314,11 +440,14 @@ export class CommandQueue {
   }
 
   private renderPreview(): void {
-    if (this.lines.length > 40) {
+    if (this.lines.reduce((count, unit) => count + unit.split('\n').length, 0) > 40) {
       return
     }
 
-    const body = this.lines.map(visibleCommand).join('\r\n')
+    const body = this.lines
+      .flatMap((unit) => unit.split('\n'))
+      .map(visibleCommand)
+      .join('\r\n')
     this.writeLocal(`\u001b7\r\n\u001b[90m${body}\u001b[0m\u001b8`)
     this.previewDrawn = true
   }

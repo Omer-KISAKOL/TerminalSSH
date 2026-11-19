@@ -1,13 +1,4 @@
-export function getParentPath(filePath: string): string {
-  const normalized = filePath.replace(/\\/g, '/')
-  const index = normalized.lastIndexOf('/')
-
-  if (index <= 0) {
-    return '/'
-  }
-
-  return normalized.slice(0, index) || '/'
-}
+export { getParentPath, splitPathToBreadcrumbs, normalizeNavigatedPath } from '@/lib/path-breadcrumbs'
 
 export function joinPath(base: string, name: string): string {
   if (base.endsWith('/')) {

@@ -49,6 +49,30 @@ describe('splitPastedCommands', () => {
   })
 })
 
+describe('splitPastedCommands heredoc ve devam satırları', () => {
+  it('EOF gövdesini tek komut olarak tutar', () => {
+    const text = "cat > a.txt <<'EOF'\nline1\n\nls -la\nEOF\necho done\n"
+    expect(splitPastedCommands(text)).toEqual(["cat > a.txt <<'EOF'\nline1\n\nls -la\nEOF", 'echo done'])
+  })
+
+  it('<<- ile girintili ayracı tanır', () => {
+    const text = 'cat <<-EOF\n\tbody\n\tEOF\nls\n'
+    expect(splitPastedCommands(text)).toEqual(['cat <<-EOF\n\tbody\n\tEOF', 'ls'])
+  })
+
+  it('tek başına heredoc de tek birim olarak döner', () => {
+    expect(splitPastedCommands('cat <<EOF\nhi\nEOF\n')).toEqual(['cat <<EOF\nhi\nEOF'])
+  })
+
+  it('ters bölü ve açık tırnak ile devam eden satırları birleştirir', () => {
+    expect(splitPastedCommands('apt update && \\\napt upgrade\nls\n')).toEqual([
+      'apt update && \\\napt upgrade',
+      'ls',
+    ])
+    expect(splitPastedCommands('echo "a\nb"\nls\n')).toEqual(['echo "a\nb"', 'ls'])
+  })
+})
+
 describe('isShellPrompt', () => {
   it('kabuk istemini tanır', () => {
     expect(isShellPrompt('user@host:~$')).toBe(true)
@@ -63,6 +87,18 @@ describe('lastVisibleLine', () => {
   it('son görünür satırı ve ANSI kodlarını çözer', () => {
     expect(lastVisibleLine('git pull\r\n\u001b[32muser@host:~$\u001b[0m')).toBe('user@host:~$')
     expect(lastVisibleLine('progress 10%\rprogress 20%')).toBe('progress 20%')
+  })
+})
+
+describe('CommandQueue tam ekran uygulama (nano/vim)', () => {
+  it('tam ekran modunda çok satırlı yapıştırmayı kuyruğa almadan olduğu gibi gönderir', () => {
+    const sent: string[] = []
+    const queue = new CommandQueue({ send: (data) => void sent.push(data), shouldBypass: () => true })
+
+    queue.handleInput('line1\rline2\rline3\r')
+
+    expect(sent).toEqual(['line1\rline2\rline3\r'])
+    expect(queue.getSnapshot().phase).toBe('idle')
   })
 })
 

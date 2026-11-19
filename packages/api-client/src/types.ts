@@ -11,6 +11,39 @@ export interface AuthSession {
   user: AuthUser
 }
 
+export interface AuthMeResponse {
+  user: AuthUser
+  requiresSecuritySetup: boolean
+}
+
+export interface LoginPendingSecuritySetup {
+  requiresSecuritySetup: true
+  setupToken: string
+  user: AuthUser
+}
+
+export type LoginResponse = AuthSession | LoginPendingSecuritySetup
+
+export interface SecuritySetupWithTokenInput {
+  setupToken: string
+  securityQuestionId: string
+  securityAnswer: string
+  deviceName?: string
+}
+
+export interface SecuritySetupAuthenticatedInput {
+  securityQuestionId: string
+  securityAnswer: string
+}
+
+export interface RegisterAccountInput {
+  email: string
+  password: string
+  securityQuestionId: string
+  securityAnswer: string
+  deviceName?: string
+}
+
 export interface CloudProfile {
   id: string
   name: string

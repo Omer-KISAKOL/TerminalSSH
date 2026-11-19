@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/Button'
 import { useLocale } from '@/hooks/useLocale'
 
 type ProfileListItemProps = {
+  dense?: boolean
   profile: PublicServerProfile
   isLastConnected: boolean
   isSelected: boolean
@@ -49,6 +50,7 @@ function DeleteIcon() {
 }
 
 export function ProfileListItem({
+  dense = false,
   profile,
   isLastConnected,
   isSelected,
@@ -90,7 +92,13 @@ export function ProfileListItem({
         </p>
       ) : null}
 
-      <div className="mt-3 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_2.25rem_2.25rem] items-stretch gap-2">
+      <div
+        className={
+          dense
+            ? 'mt-3 grid grid-cols-2 gap-1.5'
+            : 'mt-3 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_2.25rem_2.25rem] items-stretch gap-2'
+        }
+      >
         <Button
           variant="primary"
           className="h-8 min-w-0 px-2 py-1 text-[11px]"

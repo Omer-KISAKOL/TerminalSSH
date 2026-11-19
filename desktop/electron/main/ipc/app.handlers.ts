@@ -1,6 +1,7 @@
 import { app, ipcMain } from 'electron'
 
 import { IPC_CHANNELS } from '@shared/ipc-channels'
+import type { AppLocale } from '@shared/i18n/locale'
 
 function isAppLocale(value: unknown): value is AppLocale {
   return value === 'tr' || value === 'en'

@@ -1,4 +1,12 @@
-import type { AuthUser } from '@shared/contracts/auth'
+import type {
+  AuthUser,
+  PasswordResetConfirmRequest,
+  PasswordResetQuestionRequest,
+  PasswordResetQuestionResponse,
+  RegisterRequest,
+  SecuritySetupRequest,
+  SessionResponse,
+} from '@shared/contracts/auth'
 import type { HostVerifyRequestEvent } from '@shared/contracts/host'
 import type {
   ProfileEditSecrets,
@@ -48,17 +56,14 @@ export interface DesktopApi {
     onStatus(callback: (event: SftpStatusEvent) => void): () => void
   }
   auth: {
-    register(input: { email: string; password: string; deviceName?: string }): Promise<{
-      user: AuthUser
-      isAuthenticated: boolean
-    }>
-    login(input: { email: string; password: string; deviceName?: string }): Promise<{
-      user: AuthUser
-      isAuthenticated: boolean
-    }>
+    register(input: RegisterRequest): Promise<SessionResponse>
+    login(input: { email: string; password: string; deviceName?: string }): Promise<SessionResponse>
     logout(): Promise<{ isAuthenticated: boolean }>
-    refresh(): Promise<{ isAuthenticated: boolean; user: AuthUser | null }>
-    getSession(): Promise<{ isAuthenticated: boolean; user: AuthUser | null }>
+    refresh(): Promise<SessionResponse>
+    getSession(): Promise<SessionResponse>
+    completeSecuritySetup(input: SecuritySetupRequest): Promise<SessionResponse>
+    getPasswordResetQuestion(input: PasswordResetQuestionRequest): Promise<PasswordResetQuestionResponse>
+    resetPassword(input: PasswordResetConfirmRequest): Promise<{ ok: boolean }>
   }
   profiles: {
     list(): Promise<PublicServerProfile[]>
@@ -75,6 +80,7 @@ export interface DesktopApi {
     list(): Promise<ProfileSnippet[]>
     save(input: SaveSnippetRequest): Promise<ProfileSnippet>
     remove(snippetId: string): Promise<void>
+    reorder(orderedIds: string[]): Promise<ProfileSnippet[]>
   }
   files: {
     selectPrivateKey(): Promise<string | null>

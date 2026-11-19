@@ -9,14 +9,15 @@ const LOCALE_LABEL_KEYS: Record<AppLocale, MessageKey> = {
   en: 'settings.languageEn',
 }
 
-export function LanguageSection() {
+type LanguageSectionProps = {
+  panelMode?: boolean
+}
+
+export function LanguageSection({ panelMode = false }: LanguageSectionProps) {
   const { locale, setLocale, t } = useLocale()
 
-  return (
-    <section className="border-b border-border px-5 py-4">
-      <h3 className="text-sm font-medium text-text">{t('settings.language')}</h3>
-      <p className="mt-1 text-xs text-text-muted">{t('settings.languageHelp')}</p>
-      <div className="mt-3 flex flex-wrap gap-2">
+  const picker = (
+    <div className={panelMode ? 'flex flex-wrap gap-2' : 'mt-3 flex flex-wrap gap-2'}>
         {APP_LOCALES.map((option) => {
           const selected = locale === option
 
@@ -36,7 +37,18 @@ export function LanguageSection() {
             </button>
           )
         })}
-      </div>
+    </div>
+  )
+
+  if (panelMode) {
+    return picker
+  }
+
+  return (
+    <section className="border-b border-border px-5 py-4">
+      <h3 className="text-sm font-medium text-text">{t('settings.language')}</h3>
+      <p className="mt-1 text-xs text-text-muted">{t('settings.languageHelp')}</p>
+      {picker}
     </section>
   )
 }

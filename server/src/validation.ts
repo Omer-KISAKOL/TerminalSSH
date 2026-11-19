@@ -4,6 +4,31 @@ export const registerSchema = z.object({
   email: z.string().email('Geçerli bir e-posta adresi girin.'),
   password: z.string().min(8, 'Parola en az 8 karakter olmalıdır.'),
   deviceName: z.string().max(120).optional(),
+  securityQuestionId: z.enum(
+    ['childhood-friend', 'mother-maiden', 'first-pet', 'birth-city', 'favorite-teacher'],
+    {
+      errorMap: () => ({ message: 'Geçerli bir güvenlik sorusu seçin.' }),
+    },
+  ),
+  securityAnswer: z
+    .string()
+    .trim()
+    .min(2, 'Güvenlik cevabı en az 2 karakter olmalıdır.')
+    .max(120, 'Güvenlik cevabı çok uzun.'),
+})
+
+export const passwordResetQuestionSchema = z.object({
+  email: z.string().email('Geçerli bir e-posta adresi girin.'),
+})
+
+export const passwordResetConfirmSchema = z.object({
+  email: z.string().email('Geçerli bir e-posta adresi girin.'),
+  securityAnswer: z
+    .string()
+    .trim()
+    .min(2, 'Güvenlik cevabı gerekli.')
+    .max(120, 'Güvenlik cevabı çok uzun.'),
+  newPassword: z.string().min(8, 'Parola en az 8 karakter olmalıdır.'),
 })
 
 export const loginSchema = z.object({
@@ -14,6 +39,30 @@ export const loginSchema = z.object({
 
 export const refreshSchema = z.object({
   refreshToken: z.string().min(1),
+})
+
+const securityQuestionAnswerSchema = {
+  securityQuestionId: z.enum(
+    ['childhood-friend', 'mother-maiden', 'first-pet', 'birth-city', 'favorite-teacher'],
+    {
+      errorMap: () => ({ message: 'Geçerli bir güvenlik sorusu seçin.' }),
+    },
+  ),
+  securityAnswer: z
+    .string()
+    .trim()
+    .min(2, 'Güvenlik cevabı en az 2 karakter olmalıdır.')
+    .max(120, 'Güvenlik cevabı çok uzun.'),
+}
+
+export const securitySetupWithTokenSchema = z.object({
+  setupToken: z.string().min(1, 'Kurulum belirteci gerekli.'),
+  deviceName: z.string().max(120).optional(),
+  ...securityQuestionAnswerSchema,
+})
+
+export const securitySetupAuthenticatedSchema = z.object({
+  ...securityQuestionAnswerSchema,
 })
 
 export const profileInputSchema = z.object({

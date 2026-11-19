@@ -5,9 +5,14 @@ CREATE TABLE IF NOT EXISTS users (
   email TEXT NOT NULL UNIQUE,
   password_hash TEXT NOT NULL,
   encrypted_data_key TEXT NOT NULL,
+  security_question_id TEXT,
+  security_answer_hash TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS security_question_id TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS security_answer_hash TEXT;
 
 CREATE TABLE IF NOT EXISTS refresh_sessions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

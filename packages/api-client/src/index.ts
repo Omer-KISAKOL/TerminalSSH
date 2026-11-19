@@ -1,22 +1,31 @@
 import { ApiClientError } from './types.js'
 import type {
+  AuthMeResponse,
   AuthSession,
-  AuthUser,
   CloudProfile,
   CloudSnippet,
+  LoginResponse,
+  RegisterAccountInput,
   SaveCloudProfileInput,
   SaveCloudSnippetInput,
+  SecuritySetupAuthenticatedInput,
+  SecuritySetupWithTokenInput,
   SyncCloudProfileInput,
 } from './types.js'
 
 export type {
+  AuthMeResponse,
   AuthSession,
   AuthUser,
   AuthType,
   CloudProfile,
   CloudSnippet,
+  LoginResponse,
+  RegisterAccountInput,
   SaveCloudProfileInput,
   SaveCloudSnippetInput,
+  SecuritySetupAuthenticatedInput,
+  SecuritySetupWithTokenInput,
   SyncCloudProfileInput,
 } from './types.js'
 export { ApiClientError } from './types.js'
@@ -115,17 +124,56 @@ export class TerminalSshApiClient {
     return parseJson<T>(response)
   }
 
-  register(email: string, password: string, deviceName?: string) {
+  register(input: RegisterAccountInput) {
     return this.request<AuthSession>('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({
+        email: input.email,
+        password: input.password,
+        securityQuestionId: input.securityQuestionId,
+        securityAnswer: input.securityAnswer,
+        deviceName: input.deviceName,
+      }),
+    })
+  }
+
+  getPasswordResetQuestion(email: string) {
+    return this.request<{ securityQuestionId: string }>('/auth/password-reset/question', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    })
+  }
+
+  resetPasswordWithSecurityAnswer(email: string, securityAnswer: string, newPassword: string) {
+    return this.request<{ ok: boolean }>('/auth/password-reset/confirm', {
+      method: 'POST',
+      body: JSON.stringify({ email, securityAnswer, newPassword }),
+    })
+  }
+
+  login(email: string, password: string, deviceName?: string) {
+    return this.request<LoginResponse>('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password, deviceName }),
     })
   }
 
-  login(email: string, password: string, deviceName?: string) {
-    return this.request<AuthSession>('/auth/login', {
+  completeSecuritySetupWithToken(input: SecuritySetupWithTokenInput) {
+    return this.request<AuthSession>('/auth/security-setup', {
       method: 'POST',
-      body: JSON.stringify({ email, password, deviceName }),
+      body: JSON.stringify({
+        setupToken: input.setupToken,
+        securityQuestionId: input.securityQuestionId,
+        securityAnswer: input.securityAnswer,
+        deviceName: input.deviceName,
+      }),
+    })
+  }
+
+  completeSecuritySetupAuthenticated(input: SecuritySetupAuthenticatedInput) {
+    return this.request<{ ok: boolean }>('/auth/security-setup/complete', {
+      method: 'POST',
+      body: JSON.stringify(input),
     })
   }
 
@@ -144,7 +192,7 @@ export class TerminalSshApiClient {
   }
 
   me() {
-    return this.request<{ user: AuthUser }>('/auth/me')
+    return this.request<AuthMeResponse>('/auth/me')
   }
 
   listProfiles() {

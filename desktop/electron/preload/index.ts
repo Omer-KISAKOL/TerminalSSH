@@ -130,6 +130,11 @@ const desktopApi: DesktopApi = {
     logout: () => ipcRenderer.invoke(IPC_CHANNELS.auth.logout),
     refresh: () => ipcRenderer.invoke(IPC_CHANNELS.auth.refresh),
     getSession: () => ipcRenderer.invoke(IPC_CHANNELS.auth.getSession),
+    getPasswordResetQuestion: (input) =>
+      ipcRenderer.invoke(IPC_CHANNELS.auth.getPasswordResetQuestion, input),
+    resetPassword: (input) => ipcRenderer.invoke(IPC_CHANNELS.auth.resetPassword, input),
+    completeSecuritySetup: (input) =>
+      ipcRenderer.invoke(IPC_CHANNELS.auth.completeSecuritySetup, input),
   },
   profiles: {
     list: () => ipcRenderer.invoke(IPC_CHANNELS.profiles.list),
@@ -146,6 +151,7 @@ const desktopApi: DesktopApi = {
     list: () => ipcRenderer.invoke(IPC_CHANNELS.snippets.list),
     save: (input) => ipcRenderer.invoke(IPC_CHANNELS.snippets.save, input),
     remove: (snippetId) => ipcRenderer.invoke(IPC_CHANNELS.snippets.remove, snippetId),
+    reorder: (orderedIds) => ipcRenderer.invoke(IPC_CHANNELS.snippets.reorder, orderedIds),
   },
   files: {
     selectPrivateKey: () => ipcRenderer.invoke(IPC_CHANNELS.files.selectPrivateKey),

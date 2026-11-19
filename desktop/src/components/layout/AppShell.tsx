@@ -4,9 +4,11 @@ import type { PublicServerProfile } from '@shared/contracts/profile'
 import type { ConnectionFormValues } from '@shared/contracts/ssh'
 
 import { AuthScreen } from '@/components/auth/AuthScreen'
+import { ForgotPasswordForm } from '@/components/auth/ForgotPasswordForm'
 import { LoginForm } from '@/components/auth/LoginForm'
 import { ProfileMigrationDialog } from '@/components/auth/ProfileMigrationDialog'
 import { RegisterForm } from '@/components/auth/RegisterForm'
+import { SecuritySetupForm } from '@/components/auth/SecuritySetupForm'
 import { ConnectionForm } from '@/components/connection/ConnectionForm'
 import { HostFingerprintDialog } from '@/components/connection/HostFingerprintDialog'
 import { ServerHome } from '@/components/profiles/ServerHome'
@@ -26,6 +28,7 @@ import {
   validateConnectionForm,
 } from '@/lib/connection-form'
 import { dismissMigrationPrompt, isMigrationPromptDismissed } from '@/lib/migration-prompt'
+import { toUserErrorMessage } from '@/lib/user-error'
 
 import { SettingsDialog } from '@/components/settings/SettingsDialog'
 
@@ -38,7 +41,7 @@ type AppShellProps = {
   appVersion: string | null
 }
 
-type AuthScreen = 'login' | 'register'
+type AuthScreen = 'login' | 'register' | 'forgot'
 
 export function AppShell({ appVersion }: AppShellProps) {
   const { t, messages } = useLocale()
@@ -54,6 +57,8 @@ export function AppShell({ appVersion }: AppShellProps) {
   const [formKey, setFormKey] = useState('create')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [authScreen, setAuthScreen] = useState<AuthScreen>('login')
+  const [passwordResetLoading, setPasswordResetLoading] = useState(false)
+  const [passwordResetError, setPasswordResetError] = useState<string | null>(null)
   const [offlineMode, setOfflineMode] = useState(false)
   const [migrationCandidates, setMigrationCandidates] = useState<
     Awaited<ReturnType<typeof window.desktopApi.profiles.listLocalOnly>>
@@ -63,6 +68,7 @@ export function AppShell({ appVersion }: AppShellProps) {
   const [syncingProfiles, setSyncingProfiles] = useState(false)
   const [migrationChecked, setMigrationChecked] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [connectionFormTabId, setConnectionFormTabId] = useState<string | null>(null)
 
   const handleTerminalData = useCallback((tabId: string, data: string) => {
     terminalApisRef.current.get(tabId)?.write(data)
@@ -78,7 +84,10 @@ export function AppShell({ appVersion }: AppShellProps) {
     onTerminalMessage: handleTerminalMessage,
   })
   const workspaceRef = useRef(workspace)
-  workspaceRef.current = workspace
+
+  useEffect(() => {
+    workspaceRef.current = workspace
+  }, [workspace])
 
   useEffect(() => {
     const unsubscribeOpen = window.desktopApi.app.onOpenSftpTab(() => {
@@ -104,6 +113,18 @@ export function AppShell({ appVersion }: AppShellProps) {
     setFormKey(`${mode}-${values.profileId ?? 'new'}-${Date.now()}`)
   }, [])
 
+  const resolveTerminalTabForForm = useCallback(() => {
+    const active = workspace.activeTabId
+      ? workspace.tabs.find((tab) => tab.id === workspace.activeTabId)
+      : null
+
+    if (active?.type === 'terminal' && !active.sessionId) {
+      return active.id
+    }
+
+    return workspace.addTerminalTab()
+  }, [workspace])
+
   const openProfile = useCallback(
     async (profile: PublicServerProfile) => {
       setSelectedProfileId(profile.id)
@@ -118,10 +139,18 @@ export function AppShell({ appVersion }: AppShellProps) {
       }
 
       resetForm('edit', formValues)
-      setView('form')
+
+      if (workspace.tabs.length > 0) {
+        setConnectionFormTabId(resolveTerminalTabForForm())
+        setView('workspace')
+      } else {
+        setConnectionFormTabId(null)
+        setView('form')
+      }
+
       setSidebarOpen(false)
     },
-    [resetForm],
+    [resetForm, resolveTerminalTabForForm, workspace.tabs.length],
   )
 
   const handleConnect = useCallback(
@@ -156,14 +185,17 @@ export function AppShell({ appVersion }: AppShellProps) {
       setConnectingProfileId(profileId ?? null)
       setView('workspace')
 
+      const targetTabId = connectionFormTabId
+
       try {
-        await workspace.openTerminalSession(connectValues)
+        await workspace.openTerminalSession(connectValues, { tabId: targetTabId })
+        setConnectionFormTabId(null)
         await profiles.refresh()
       } finally {
         setConnectingProfileId(null)
       }
     },
-    [formMode, profiles, resetForm, workspace],
+    [connectionFormTabId, formMode, profiles, resetForm, workspace],
   )
 
   const handleProfileConnect = useCallback(
@@ -215,17 +247,53 @@ export function AppShell({ appVersion }: AppShellProps) {
   )
 
   useEffect(() => {
-    if (workspace.activeTab?.type === 'terminal' && workspace.activeTab.status === 'connected') {
-      terminalApisRef.current.get(workspace.activeTab.id)?.focus()
+    const active = workspace.activeTab
+
+    if (active?.type !== 'terminal' || active.status !== 'connected') {
+      return
     }
-  }, [workspace.activeTab])
+
+    const api = terminalApisRef.current.get(active.id)
+    let innerFrame = 0
+    const outerFrame = requestAnimationFrame(() => {
+      innerFrame = requestAnimationFrame(() => {
+        api?.focus()
+      })
+    })
+
+    return () => {
+      cancelAnimationFrame(outerFrame)
+      cancelAnimationFrame(innerFrame)
+    }
+  }, [workspace.activeTab, workspace.activeTabId])
 
   const handleNewConnection = useCallback(() => {
     setSelectedProfileId(null)
     resetForm('create', DEFAULT_CONNECTION_FORM)
-    setView('form')
+    const tabId = workspace.addTerminalTab()
+    setConnectionFormTabId(tabId)
+    setView('workspace')
     setSidebarOpen(false)
-  }, [resetForm])
+  }, [resetForm, workspace])
+
+  const handleCloseConnectionFormInTab = useCallback(() => {
+    setConnectionFormTabId(null)
+  }, [])
+
+  const handleTerminalTabNavigateHome = useCallback(
+    (tabId: string) => {
+      setConnectionFormTabId(null)
+
+      if (workspace.tabs.length > 0) {
+        setView('workspace')
+        workspace.setActiveTabId(tabId)
+        return
+      }
+
+      setView('servers')
+    },
+    [workspace],
+  )
 
   const handleProfileDelete = useCallback(
     async (profile: PublicServerProfile) => {
@@ -316,16 +384,16 @@ export function AppShell({ appVersion }: AppShellProps) {
   const handleSelectSettingsMode = useCallback(() => {
     setSettingsOpen(true)
   }, [])
-  const showAuthGate = !auth.isLoading && !auth.isAuthenticated && !offlineMode
+  const showAuthGate = !auth.isLoading && !auth.isReadyForApp && !offlineMode
 
   useEffect(() => {
-    if (auth.isAuthenticated && !auth.isLoading) {
+    if (auth.isReadyForApp && !auth.isLoading) {
       void profiles.refresh()
     }
-  }, [auth.isAuthenticated, auth.isLoading, profiles.refresh])
+  }, [auth.isReadyForApp, auth.isLoading, profiles])
 
   useEffect(() => {
-    if (!auth.isAuthenticated || !auth.user || offlineMode || migrationChecked) {
+    if (!auth.isReadyForApp || !auth.user || offlineMode || migrationChecked) {
       return
     }
 
@@ -343,7 +411,7 @@ export function AppShell({ appVersion }: AppShellProps) {
         setShowMigrationDialog(true)
       }
     })()
-  }, [auth.isAuthenticated, auth.user, migrationChecked, offlineMode])
+  }, [auth.isReadyForApp, auth.user, migrationChecked, offlineMode])
 
   const handleImportLocalProfiles = useCallback(async () => {
     setMigrationLoading(true)
@@ -363,7 +431,7 @@ export function AppShell({ appVersion }: AppShellProps) {
     } finally {
       setMigrationLoading(false)
     }
-  }, [auth.user, profiles.refresh, t])
+  }, [auth.user, profiles, t])
 
   const handleSkipMigration = useCallback(() => {
     if (auth.user) {
@@ -382,13 +450,49 @@ export function AppShell({ appVersion }: AppShellProps) {
     } finally {
       setSyncingProfiles(false)
     }
-  }, [profiles.refresh])
+  }, [profiles])
 
   const handleLogout = useCallback(async () => {
     await auth.logout()
     setOfflineMode(false)
     await profiles.refresh()
-  }, [auth, profiles.refresh])
+  }, [auth, profiles])
+
+  const handleRequestPasswordResetQuestion = useCallback(
+    async (email: string) => {
+      setPasswordResetLoading(true)
+      setPasswordResetError(null)
+
+      try {
+        return await auth.requestPasswordResetQuestion(email)
+      } catch (error) {
+        const message = toUserErrorMessage(error, t('errors.connectionFailed'))
+        setPasswordResetError(message)
+        throw error
+      } finally {
+        setPasswordResetLoading(false)
+      }
+    },
+    [auth, t],
+  )
+
+  const handleResetPassword = useCallback(
+    async (email: string, securityAnswer: string, newPassword: string) => {
+      setPasswordResetLoading(true)
+      setPasswordResetError(null)
+
+      try {
+        await auth.resetPassword(email, securityAnswer, newPassword)
+      } catch (error) {
+        const message = toUserErrorMessage(error, t('errors.connectionFailed'))
+        setPasswordResetError(message)
+        throw error
+      } finally {
+        setPasswordResetLoading(false)
+      }
+    },
+    [auth, t],
+  )
 
   if (auth.isLoading) {
     return (
@@ -402,7 +506,27 @@ export function AppShell({ appVersion }: AppShellProps) {
     return (
       <div className="flex h-full items-center justify-center bg-black px-4 py-8 sm:px-6">
         <AuthScreen>
-          {authScreen === 'login' ? (
+          {auth.requiresSecuritySetup && auth.user ? (
+            <SecuritySetupForm
+              email={auth.user.email}
+              loading={auth.isLoading}
+              error={auth.error}
+              onSubmit={async (securityQuestionId, securityAnswer) => {
+                await auth.completeSecuritySetup(securityQuestionId, securityAnswer)
+              }}
+              cancelLabel={auth.securitySetupToken ? undefined : t('account.logout')}
+              onCancel={
+                auth.securitySetupToken
+                  ? () => {
+                      auth.clearSecuritySetupPending()
+                      setAuthScreen('login')
+                    }
+                  : () => {
+                      void auth.logout()
+                    }
+              }
+            />
+          ) : authScreen === 'login' ? (
             <LoginForm
               loading={auth.isLoading}
               error={auth.error}
@@ -410,16 +534,31 @@ export function AppShell({ appVersion }: AppShellProps) {
                 await auth.login(email, password)
               }}
               onSwitchToRegister={() => setAuthScreen('register')}
+              onForgotPassword={() => {
+                setPasswordResetError(null)
+                setAuthScreen('forgot')
+              }}
               onContinueOffline={() => setOfflineMode(true)}
             />
-          ) : (
+          ) : authScreen === 'register' ? (
             <RegisterForm
               loading={auth.isLoading}
               error={auth.error}
-              onSubmit={async (email, password) => {
-                await auth.register(email, password)
+              onSubmit={async (email, password, securityQuestionId, securityAnswer) => {
+                await auth.register(email, password, securityQuestionId, securityAnswer)
               }}
               onSwitchToLogin={() => setAuthScreen('login')}
+            />
+          ) : (
+            <ForgotPasswordForm
+              loading={passwordResetLoading}
+              error={passwordResetError}
+              onRequestQuestion={handleRequestPasswordResetQuestion}
+              onResetPassword={handleResetPassword}
+              onBackToLogin={() => {
+                setPasswordResetError(null)
+                setAuthScreen('login')
+              }}
             />
           )}
         </AuthScreen>
@@ -479,7 +618,7 @@ export function AppShell({ appVersion }: AppShellProps) {
               onCloseTab={(tabId) => void handleCloseTab(tabId)}
             />
 
-            <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+            <div className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
             {workspace.tabs.map((tab) =>
               tab.type === 'terminal' ? (
                 <TerminalTabPanel
@@ -496,8 +635,15 @@ export function AppShell({ appVersion }: AppShellProps) {
                   onReconnect={(tabId) => void workspace.reconnectTab(tabId)}
                   onDisconnect={(tabId) => void workspace.disconnectTab(tabId)}
                   onClear={(tabId) => terminalApisRef.current.get(tabId)?.clear()}
-                  onBackToForm={handleBackToServers}
+                  onBackToForm={() => handleTerminalTabNavigateHome(tab.id)}
                   onOpenSidebar={() => setSidebarOpen(true)}
+                  connectionFormOpen={connectionFormTabId === tab.id}
+                  connectionFormMode={formMode}
+                  connectionFormKey={formKey}
+                  connectionFormValues={formValues}
+                  connectionFormDisabled={isConnectBusy}
+                  onConnectionFormSubmit={handleConnect}
+                  onCloseConnectionForm={handleCloseConnectionFormInTab}
                   profiles={profiles.profiles}
                   selectedProfileId={selectedProfileId}
                   lastConnectedProfileId={profiles.lastConnectedProfileId}

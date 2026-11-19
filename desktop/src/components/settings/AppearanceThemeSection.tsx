@@ -15,7 +15,7 @@ function ThemePreviewSwatch({
 }) {
   return (
     <div
-      className={`flex h-8 w-13 shrink-0 flex-col justify-center gap-0.75 rounded-md border-2 p-1.5 ${
+      className={`flex h-8 w-12 shrink-0 flex-col justify-center gap-1 rounded-md border-2 p-1.5 ${
         selected ? 'border-[#3b82f6]' : 'border-transparent'
       }`}
       style={{ backgroundColor: background }}
@@ -24,7 +24,7 @@ function ThemePreviewSwatch({
       {bars.map((color, index) => (
         <span
           key={`${color}-${index}`}
-          className="block h-0.75 rounded-full"
+          className="block h-1 rounded-full"
           style={{ backgroundColor: color, width: index === 0 ? '100%' : index === 1 ? '85%' : '70%' }}
         />
       ))}
@@ -32,10 +32,45 @@ function ThemePreviewSwatch({
   )
 }
 
-export function AppearanceThemeSection() {
+type AppearanceThemeSectionProps = {
+  panelMode?: boolean
+}
+
+export function AppearanceThemeSection({ panelMode = false }: AppearanceThemeSectionProps) {
   const { t } = useLocale()
   const { themeId, theme, setThemeId } = useAppearanceTheme()
   const [expanded, setExpanded] = useState(false)
+
+  const themeGrid = (
+    <div className={panelMode ? 'grid grid-cols-1 gap-0.5 sm:grid-cols-2' : 'mt-3 grid grid-cols-1 gap-0.5 sm:grid-cols-2'}>
+      {APPEARANCE_THEMES.map((preset) => {
+        const selected = themeId === preset.id
+
+        return (
+          <button
+            key={preset.id}
+            type="button"
+            className={`flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors ${
+              selected ? 'bg-surface-muted' : 'hover:bg-surface-muted/60'
+            }`}
+            aria-pressed={selected}
+            onClick={() => setThemeId(preset.id)}
+          >
+            <ThemePreviewSwatch
+              background={preset.colors.terminalBackground}
+              bars={preset.previewBars}
+              selected={selected}
+            />
+            <span className="text-sm font-medium text-text">{preset.name}</span>
+          </button>
+        )
+      })}
+    </div>
+  )
+
+  if (panelMode) {
+    return themeGrid
+  }
 
   return (
     <section className="px-5 py-4">
@@ -67,32 +102,7 @@ export function AppearanceThemeSection() {
         </div>
       </button>
 
-      {expanded ? (
-        <div className="mt-3 grid grid-cols-1 gap-0.5 sm:grid-cols-2">
-          {APPEARANCE_THEMES.map((preset) => {
-            const selected = themeId === preset.id
-
-            return (
-              <button
-                key={preset.id}
-                type="button"
-                className={`flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors ${
-                  selected ? 'bg-surface-muted' : 'hover:bg-surface-muted/60'
-                }`}
-                aria-pressed={selected}
-                onClick={() => setThemeId(preset.id)}
-              >
-                <ThemePreviewSwatch
-                  background={preset.colors.terminalBackground}
-                  bars={preset.previewBars}
-                  selected={selected}
-                />
-                <span className="text-sm font-medium text-text">{preset.name}</span>
-              </button>
-            )
-          })}
-        </div>
-      ) : null}
+      {expanded ? themeGrid : null}
     </section>
   )
 }

@@ -27,6 +27,9 @@ export const messagesTr = {
     newConnectionAria: 'Yeni SSH bağlantısı oluştur',
     settings: 'Ayarlar',
     savedServers: 'Kayıtlı Sunucular',
+    collapse: 'Kenar çubuğunu daralt',
+    expand: 'Kenar çubuğunu genişlet',
+    collapsedProfileAria: '{name} — menüyü açmak için tıklayın',
   },
   serverHome: {
     title: 'Kayıtlı Sunucular',
@@ -89,7 +92,7 @@ export const messagesTr = {
   },
   settings: {
     title: 'Ayarlar',
-    subtitle: "Dil, profiller, snippet'ler ve görünüm.",
+    subtitle: 'Soldan bir bölüm seçin.',
     language: 'Dil',
     languageHelp: 'Arayüz dili. Terminal çıktısı değişmez.',
     languageTr: 'Türkçe',
@@ -110,6 +113,7 @@ export const messagesTr = {
     importSuccess: '{count} profil içe aktarıldı.',
     snippetsTitle: "Snippet'ler",
     snippetsHelp: 'Tüm sunucularda paylaşılır.',
+    menuNav: 'Ayarlar menüsü',
   },
   auth: {
     loginTitle: 'Hesabınıza giriş yapın',
@@ -126,6 +130,29 @@ export const messagesTr = {
     registerAction: 'Hesap oluştur',
     haveAccount: 'Giriş yap',
     backToLogin: 'Giriş ekranına dön',
+    forgotPassword: 'Şifremi unuttum',
+    forgotPasswordTitle: 'Parolayı sıfırla',
+    forgotPasswordSubtitleEmail: 'Hesabınıza kayıtlı e-posta adresini girin.',
+    forgotPasswordSubtitleAnswer: 'Güvenlik sorusunu yanıtlayın ve yeni parolanızı belirleyin.',
+    continue: 'Devam',
+    resetPassword: 'Parolayı güncelle',
+    resetPasswordSuccess: 'Parolanız güncellendi. Giriş yapabilirsiniz.',
+    securityQuestion: 'Güvenlik sorusu',
+    securityAnswer: 'Güvenlik cevabı',
+    securityAnswerHint: 'Kayıt sırasında verdiğiniz yanıtı girin. Büyük/küçük harf duyarlı değildir.',
+    selectSecurityQuestion: 'Bir güvenlik sorusu seçin',
+    securityQuestionRequired: 'Güvenlik sorusu seçmelisiniz.',
+    securitySetupTitle: 'Güvenlik sorusu ekleyin',
+    securitySetupSubtitle:
+      'Hesabınız güncellendi. Parola sıfırlama için bir kez güvenlik sorusu seçin; ardından giriş tamamlanır.',
+    securitySetupAction: 'Kaydet ve devam et',
+    securityQuestions: {
+      'childhood-friend': 'İlk çocukluk arkadaşınızın adı nedir?',
+      'mother-maiden': 'Annenizin kızlık soyadı nedir?',
+      'first-pet': 'İlk evcil hayvanınızın adı nedir?',
+      'birth-city': 'Doğduğunuz şehir neresidir?',
+      'favorite-teacher': 'En sevdiğiniz öğretmeninizin adı nedir?',
+    },
   },
   account: {
     label: 'Hesap',
@@ -141,6 +168,8 @@ export const messagesTr = {
     emailInvalid: 'Geçerli bir e-posta adresi girin.',
     passwordRequired: 'Parola gerekli.',
     passwordMin: 'Parola en az 8 karakter olmalıdır.',
+    securityAnswerMin: 'Güvenlik cevabı en az 2 karakter olmalıdır.',
+    securityAnswerMax: 'Güvenlik cevabı çok uzun.',
   },
   status: {
     idle: 'Hazır',
@@ -180,6 +209,9 @@ export const messagesTr = {
     dropQueue: 'Sırayı iptal et',
   },
   snippets: {
+    panelTitle: "Snippet'ler",
+    collapse: 'Snippet panelini daralt',
+    expand: 'Snippet panelini genişlet',
     new: 'Yeni Snippet',
     searchPlaceholder: 'Snippet ara…',
     empty: 'Henüz snippet yok.',
@@ -194,6 +226,8 @@ export const messagesTr = {
     applyPlain: 'Doğrudan gönder',
     edit: 'Düzenle',
     delete: 'Sil',
+    dragHandle: 'Sıralamak için sürükleyin',
+    reorderWhileSearch: 'Sıralamak için arama kutusunu temizleyin.',
   },
   sftp: {
     pickServerTitle: 'Sunucu Seç',
@@ -257,6 +291,15 @@ export const messagesTr = {
     kindSymlink: 'bağlantı',
     kindFile: 'dosya',
     parentDir: 'Üst dizin',
+    searchPlaceholder: 'Bu dizinde ara…',
+    noResults: 'Eşleşen öğe yok.',
+    sortBy: '{column} sütununa göre sırala',
+    goBack: 'Geri',
+    goForward: 'İleri',
+    pathBreadcrumb: 'Dizin yolu',
+    pathInputLabel: 'Gitmek istediğiniz dizin yolu',
+    pathTabHint: 'Tab ile klasör/dosya adını tamamlayın',
+    editPath: 'Yol',
   },
   errors: {
     connectionFailed: 'Bağlantı kurulamadı.',
@@ -293,6 +336,9 @@ export const messagesEn = {
     newConnectionAria: 'Create a new SSH connection',
     settings: 'Settings',
     savedServers: 'Saved Servers',
+    collapse: 'Collapse sidebar',
+    expand: 'Expand sidebar',
+    collapsedProfileAria: '{name} — click to open the menu',
   },
   serverHome: {
     title: 'Saved Servers',
@@ -354,7 +400,7 @@ export const messagesEn = {
   },
   settings: {
     title: 'Settings',
-    subtitle: 'Language, profiles, snippets, and appearance.',
+    subtitle: 'Choose a section from the menu.',
     language: 'Language',
     languageHelp: 'Interface language. Terminal output is unchanged.',
     languageTr: 'Türkçe',
@@ -375,6 +421,7 @@ export const messagesEn = {
     importSuccess: 'Imported {count} profile(s).',
     snippetsTitle: 'Snippets',
     snippetsHelp: 'Shared across all servers.',
+    menuNav: 'Settings menu',
   },
   auth: {
     loginTitle: 'Sign in to your account',
@@ -391,6 +438,29 @@ export const messagesEn = {
     registerAction: 'Create account',
     haveAccount: 'Sign in',
     backToLogin: 'Back to sign in',
+    forgotPassword: 'Forgot password',
+    forgotPasswordTitle: 'Reset password',
+    forgotPasswordSubtitleEmail: 'Enter the email address for your account.',
+    forgotPasswordSubtitleAnswer: 'Answer your security question and choose a new password.',
+    continue: 'Continue',
+    resetPassword: 'Update password',
+    resetPasswordSuccess: 'Your password was updated. You can sign in now.',
+    securityQuestion: 'Security question',
+    securityAnswer: 'Security answer',
+    securityAnswerHint: 'Enter the answer you chose at registration. Not case-sensitive.',
+    selectSecurityQuestion: 'Choose a security question',
+    securityQuestionRequired: 'You must select a security question.',
+    securitySetupTitle: 'Add a security question',
+    securitySetupSubtitle:
+      'Your account needs a one-time security question for password recovery. Then you can continue.',
+    securitySetupAction: 'Save and continue',
+    securityQuestions: {
+      'childhood-friend': 'What is the name of your first childhood friend?',
+      'mother-maiden': "What is your mother's maiden name?",
+      'first-pet': 'What was the name of your first pet?',
+      'birth-city': 'What city were you born in?',
+      'favorite-teacher': 'What is the name of your favorite teacher?',
+    },
   },
   account: {
     label: 'Account',
@@ -406,6 +476,8 @@ export const messagesEn = {
     emailInvalid: 'Enter a valid email address.',
     passwordRequired: 'Password is required.',
     passwordMin: 'Password must be at least 8 characters.',
+    securityAnswerMin: 'Security answer must be at least 2 characters.',
+    securityAnswerMax: 'Security answer is too long.',
   },
   status: {
     idle: 'Ready',
@@ -445,6 +517,9 @@ export const messagesEn = {
     dropQueue: 'Cancel queue',
   },
   snippets: {
+    panelTitle: 'Snippets',
+    collapse: 'Collapse snippet panel',
+    expand: 'Expand snippet panel',
     new: 'New snippet',
     searchPlaceholder: 'Search snippets…',
     empty: 'No snippets yet.',
@@ -459,6 +534,8 @@ export const messagesEn = {
     applyPlain: 'Send as-is',
     edit: 'Edit',
     delete: 'Delete',
+    dragHandle: 'Drag to reorder',
+    reorderWhileSearch: 'Clear the search box to reorder snippets.',
   },
   sftp: {
     pickServerTitle: 'Select server',
@@ -522,6 +599,15 @@ export const messagesEn = {
     kindSymlink: 'symlink',
     kindFile: 'file',
     parentDir: 'Parent directory',
+    searchPlaceholder: 'Search this directory…',
+    noResults: 'No matching items.',
+    sortBy: 'Sort by {column}',
+    goBack: 'Back',
+    goForward: 'Forward',
+    pathBreadcrumb: 'Directory path',
+    pathInputLabel: 'Path to navigate to',
+    pathTabHint: 'Press Tab to complete path segments',
+    editPath: 'Path',
   },
   errors: {
     connectionFailed: 'Could not connect.',
@@ -536,12 +622,11 @@ type WidenStrings<T> = T extends string
   : { -readonly [K in keyof T]: WidenStrings<T[K]> }
 
 export type Messages = WidenStrings<typeof messagesTr>
-export type MessageKey = {
-  [K in keyof Messages]: Messages[K] extends string
-    ? K
-    : {
-        [K2 in keyof Messages[K]]: Messages[K][K2] extends string
-          ? `${K & string}.${K2 & string}`
-          : never
-      }[keyof Messages[K]]
-}[keyof Messages]
+
+type NestedMessageKey<T, Prefix extends string = ''> = T extends string
+  ? Prefix
+  : {
+      [K in keyof T & string]: NestedMessageKey<T[K], Prefix extends '' ? K : `${Prefix}.${K}`>
+    }[keyof T & string]
+
+export type MessageKey = NestedMessageKey<typeof messagesTr>

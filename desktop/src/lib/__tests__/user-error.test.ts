@@ -14,4 +14,12 @@ describe('toUserErrorMessage', () => {
       'Kullanıcı adı veya parola hatalı.',
     )
   })
+
+  it('electron ipc invoke sarmalayıcısını temizler', () => {
+    const error = new Error(
+      "Error invoking remote method 'auth:reset-password': Error: Güvenlik sorusunun cevabı hatalı.",
+    )
+
+    expect(toUserErrorMessage(error)).toBe('Güvenlik sorusunun cevabı hatalı.')
+  })
 })

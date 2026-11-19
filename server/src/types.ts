@@ -5,6 +5,8 @@ export interface UserRow {
   email: string
   password_hash: string
   encrypted_data_key: string
+  security_question_id: string | null
+  security_answer_hash: string | null
   created_at: Date
   updated_at: Date
 }

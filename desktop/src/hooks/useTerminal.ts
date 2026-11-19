@@ -4,10 +4,13 @@ import { useCallback, useEffect, useRef } from 'react'
 
 import { useAppearanceTheme } from '@/hooks/useAppearanceTheme'
 import { debounce } from '@/lib/debounce'
+import { isFullScreenTerminal } from '@/lib/terminal-mouse'
 
 type UseTerminalOptions = {
   onInput: (data: string) => void
   onResize: (cols: number, rows: number) => void
+  /** When false, skip fit/resize notifications (inactive workspace tab). */
+  layoutActive?: boolean
 }
 
 type UseTerminalResult = {
@@ -16,12 +19,18 @@ type UseTerminalResult = {
   write: (data: string) => void
   writeln: (message: string) => void
   focus: () => void
+  refit: () => void
   copySelection: () => Promise<void>
   pasteFromClipboard: () => Promise<void>
+  isFullScreen: () => boolean
   hasSelection: () => boolean
 }
 
-export function useTerminal({ onInput, onResize }: UseTerminalOptions): UseTerminalResult {
+export function useTerminal({
+  onInput,
+  onResize,
+  layoutActive = true,
+}: UseTerminalOptions): UseTerminalResult {
   const { theme } = useAppearanceTheme()
   const containerRef = useRef<HTMLDivElement | null>(null)
   const terminalRef = useRef<Terminal | null>(null)
@@ -29,6 +38,11 @@ export function useTerminal({ onInput, onResize }: UseTerminalOptions): UseTermi
   const onInputRef = useRef(onInput)
   const onResizeRef = useRef(onResize)
   const themeRef = useRef(theme)
+  const layoutActiveRef = useRef(layoutActive)
+
+  useEffect(() => {
+    layoutActiveRef.current = layoutActive
+  }, [layoutActive])
 
   useEffect(() => {
     themeRef.current = theme
@@ -61,6 +75,10 @@ export function useTerminal({ onInput, onResize }: UseTerminalOptions): UseTermi
         cursor: palette.terminalCursor,
       },
       scrollback: 5000,
+      scrollSensitivity: 1,
+      fastScrollSensitivity: 5,
+      altClickMovesCursor: true,
+      rightClickSelectsWord: false,
     })
 
     const fitAddon = new FitAddon()
@@ -71,17 +89,41 @@ export function useTerminal({ onInput, onResize }: UseTerminalOptions): UseTermi
     fitAddonRef.current = fitAddon
 
     const fitAndNotify = debounce(() => {
+      if (!layoutActiveRef.current) {
+        return
+      }
+
+      const width = container.clientWidth
+      const height = container.clientHeight
+
+      if (width < 8 || height < 8) {
+        return
+      }
+
       fitAddon.fit()
+      terminal.refresh(0, terminal.rows - 1)
       onResizeRef.current(terminal.cols, terminal.rows)
     }, 150)
 
     const pasteText = (text: string) => {
-      if (text) {
-        onInputRef.current(text)
+      if (!text) {
+        return
       }
+
+      if (isFullScreenTerminal(terminal)) {
+        // nano/vim: satır sonlarını CR'ye çevirir, destekleniyorsa bracketed paste kullanır.
+        terminal.paste(text)
+        return
+      }
+
+      onInputRef.current(text)
     }
 
     const dataDisposable = terminal.onData((data) => {
+      onInputRef.current(data)
+    })
+
+    const binaryDisposable = terminal.onBinary((data) => {
       onInputRef.current(data)
     })
 
@@ -120,6 +162,82 @@ export function useTerminal({ onInput, onResize }: UseTerminalOptions): UseTermi
 
     container.addEventListener('paste', onPaste, true)
 
+    // nano/vim fare raporlamasını açmadıysa: tıklanan hücreye ok tuşlarıyla git.
+    const cellFromEvent = (event: MouseEvent) => {
+      const screen = container.querySelector('.xterm-screen')
+
+      if (!screen) {
+        return null
+      }
+
+      const rect = screen.getBoundingClientRect()
+      const col = Math.floor(((event.clientX - rect.left) / rect.width) * terminal.cols)
+      const row = Math.floor(((event.clientY - rect.top) / rect.height) * terminal.rows)
+
+      if (col < 0 || row < 0 || col >= terminal.cols || row >= terminal.rows) {
+        return null
+      }
+
+      return { col, row }
+    }
+
+    const sendArrows = (direction: 'A' | 'B' | 'C' | 'D', count: number) => {
+      if (count <= 0) {
+        return
+      }
+
+      const prefix = terminal.modes.applicationCursorKeysMode ? '\x1bO' : '\x1b['
+      onInputRef.current(`${prefix}${direction}`.repeat(count))
+    }
+
+    let downCell: { col: number; row: number } | null = null
+
+    const onMouseDown = (event: MouseEvent) => {
+      downCell =
+        event.button === 0 && !event.shiftKey && !event.altKey ? cellFromEvent(event) : null
+    }
+
+    const onMouseUp = (event: MouseEvent) => {
+      const start = downCell
+      downCell = null
+
+      if (
+        !start ||
+        event.button !== 0 ||
+        terminal.buffer.active.type !== 'alternate' ||
+        terminal.modes.mouseTrackingMode !== 'none'
+      ) {
+        return
+      }
+
+      const end = cellFromEvent(event)
+
+      if (!end || end.col !== start.col || end.row !== start.row) {
+        return
+      }
+
+      const buffer = terminal.buffer.active
+      const dy = end.row - buffer.cursorY
+
+      sendArrows(dy < 0 ? 'A' : 'B', Math.abs(dy))
+
+      window.setTimeout(
+        () => {
+          const active = terminal.buffer.active
+          const line = active.getLine(active.baseY + end.row)
+          const lineLength = line ? line.translateToString(true).length : end.col
+          const targetCol = Math.min(end.col, lineLength)
+          const dx = targetCol - active.cursorX
+
+          sendArrows(dx < 0 ? 'D' : 'C', Math.abs(dx))
+        },
+        dy === 0 ? 0 : 80,
+      )
+    }
+
+    container.addEventListener('mousedown', onMouseDown)
+    container.addEventListener('mouseup', onMouseUp)
+
     const resizeObserver = new ResizeObserver(() => {
       fitAndNotify()
     })
@@ -128,8 +246,11 @@ export function useTerminal({ onInput, onResize }: UseTerminalOptions): UseTermi
     fitAndNotify()
 
     return () => {
+      binaryDisposable.dispose()
       dataDisposable.dispose()
       container.removeEventListener('paste', onPaste, true)
+      container.removeEventListener('mousedown', onMouseDown)
+      container.removeEventListener('mouseup', onMouseUp)
       resizeObserver.disconnect()
       terminal.dispose()
       terminalRef.current = null
@@ -167,6 +288,51 @@ export function useTerminal({ onInput, onResize }: UseTerminalOptions): UseTermi
     terminalRef.current?.focus()
   }, [])
 
+  const refit = useCallback(() => {
+    const container = containerRef.current
+    const terminal = terminalRef.current
+    const fitAddon = fitAddonRef.current
+
+    if (!container || !terminal || !fitAddon || !layoutActiveRef.current) {
+      return
+    }
+
+    const width = container.clientWidth
+    const height = container.clientHeight
+
+    if (width < 8 || height < 8) {
+      return
+    }
+
+    fitAddon.fit()
+    terminal.refresh(0, terminal.rows - 1)
+    onResizeRef.current(terminal.cols, terminal.rows)
+  }, [])
+
+  useEffect(() => {
+    if (!layoutActive) {
+      return
+    }
+
+    let innerFrame = 0
+    const outerFrame = requestAnimationFrame(() => {
+      innerFrame = requestAnimationFrame(() => {
+        refit()
+      })
+    })
+
+    return () => {
+      cancelAnimationFrame(outerFrame)
+      cancelAnimationFrame(innerFrame)
+    }
+  }, [layoutActive, refit])
+
+  const isFullScreen = useCallback(() => {
+    const terminal = terminalRef.current
+
+    return terminal ? isFullScreenTerminal(terminal) : false
+  }, [])
+
   const hasSelection = useCallback(() => {
     return Boolean(terminalRef.current?.getSelection())
   }, [])
@@ -181,10 +347,18 @@ export function useTerminal({ onInput, onResize }: UseTerminalOptions): UseTermi
 
   const pasteFromClipboard = useCallback(async () => {
     const text = await navigator.clipboard.readText()
+    const terminal = terminalRef.current
 
-    if (text) {
-      onInputRef.current(text)
+    if (!text) {
+      return
     }
+
+    if (terminal && isFullScreenTerminal(terminal)) {
+      terminal.paste(text)
+      return
+    }
+
+    onInputRef.current(text)
   }, [])
 
   return {
@@ -193,8 +367,10 @@ export function useTerminal({ onInput, onResize }: UseTerminalOptions): UseTermi
     write,
     writeln,
     focus,
+    refit,
     copySelection,
     pasteFromClipboard,
+    isFullScreen,
     hasSelection,
   }
 }

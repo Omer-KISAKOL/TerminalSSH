@@ -59,4 +59,12 @@ export const cloudSnippetService = {
   async remove(snippetId: string): Promise<void> {
     await getApiClient().deleteSnippet(snippetId)
   },
+
+  async reorder(orderedIds: string[]): Promise<Snippet[]> {
+    const client = getApiClient()
+    await Promise.all(
+      orderedIds.map((id, index) => client.updateSnippet(id, { sortOrder: index })),
+    )
+    return this.list()
+  },
 }

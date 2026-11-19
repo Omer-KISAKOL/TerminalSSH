@@ -240,8 +240,9 @@ export function SftpTabPanel({
   const handleLocalSelect = (
     entry: FileEntry,
     modifiers: { ctrlKey: boolean; metaKey: boolean; shiftKey: boolean },
+    visibleEntries: FileEntry[],
   ) => {
-    const next = selectEntry(localEntries, entry, selectedLocalPaths, localAnchorPath, modifiers)
+    const next = selectEntry(visibleEntries, entry, selectedLocalPaths, localAnchorPath, modifiers)
     setSelectedLocalPaths(next.selectedPaths)
     setLocalAnchorPath(next.anchorPath)
   }
@@ -249,8 +250,9 @@ export function SftpTabPanel({
   const handleRemoteSelect = (
     entry: FileEntry,
     modifiers: { ctrlKey: boolean; metaKey: boolean; shiftKey: boolean },
+    visibleEntries: FileEntry[],
   ) => {
-    const next = selectEntry(remoteEntries, entry, selectedRemotePaths, remoteAnchorPath, modifiers)
+    const next = selectEntry(visibleEntries, entry, selectedRemotePaths, remoteAnchorPath, modifiers)
     setSelectedRemotePaths(next.selectedPaths)
     setRemoteAnchorPath(next.anchorPath)
   }
@@ -409,6 +411,7 @@ export function SftpTabPanel({
           }
           actionDisabled={!connected || selectedLocalFiles.length === 0 || transferring}
           onAction={() => void uploadFiles(selectedLocalFiles)}
+          listDirectoryEntries={(directoryPath) => window.desktopApi.files.listLocalDir(directoryPath)}
         />
 
         {connected && tab.sessionId ? (
@@ -438,6 +441,9 @@ export function SftpTabPanel({
             }
             actionDisabled={selectedRemoteFiles.length === 0 || transferring}
             onAction={() => void downloadFiles(selectedRemoteFiles)}
+            listDirectoryEntries={(directoryPath) =>
+              window.desktopApi.sftp.listDir(tab.sessionId!, directoryPath)
+            }
           />
         ) : (
           <SftpHostPicker

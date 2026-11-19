@@ -21,6 +21,9 @@ export const IPC_CHANNELS = {
     logout: 'auth:logout',
     refresh: 'auth:refresh',
     getSession: 'auth:get-session',
+    getPasswordResetQuestion: 'auth:get-password-reset-question',
+    resetPassword: 'auth:reset-password',
+    completeSecuritySetup: 'auth:complete-security-setup',
   },
   profiles: {
     list: 'profiles:list',
@@ -37,6 +40,7 @@ export const IPC_CHANNELS = {
     list: 'snippets:list',
     save: 'snippets:save',
     remove: 'snippets:remove',
+    reorder: 'snippets:reorder',
   },
   sftp: {
     connect: 'sftp:connect',

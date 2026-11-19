@@ -31,7 +31,7 @@ export function SftpHostPicker({
         ) : profiles.length === 0 ? (
           <p className="text-sm text-text-muted">{t('sftp.noProfiles')}</p>
         ) : (
-          <div className="space-y-2">
+          <div className="grid grid-cols-2 gap-2">
             {profiles.map((profile) => (
               <div
                 key={profile.id}

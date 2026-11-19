@@ -9,6 +9,10 @@ export interface AccessTokenPayload {
   email: string
 }
 
+export interface SecuritySetupTokenPayload extends AccessTokenPayload {
+  purpose: 'security-setup'
+}
+
 export function hashToken(token: string): string {
   return createHash('sha256').update(token).digest('hex')
 }
@@ -23,6 +27,38 @@ export function createAccessToken(payload: AccessTokenPayload): string {
 
 export function createRefreshToken(): string {
   return randomBytes(48).toString('base64url')
+}
+
+export function createSecuritySetupToken(payload: AccessTokenPayload): string {
+  const signOptions: SignOptions = {
+    expiresIn: '15m',
+  }
+
+  return jwt.sign(
+    { ...payload, purpose: 'security-setup' } satisfies SecuritySetupTokenPayload,
+    config.jwtSecret,
+    signOptions,
+  )
+}
+
+export function verifySecuritySetupToken(token: string): AccessTokenPayload {
+  const decoded = jwt.verify(token, config.jwtSecret)
+
+  if (
+    typeof decoded !== 'object' ||
+    decoded === null ||
+    !('sub' in decoded) ||
+    !('email' in decoded) ||
+    !('purpose' in decoded) ||
+    decoded.purpose !== 'security-setup'
+  ) {
+    throw new Error('Invalid security setup token.')
+  }
+
+  return {
+    sub: String(decoded.sub),
+    email: String(decoded.email),
+  }
 }
 
 export function verifyAccessToken(token: string): AccessTokenPayload {

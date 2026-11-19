@@ -1,7 +1,11 @@
 import { ipcMain } from 'electron'
 
 import { IPC_CHANNELS } from '@shared/ipc-channels'
-import { assertSaveSnippetRequest, assertSnippetId } from '@shared/validation/snippet'
+import {
+  assertSaveSnippetRequest,
+  assertSnippetId,
+  assertSnippetReorderRequest,
+} from '@shared/validation/snippet'
 
 import { snippetManager } from '../services/snippet-manager'
 
@@ -27,5 +31,12 @@ export function registerSnippetHandlers(): void {
         await snippetManager.remove(snippetId)
       },
     ),
+  )
+
+  ipcMain.handle(
+    IPC_CHANNELS.snippets.reorder,
+    createIpcHandler(assertSnippetReorderRequest, async (_event, orderedIds) => {
+      return snippetManager.reorder(orderedIds)
+    }),
   )
 }

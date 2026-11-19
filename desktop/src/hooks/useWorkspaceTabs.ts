@@ -305,16 +305,28 @@ export function useWorkspaceTabs({
   )
 
   const openTerminalSession = useCallback(
-    async (values: ConnectionFormValues) => {
-      let tabId = activeTabIdRef.current
-      const activeTab = tabId ? tabsRef.current.find((tab) => tab.id === tabId) : null
+    async (values: ConnectionFormValues, options?: { tabId?: string | null }) => {
+      let tabId = options?.tabId ?? null
 
-      if (!activeTab || activeTab.type !== 'terminal' || activeTab.sessionId) {
-        tabId = addTerminalTab()
+      if (tabId) {
+        const explicitTab = tabsRef.current.find((tab) => tab.id === tabId)
+        if (!explicitTab || explicitTab.type !== 'terminal') {
+          tabId = null
+        }
       }
 
       if (!tabId) {
-        return
+        const activeId = activeTabIdRef.current
+        const activeTab = activeId ? tabsRef.current.find((tab) => tab.id === activeId) : null
+
+        const canReuseActive =
+          activeTab?.type === 'terminal' &&
+          !activeTab.sessionId &&
+          (activeTab.status === 'idle' ||
+            activeTab.status === 'disconnected' ||
+            activeTab.status === 'error')
+
+        tabId = canReuseActive ? activeTab.id : addTerminalTab()
       }
 
       setActiveTabId(tabId)

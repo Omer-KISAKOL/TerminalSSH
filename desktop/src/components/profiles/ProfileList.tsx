@@ -4,7 +4,10 @@ import { useLocale } from '@/hooks/useLocale'
 
 import { ProfileListItem } from './ProfileListItem'
 
+type ProfileListColumns = 1 | 2 | 4
+
 type ProfileListProps = {
+  columns?: ProfileListColumns
   profiles: PublicServerProfile[]
   selectedProfileId: string | null
   lastConnectedProfileId: string | null
@@ -18,7 +21,20 @@ type ProfileListProps = {
   onDelete: (profile: PublicServerProfile) => void
 }
 
+function profileListLayoutClass(columns: ProfileListColumns): string {
+  if (columns === 4) {
+    return 'grid grid-cols-2 gap-2 overflow-y-auto md:grid-cols-4'
+  }
+
+  if (columns === 2) {
+    return 'grid grid-cols-2 gap-2 overflow-y-auto'
+  }
+
+  return 'space-y-2 overflow-y-auto'
+}
+
 export function ProfileList({
+  columns = 1,
   profiles,
   selectedProfileId,
   lastConnectedProfileId,
@@ -57,11 +73,14 @@ export function ProfileList({
     )
   }
 
+  const dense = columns > 1
+
   return (
-    <div className="space-y-2 overflow-y-auto">
+    <div className={profileListLayoutClass(columns)}>
       {profiles.map((profile) => (
         <ProfileListItem
           key={profile.id}
+          dense={dense}
           profile={profile}
           isSelected={selectedProfileId === profile.id}
           isLastConnected={lastConnectedProfileId === profile.id}

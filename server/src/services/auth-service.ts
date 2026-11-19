@@ -2,6 +2,11 @@ import { randomUUID } from 'node:crypto'
 
 import argon2 from 'argon2'
 
+import {
+  isSecurityQuestionId,
+  normalizeSecurityAnswer,
+  type SecurityQuestionId,
+} from '../constants/security-questions.js'
 import { pool } from '../db/pool.js'
 import type { UserRow } from '../types.js'
 import {
@@ -12,8 +17,10 @@ import {
 import {
   createAccessToken,
   createRefreshToken,
+  createSecuritySetupToken,
   getRefreshExpiryDate,
   hashToken,
+  verifySecuritySetupToken,
 } from './token-service.js'
 
 export class AuthError extends Error {
@@ -36,9 +43,40 @@ async function findUserById(id: string): Promise<UserRow | null> {
   return result.rows[0] ?? null
 }
 
+export function userNeedsSecuritySetup(user: UserRow): boolean {
+  return (
+    !user.security_question_id ||
+    !user.security_answer_hash ||
+    !isSecurityQuestionId(user.security_question_id)
+  )
+}
+
+async function setUserSecurityQuestion(
+  userId: string,
+  securityQuestionId: SecurityQuestionId,
+  securityAnswer: string,
+): Promise<void> {
+  if (!isSecurityQuestionId(securityQuestionId)) {
+    throw new AuthError('Geçerli bir güvenlik sorusu seçin.')
+  }
+
+  const securityAnswerHash = await argon2.hash(normalizeSecurityAnswer(securityAnswer))
+
+  await pool.query(
+    `UPDATE users
+     SET security_question_id = $2,
+         security_answer_hash = $3,
+         updated_at = NOW()
+     WHERE id = $1`,
+    [userId, securityQuestionId, securityAnswerHash],
+  )
+}
+
 export async function registerUser(
   email: string,
   password: string,
+  securityQuestionId: SecurityQuestionId,
+  securityAnswer: string,
   deviceName?: string,
 ): Promise<{ accessToken: string; refreshToken: string; user: { id: string; email: string } }> {
   const normalizedEmail = email.trim().toLowerCase()
@@ -47,25 +85,100 @@ export async function registerUser(
     throw new AuthError('Bu e-posta adresi zaten kayıtlı.')
   }
 
+  if (!isSecurityQuestionId(securityQuestionId)) {
+    throw new AuthError('Geçerli bir güvenlik sorusu seçin.')
+  }
+
   const passwordHash = await argon2.hash(password)
+  const securityAnswerHash = await argon2.hash(normalizeSecurityAnswer(securityAnswer))
   const dataKey = generateDataKey()
   const encryptedDataKey = encryptDataKey(dataKey)
   const userId = randomUUID()
 
   await pool.query(
-    `INSERT INTO users (id, email, password_hash, encrypted_data_key)
-     VALUES ($1, $2, $3, $4)`,
-    [userId, normalizedEmail, passwordHash, encryptedDataKey],
+    `INSERT INTO users (
+      id, email, password_hash, encrypted_data_key, security_question_id, security_answer_hash
+    ) VALUES ($1, $2, $3, $4, $5, $6)`,
+    [userId, normalizedEmail, passwordHash, encryptedDataKey, securityQuestionId, securityAnswerHash],
   )
 
   return createSession(userId, normalizedEmail, deviceName)
 }
 
+export async function getPasswordResetQuestion(
+  email: string,
+): Promise<{ securityQuestionId: SecurityQuestionId }> {
+  const user = await findUserByEmail(email.trim().toLowerCase())
+
+  if (
+    !user?.security_question_id ||
+    !user.security_answer_hash ||
+    !isSecurityQuestionId(user.security_question_id)
+  ) {
+    throw new AuthError('Bu e-posta için parola sıfırlama yapılamıyor.')
+  }
+
+  return { securityQuestionId: user.security_question_id }
+}
+
+export async function resetPasswordWithSecurityAnswer(
+  email: string,
+  securityAnswer: string,
+  newPassword: string,
+): Promise<void> {
+  const user = await findUserByEmail(email.trim().toLowerCase())
+
+  if (!user?.security_answer_hash) {
+    throw new AuthError('Güvenlik sorusunun cevabı hatalı.')
+  }
+
+  const valid = await argon2.verify(user.security_answer_hash, normalizeSecurityAnswer(securityAnswer))
+
+  if (!valid) {
+    throw new AuthError('Güvenlik sorusunun cevabı hatalı.')
+  }
+
+  const reusingCurrentPassword = await argon2.verify(user.password_hash, newPassword)
+
+  if (reusingCurrentPassword) {
+    throw new AuthError('Yeni parola mevcut parolanızdan farklı olmalıdır.')
+  }
+
+  const passwordHash = await argon2.hash(newPassword)
+
+  await pool.query(
+    `UPDATE users
+     SET password_hash = $2, updated_at = NOW()
+     WHERE id = $1`,
+    [user.id, passwordHash],
+  )
+
+  await pool.query(
+    `UPDATE refresh_sessions
+     SET revoked_at = NOW()
+     WHERE user_id = $1 AND revoked_at IS NULL`,
+    [user.id],
+  )
+}
+
+export type LoginUserResult =
+  | {
+      requiresSecuritySetup: false
+      accessToken: string
+      refreshToken: string
+      user: { id: string; email: string }
+    }
+  | {
+      requiresSecuritySetup: true
+      setupToken: string
+      user: { id: string; email: string }
+    }
+
 export async function loginUser(
   email: string,
   password: string,
   deviceName?: string,
-): Promise<{ accessToken: string; refreshToken: string; user: { id: string; email: string } }> {
+): Promise<LoginUserResult> {
   const user = await findUserByEmail(email.trim().toLowerCase())
 
   if (!user) {
@@ -78,7 +191,67 @@ export async function loginUser(
     throw new AuthError('E-posta veya parola hatalı.')
   }
 
+  if (userNeedsSecuritySetup(user)) {
+    return {
+      requiresSecuritySetup: true,
+      setupToken: createSecuritySetupToken({ sub: user.id, email: user.email }),
+      user: { id: user.id, email: user.email },
+    }
+  }
+
+  const session = await createSession(user.id, user.email, deviceName)
+
+  return {
+    requiresSecuritySetup: false,
+    ...session,
+  }
+}
+
+export async function completeSecuritySetupWithToken(
+  setupToken: string,
+  securityQuestionId: SecurityQuestionId,
+  securityAnswer: string,
+  deviceName?: string,
+): Promise<{ accessToken: string; refreshToken: string; user: { id: string; email: string } }> {
+  let payload: { sub: string; email: string }
+
+  try {
+    payload = verifySecuritySetupToken(setupToken)
+  } catch {
+    throw new AuthError('Güvenlik sorusu kurulumunun süresi doldu. Lütfen tekrar giriş yapın.')
+  }
+
+  const user = await findUserById(payload.sub)
+
+  if (!user || user.email !== payload.email) {
+    throw new AuthError('Kullanıcı bulunamadı.')
+  }
+
+  if (!userNeedsSecuritySetup(user)) {
+    throw new AuthError('Güvenlik sorusu zaten tanımlı.')
+  }
+
+  await setUserSecurityQuestion(user.id, securityQuestionId, securityAnswer)
+
   return createSession(user.id, user.email, deviceName)
+}
+
+export async function completeSecuritySetupForUser(
+  userId: string,
+  securityQuestionId: SecurityQuestionId,
+  securityAnswer: string,
+): Promise<void> {
+  const user = await findUserById(userId)
+
+  if (!user) {
+    throw new AuthError('Kullanıcı bulunamadı.')
+  }
+
+  if (!userNeedsSecuritySetup(user)) {
+    throw new AuthError('Güvenlik sorusu zaten tanımlı.')
+  }
+
+  await setUserSecurityQuestion(user.id, securityQuestionId, securityAnswer)
 }
 
 async function createSession(
@@ -164,6 +337,22 @@ export async function getUserById(userId: string): Promise<{ id: string; email: 
   }
 
   return { id: user.id, email: user.email }
+}
+
+export async function getAuthenticatedUserInfo(userId: string): Promise<{
+  user: { id: string; email: string }
+  requiresSecuritySetup: boolean
+} | null> {
+  const user = await findUserById(userId)
+
+  if (!user) {
+    return null
+  }
+
+  return {
+    user: { id: user.id, email: user.email },
+    requiresSecuritySetup: userNeedsSecuritySetup(user),
+  }
 }
 
 export async function getUserDataKey(userId: string): Promise<Buffer> {

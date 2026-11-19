@@ -19,6 +19,7 @@ export type TerminalApi = {
 }
 
 type TerminalViewProps = {
+  isActive?: boolean
   onReady: (api: TerminalApi | null) => void
   onInput: (data: string) => void
   onResize: (cols: number, rows: number) => void
@@ -29,11 +30,13 @@ type ContextMenuState = {
   y: number
 }
 
-export function TerminalView({ onReady, onInput, onResize }: TerminalViewProps) {
+export function TerminalView({ isActive = true, onReady, onInput, onResize }: TerminalViewProps) {
   const { t } = useLocale()
+  const fullScreenRef = useRef<() => boolean>(() => false)
   const { snapshot, handleInput, observeOutput, begin, cancel, dropPending, setWriteLocal } =
-    useCommandQueue(onInput)
-  const terminal = useTerminal({ onInput: handleInput, onResize })
+    useCommandQueue(onInput, () => fullScreenRef.current())
+  const terminal = useTerminal({ onInput: handleInput, onResize, layoutActive: isActive })
+  fullScreenRef.current = terminal.isFullScreen
   const { clear, containerRef, copySelection, focus, pasteFromClipboard, write, writeln } = terminal
   const apiRef = useRef<TerminalApi | null>(null)
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null)

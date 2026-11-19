@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 
 import type { FileEntry } from '@shared/contracts/sftp'
 
@@ -10,8 +10,20 @@ import {
   type TransferDragPayload,
 } from '@/lib/file-selection'
 
+import {
+  DEFAULT_FILE_SORT,
+  filterAndSortEntries,
+  toggleFileSort,
+  type FileSortKey,
+  type FileSortState,
+} from '@/lib/file-sort'
+
 import { Button } from '@/components/ui/Button'
 import { useLocale } from '@/hooks/useLocale'
+import { usePathNavigationHistory } from '@/hooks/usePathNavigationHistory'
+import { getParentPath } from '@/lib/paths'
+
+import { PathBreadcrumbs } from './PathBreadcrumbs'
 
 type FilePaneProps = {
   side: FilePaneSide
@@ -26,6 +38,7 @@ type FilePaneProps = {
   onSelect: (
     entry: FileEntry,
     modifiers: { ctrlKey: boolean; metaKey: boolean; shiftKey: boolean },
+    visibleEntries: FileEntry[],
   ) => void
   onContextMenu: (event: React.MouseEvent, entry: FileEntry | null) => void
   onDragStartTransfer: (entry: FileEntry, event: React.DragEvent) => void
@@ -36,6 +49,53 @@ type FilePaneProps = {
   actionLabel?: string
   onAction?: () => void
   actionDisabled?: boolean
+  listDirectoryEntries?: (directoryPath: string) => Promise<FileEntry[]>
+}
+
+function FolderIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-accent" fill="currentColor" aria-hidden="true">
+      <path d="M3 6.5A2.5 2.5 0 0 1 5.5 4h3.8c.6 0 1.2.3 1.6.8L12 6h6.5A2.5 2.5 0 0 1 21 8.5v9a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5v-11Z" />
+    </svg>
+  )
+}
+
+function FileIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-4 w-4 shrink-0 text-text-muted"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M7 3h7l5 5v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" />
+      <path d="M14 3v5h5" />
+    </svg>
+  )
+}
+
+function LinkIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-4 w-4 shrink-0 text-text-muted"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      aria-hidden="true"
+    >
+      <path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1" />
+      <path d="M14 10a4 4 0 0 0-5.7 0l-3 3A4 4 0 0 0 11 18.7l1-1" />
+    </svg>
+  )
+}
+
+function EntryIcon({ kind }: { kind: FileEntry['kind'] }) {
+  return kind === 'directory' ? <FolderIcon /> : kind === 'symlink' ? <LinkIcon /> : <FileIcon />
 }
 
 function formatDate(value: string | null, locale: 'tr' | 'en'): string {
@@ -85,10 +145,41 @@ export function FilePane({
   actionLabel,
   onAction,
   actionDisabled = false,
+  listDirectoryEntries,
 }: FilePaneProps) {
   const { locale, t } = useLocale()
+  const pathHistory = usePathNavigationHistory(path)
   const [dragDepth, setDragDepth] = useState(0)
   const isDropTarget = dropActive || dragDepth > 0
+  const [query, setQuery] = useState('')
+  const [sort, setSort] = useState<FileSortState>(DEFAULT_FILE_SORT)
+  const visibleEntries = useMemo(
+    () => filterAndSortEntries(entries, query, sort),
+    [entries, query, sort],
+  )
+
+  const renderSortHeader = (key: FileSortKey, label: string) => {
+    const active = sort.key === key
+
+    return (
+      <th
+        className="px-3 py-2 font-medium"
+        aria-sort={active ? (sort.direction === 'asc' ? 'ascending' : 'descending') : 'none'}
+      >
+        <button
+          type="button"
+          className="flex items-center gap-1 transition hover:text-text"
+          title={t('filePane.sortBy', { column: label })}
+          onClick={() => setSort((current) => toggleFileSort(current, key))}
+        >
+          {label}
+          <span aria-hidden="true" className={active ? 'text-accent' : 'opacity-30'}>
+            {active ? (sort.direction === 'asc' ? '▲' : '▼') : '↕'}
+          </span>
+        </button>
+      </th>
+    )
+  }
 
   const handleDragEnter = (event: React.DragEvent) => {
     if (!event.dataTransfer.types.includes(TRANSFER_DRAG_MIME)) {
@@ -151,15 +242,25 @@ export function FilePane({
         onContextMenu(event, null)
       }}
     >
-      <header className="flex items-center justify-between gap-2 border-b border-border px-3 py-2">
-        <div className="min-w-0">
-          <h3 className="text-sm font-medium text-text">{title}</h3>
-          <p className="truncate font-mono text-xs text-text-muted">{path || '—'}</p>
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <Button variant="ghost" className="px-2 py-1 text-xs" onClick={onGoUp}>
-            {t('filePane.parentDir')}
-          </Button>
+      <header className="flex flex-col gap-2 border-b border-border px-3 py-2">
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="shrink-0 text-sm font-medium text-text">{title}</h3>
+          <div className="flex shrink-0 items-center gap-2">
+            <Button
+              variant="ghost"
+              className="px-2 py-1 text-xs"
+              onClick={() => {
+                const parent = getParentPath(path)
+
+                if (parent !== path) {
+                  onNavigate(parent)
+                } else {
+                  onGoUp()
+                }
+              }}
+            >
+              {t('filePane.parentDir')}
+            </Button>
           {actionLabel && onAction ? (
             <Button
               variant="primary"
@@ -170,7 +271,30 @@ export function FilePane({
               {actionLabel}
             </Button>
           ) : null}
+          </div>
         </div>
+        <PathBreadcrumbs
+          side={side}
+          path={path}
+          listDirectoryEntries={listDirectoryEntries}
+          onNavigate={onNavigate}
+          canGoBack={pathHistory.canGoBack}
+          canGoForward={pathHistory.canGoForward}
+          onGoBack={() => {
+            const target = pathHistory.goBack()
+
+            if (target) {
+              onNavigate(target)
+            }
+          }}
+          onGoForward={() => {
+            const target = pathHistory.goForward()
+
+            if (target) {
+              onNavigate(target)
+            }
+          }}
+        />
       </header>
 
       {error ? (
@@ -185,14 +309,25 @@ export function FilePane({
         </p>
       ) : null}
 
+      <div className="border-b border-border px-3 py-2">
+        <input
+          type="search"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder={t('filePane.searchPlaceholder')}
+          aria-label={t('filePane.searchPlaceholder')}
+          className="w-full rounded-md border border-border bg-surface px-2 py-1 text-sm text-text placeholder:text-text-muted focus:border-accent focus:outline-none"
+        />
+      </div>
+
       <div className="min-h-0 flex-1 overflow-auto">
         <table className="w-full text-left text-sm">
           <thead className="sticky top-0 bg-surface-raised text-xs text-text-muted">
             <tr>
-              <th className="px-3 py-2 font-medium">{t('filePane.name')}</th>
-              <th className="px-3 py-2 font-medium">{t('filePane.modified')}</th>
-              <th className="px-3 py-2 font-medium">{t('filePane.size')}</th>
-              <th className="px-3 py-2 font-medium">{t('filePane.type')}</th>
+              {renderSortHeader('name', t('filePane.name'))}
+              {renderSortHeader('modified', t('filePane.modified'))}
+              {renderSortHeader('size', t('filePane.size'))}
+              {renderSortHeader('type', t('filePane.type'))}
             </tr>
           </thead>
           <tbody>
@@ -202,14 +337,14 @@ export function FilePane({
                   {t('common.loading')}
                 </td>
               </tr>
-            ) : entries.length === 0 ? (
+            ) : visibleEntries.length === 0 ? (
               <tr>
                 <td colSpan={4} className="px-3 py-8 text-center text-text-muted">
-                  {t('filePane.emptyDir')}
+                  {entries.length === 0 ? t('filePane.emptyDir') : t('filePane.noResults')}
                 </td>
               </tr>
             ) : (
-              entries.map((entry) => {
+              visibleEntries.map((entry) => {
                 const isSelected = selectedPaths.has(entry.path)
                 const draggable = isTransferableEntry(entry)
 
@@ -226,7 +361,7 @@ export function FilePane({
                         ctrlKey: event.ctrlKey,
                         metaKey: event.metaKey,
                         shiftKey: event.shiftKey,
-                      })
+                      }, visibleEntries)
                     }
                     onDoubleClick={() => {
                       if (entry.kind === 'directory') {
@@ -247,10 +382,15 @@ export function FilePane({
                     }}
                   >
                     <td className="px-3 py-2">
-                      <div className="font-medium text-text">{entry.name}</div>
-                      {entry.permissions ? (
-                        <div className="font-mono text-[11px] text-text-muted">{entry.permissions}</div>
-                      ) : null}
+                      <div className="flex items-center gap-2">
+                        <EntryIcon kind={entry.kind} />
+                        <div className="min-w-0">
+                          <div className="truncate font-medium text-text">{entry.name}</div>
+                          {entry.permissions ? (
+                            <div className="font-mono text-[11px] text-text-muted">{entry.permissions}</div>
+                          ) : null}
+                        </div>
+                      </div>
                     </td>
                     <td className="px-3 py-2 text-text-muted">
                       {formatDate(entry.modifiedAt, locale)}
