@@ -43,7 +43,7 @@ export type AppearanceTheme = {
 export const APPEARANCE_THEMES: AppearanceTheme[] = [
   {
     id: 'termius-dark',
-    name: 'Deep Navy',
+    name: 'TSSH Main',
     previewBars: ['#4AF626', '#7AA2FF', '#E0E0E0'],
     colors: {
       surface: '#12141f',
@@ -315,7 +315,7 @@ export const APPEARANCE_THEMES: AppearanceTheme[] = [
   },
   {
     id: 'rose-pine-moon',
-    name: 'Moonlit Mauve',
+    name: 'Warkose Mauve',
     previewBars: ['#e0def4', '#c4a7e7', '#3e8fb0'],
     colors: {
       surface: '#1c1a26',
