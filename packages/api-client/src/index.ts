@@ -31,7 +31,22 @@ export interface ApiClientOptions {
 }
 
 async function parseJson<T>(response: Response): Promise<T> {
-  const payload = (await response.json()) as T & { error?: string; message?: string }
+  let payload: (T & { error?: string; message?: string }) | null = null
+
+  try {
+    payload = (await response.json()) as T & { error?: string; message?: string }
+  } catch {
+    if (!response.ok) {
+      throw new ApiClientError(
+        response.status === 429
+          ? 'Çok fazla istek gönderildi. Lütfen kısa bir süre bekleyin.'
+          : `API isteği başarısız (HTTP ${response.status}).`,
+        response.status,
+      )
+    }
+
+    throw new ApiClientError('API yanıtı okunamadı.', response.status)
+  }
 
   if (!response.ok) {
     throw new ApiClientError(
@@ -73,10 +88,19 @@ export class TerminalSshApiClient {
       headers.set('Authorization', `Bearer ${accessToken}`)
     }
 
-    const response = await fetch(`${this.baseUrl}${path}`, {
-      ...init,
-      headers,
-    })
+    let response: Response
+
+    try {
+      response = await fetch(`${this.baseUrl}${path}`, {
+        ...init,
+        headers,
+      })
+    } catch {
+      throw new ApiClientError(
+        'API sunucusuna ulaşılamıyor. Bağlantı ve sunucunun çalıştığını kontrol edin.',
+        0,
+      )
+    }
 
     if (response.status === 401 && retryOnUnauthorized && this.getRefreshToken) {
       const refreshToken = await this.getRefreshToken()

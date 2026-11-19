@@ -1,17 +1,47 @@
 import type { IpcMainInvokeEvent } from 'electron'
 
+import { ApiClientError } from '@terminalssh/api-client'
 import { IpcValidationError } from '@shared/validation/ssh'
 
-export function handleIpcError(error: unknown): never {
+function toIpcError(error: unknown): Error {
   if (error instanceof IpcValidationError) {
-    throw new Error(error.message)
+    return new Error(error.message)
+  }
+
+  if (error instanceof ApiClientError) {
+    if (error.statusCode === 429) {
+      return new Error(
+        error.message.includes('Rate limit')
+          ? `${error.message} Bir süre bekleyip tekrar deneyin.`
+          : 'Çok fazla istek gönderildi. Yaklaşık bir dakika bekleyip tekrar deneyin.',
+      )
+    }
+
+    return new Error(error.message)
   }
 
   if (error instanceof Error) {
-    throw error
+    const message = error.message.toLowerCase()
+
+    if (
+      message.includes('fetch failed') ||
+      message.includes('econnrefused') ||
+      message.includes('network') ||
+      message.includes('enotfound')
+    ) {
+      return new Error(
+        'API sunucusuna bağlanılamadı. Docker Desktop ve `pnpm dev:server` çalışıyor mu?',
+      )
+    }
+
+    return new Error(error.message)
   }
 
-  throw new Error('İşlem tamamlanamadı.')
+  return new Error('İşlem tamamlanamadı.')
+}
+
+export function handleIpcError(error: unknown): never {
+  throw toIpcError(error)
 }
 
 export function createIpcHandler<TInput, TResult>(

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { PublicServerProfile } from '@shared/contracts/profile'
 import type { ConnectionFormValues } from '@shared/contracts/ssh'
 
+import { AuthScreen } from '@/components/auth/AuthScreen'
 import { LoginForm } from '@/components/auth/LoginForm'
 import { ProfileMigrationDialog } from '@/components/auth/ProfileMigrationDialog'
 import { RegisterForm } from '@/components/auth/RegisterForm'
@@ -399,27 +400,29 @@ export function AppShell({ appVersion }: AppShellProps) {
 
   if (showAuthGate) {
     return (
-      <div className="flex h-full items-center justify-center bg-surface p-6">
-        {authScreen === 'login' ? (
-          <LoginForm
-            loading={auth.isLoading}
-            error={auth.error}
-            onSubmit={async (email, password) => {
-              await auth.login(email, password)
-            }}
-            onSwitchToRegister={() => setAuthScreen('register')}
-            onContinueOffline={() => setOfflineMode(true)}
-          />
-        ) : (
-          <RegisterForm
-            loading={auth.isLoading}
-            error={auth.error}
-            onSubmit={async (email, password) => {
-              await auth.register(email, password)
-            }}
-            onSwitchToLogin={() => setAuthScreen('login')}
-          />
-        )}
+      <div className="flex h-full items-center justify-center bg-black px-4 py-8 sm:px-6">
+        <AuthScreen>
+          {authScreen === 'login' ? (
+            <LoginForm
+              loading={auth.isLoading}
+              error={auth.error}
+              onSubmit={async (email, password) => {
+                await auth.login(email, password)
+              }}
+              onSwitchToRegister={() => setAuthScreen('register')}
+              onContinueOffline={() => setOfflineMode(true)}
+            />
+          ) : (
+            <RegisterForm
+              loading={auth.isLoading}
+              error={auth.error}
+              onSubmit={async (email, password) => {
+                await auth.register(email, password)
+              }}
+              onSwitchToLogin={() => setAuthScreen('login')}
+            />
+          )}
+        </AuthScreen>
       </div>
     )
   }

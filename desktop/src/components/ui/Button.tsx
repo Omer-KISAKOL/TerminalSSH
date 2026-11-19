@@ -10,15 +10,15 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   primary:
-    'border border-accent-hover bg-accent text-accent-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_2px_6px_rgba(0,0,0,0.35)] hover:bg-accent-hover active:bg-accent-active focus-visible:ring-accent/70',
+    'border border-accent-hover bg-accent text-accent-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_2px_6px_rgba(0,0,0,0.35)] hover:bg-accent-hover active:bg-accent-active focus:ring-accent/70',
   secondary:
-    'border border-text-muted/45 bg-surface-muted text-text shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] hover:border-text-muted/70 hover:bg-surface-raised focus-visible:ring-accent/40',
+    'border border-text-muted/45 bg-surface-muted text-text shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] hover:border-text-muted/70 hover:bg-surface-raised focus:ring-accent/40',
   success:
-    'border border-status-connected/80 bg-status-connected text-[var(--color-on-connected)] shadow-[inset_0_1px_0_color-mix(in_srgb,var(--color-on-connected)_12%,transparent)] hover:brightness-110 active:brightness-95 focus-visible:ring-status-connected/70',
+    'border border-status-connected/80 bg-status-connected text-[var(--color-on-connected)] shadow-[inset_0_1px_0_color-mix(in_srgb,var(--color-on-connected)_12%,transparent)] hover:brightness-110 active:brightness-95 focus:ring-status-connected/70',
   danger:
-    'border border-status-error/85 bg-status-error text-[var(--color-on-danger)] shadow-[inset_0_1px_0_rgba(255,255,255,0.14)] hover:brightness-110 active:brightness-95 focus-visible:ring-status-error/70',
+    'border border-status-error/85 bg-status-error text-[var(--color-on-danger)] shadow-[inset_0_1px_0_rgba(255,255,255,0.14)] hover:brightness-110 active:brightness-95 focus:ring-status-error/70',
   ghost:
-    'border border-text-muted/35 bg-surface-muted/60 text-text-muted hover:border-text-muted/60 hover:bg-surface-muted hover:text-text focus-visible:ring-accent/40',
+    'border border-text-muted/35 bg-surface-muted/60 text-text-muted hover:border-text-muted/60 hover:bg-surface-muted hover:text-text focus:ring-accent/40',
 }
 
 export function Button({
@@ -36,7 +36,7 @@ export function Button({
       type="button"
       disabled={isDisabled}
       aria-busy={loading || undefined}
-      className={`inline-flex items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-50 ${VARIANT_CLASSES[variant]} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-50 ${VARIANT_CLASSES[variant]} ${className}`}
       {...props}
     >
       {loading ? (

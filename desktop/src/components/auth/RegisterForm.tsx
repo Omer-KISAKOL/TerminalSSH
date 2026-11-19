@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/Button'
 import { PasswordInput } from '@/components/ui/PasswordInput'
 import { useLocale } from '@/hooks/useLocale'
 
+import { AuthFormFrame, authButtonClass, authFieldClass, authLabelClass } from './AuthFormFrame'
+
 type RegisterFormProps = {
   loading: boolean
   error: string | null
@@ -42,57 +44,59 @@ export function RegisterForm({ loading, error, onSubmit, onSwitchToLogin }: Regi
     await onSubmit(email, password)
   }
 
+  const displayError = formError ?? error
+
   return (
-    <form className="mx-auto flex w-full max-w-md flex-col gap-4" onSubmit={(event) => void handleSubmit(event)}>
-      <div>
-        <h2 className="text-xl font-semibold text-text">{t('auth.registerTitle')}</h2>
-        <p className="mt-1 text-sm text-text-muted">{t('auth.registerSubtitle')}</p>
-      </div>
+    <AuthFormFrame
+      title={t('auth.registerTitle')}
+      subtitle={t('auth.registerSubtitle')}
+      error={displayError}
+      footer={
+        <Button type="button" variant="secondary" className={authButtonClass} onClick={onSwitchToLogin}>
+          {t('auth.backToLogin')}
+        </Button>
+      }
+    >
+      <form className="flex flex-col gap-4" onSubmit={(event) => void handleSubmit(event)}>
+        <label className="flex flex-col gap-1.5 text-sm">
+          <span className={authLabelClass}>{t('auth.email')}</span>
+          <input
+            type="email"
+            autoComplete="email"
+            className={authFieldClass}
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+          />
+        </label>
 
-      {error || formError ? (
-        <p className="rounded-lg border border-status-error/30 bg-status-error/10 px-3 py-2 text-sm text-status-error">
-          {formError ?? error}
-        </p>
-      ) : null}
+        <label className="flex flex-col gap-1.5 text-sm">
+          <span className={authLabelClass}>{t('auth.password')}</span>
+          <div className="[&_button]:text-white/55 [&_button:hover]:text-white">
+            <PasswordInput
+              autoComplete="new-password"
+              className={authFieldClass}
+              value={password}
+              onChange={setPassword}
+            />
+          </div>
+        </label>
 
-      <label className="flex flex-col gap-1 text-sm">
-        <span className="text-text-muted">{t('auth.email')}</span>
-        <input
-          type="email"
-          autoComplete="email"
-          className="rounded-lg border border-border bg-surface px-3 py-2 text-text"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-        />
-      </label>
+        <label className="flex flex-col gap-1.5 text-sm">
+          <span className={authLabelClass}>{t('auth.confirmPassword')}</span>
+          <div className="[&_button]:text-white/55 [&_button:hover]:text-white">
+            <PasswordInput
+              autoComplete="new-password"
+              className={authFieldClass}
+              value={confirmPassword}
+              onChange={setConfirmPassword}
+            />
+          </div>
+        </label>
 
-      <label className="flex flex-col gap-1 text-sm">
-        <span className="text-text-muted">{t('auth.password')}</span>
-        <PasswordInput
-          autoComplete="new-password"
-          className="rounded-lg border border-border bg-surface px-3 py-2 text-text"
-          value={password}
-          onChange={setPassword}
-        />
-      </label>
-
-      <label className="flex flex-col gap-1 text-sm">
-        <span className="text-text-muted">{t('auth.confirmPassword')}</span>
-        <PasswordInput
-          autoComplete="new-password"
-          className="rounded-lg border border-border bg-surface px-3 py-2 text-text"
-          value={confirmPassword}
-          onChange={setConfirmPassword}
-        />
-      </label>
-
-      <Button type="submit" variant="primary" loading={loading}>
-        {t('auth.registerAction')}
-      </Button>
-
-      <Button type="button" variant="ghost" onClick={onSwitchToLogin}>
-        {t('auth.backToLogin')}
-      </Button>
-    </form>
+        <Button type="submit" variant="primary" className={authButtonClass} loading={loading}>
+          {t('auth.registerAction')}
+        </Button>
+      </form>
+    </AuthFormFrame>
   )
 }

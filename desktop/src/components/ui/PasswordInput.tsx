@@ -47,7 +47,7 @@ export function PasswordInput({
   const [visible, setVisible] = useState(defaultVisible)
 
   return (
-    <div className="relative">
+    <div className="relative w-full">
       <input
         id={id}
         type={visible ? 'text' : 'password'}
@@ -56,7 +56,7 @@ export function PasswordInput({
         value={value}
         placeholder={placeholder}
         onChange={(event) => onChange(event.target.value)}
-        className={`${className} pr-10`}
+        className={`${className} w-full pr-10`}
       />
       <button
         type="button"

@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/Button'
 import { PasswordInput } from '@/components/ui/PasswordInput'
 import { useLocale } from '@/hooks/useLocale'
 
+import { AuthFormFrame, authButtonClass, authFieldClass, authLabelClass } from './AuthFormFrame'
+
 type LoginFormProps = {
   loading: boolean
   error: string | null
@@ -43,52 +45,52 @@ export function LoginForm({
     await onSubmit(email, password)
   }
 
+  const displayError = formError ?? error
+
   return (
-    <form className="mx-auto flex w-full max-w-md flex-col gap-4" onSubmit={(event) => void handleSubmit(event)}>
-      <div>
-        <h2 className="text-xl font-semibold text-text">{t('auth.loginTitle')}</h2>
-        <p className="mt-1 text-sm text-text-muted">{t('auth.loginSubtitle')}</p>
-      </div>
+    <AuthFormFrame
+      title={t('auth.loginTitle')}
+      subtitle={t('auth.loginSubtitle')}
+      error={displayError}
+      footer={
+        <>
+          <Button type="button" variant="secondary" className={authButtonClass} onClick={onSwitchToRegister}>
+            {t('auth.register')}
+          </Button>
+          <Button type="button" variant="secondary" className={authButtonClass} onClick={onContinueOffline}>
+            {t('auth.offline')}
+          </Button>
+        </>
+      }
+    >
+      <form className="flex flex-col gap-4" onSubmit={(event) => void handleSubmit(event)}>
+        <label className="flex flex-col gap-1.5 text-sm">
+          <span className={authLabelClass}>{t('auth.email')}</span>
+          <input
+            type="email"
+            autoComplete="email"
+            className={authFieldClass}
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+          />
+        </label>
 
-      {error || formError ? (
-        <p className="rounded-lg border border-status-error/30 bg-status-error/10 px-3 py-2 text-sm text-status-error">
-          {formError ?? error}
-        </p>
-      ) : null}
+        <label className="flex flex-col gap-1.5 text-sm">
+          <span className={authLabelClass}>{t('auth.password')}</span>
+          <div className="[&_button]:text-white/55 [&_button:hover]:text-white">
+            <PasswordInput
+              autoComplete="current-password"
+              className={authFieldClass}
+              value={password}
+              onChange={setPassword}
+            />
+          </div>
+        </label>
 
-      <label className="flex flex-col gap-1 text-sm">
-        <span className="text-text-muted">{t('auth.email')}</span>
-        <input
-          type="email"
-          autoComplete="email"
-          className="rounded-lg border border-border bg-surface px-3 py-2 text-text"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-        />
-      </label>
-
-      <label className="flex flex-col gap-1 text-sm">
-        <span className="text-text-muted">{t('auth.password')}</span>
-        <PasswordInput
-          autoComplete="current-password"
-          className="rounded-lg border border-border bg-surface px-3 py-2 text-text"
-          value={password}
-          onChange={setPassword}
-        />
-      </label>
-
-      <Button type="submit" variant="primary" loading={loading}>
-        {t('auth.login')}
-      </Button>
-
-      <div className="flex flex-col gap-2">
-        <Button type="button" variant="secondary" onClick={onSwitchToRegister}>
-          {t('auth.register')}
+        <Button type="submit" variant="secondary" className={authButtonClass} loading={loading}>
+          {t('auth.login')}
         </Button>
-        <Button type="button" variant="ghost" onClick={onContinueOffline}>
-          {t('auth.offline')}
-        </Button>
-      </div>
-    </form>
+      </form>
+    </AuthFormFrame>
   )
 }
