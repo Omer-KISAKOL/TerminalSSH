@@ -201,7 +201,7 @@ export function Sidebar({
         </section>
 
         {authUser && !collapsed ? (
-          <div className="mt-auto shrink-0 border-t border-border bg-surface-raised">
+          <div className="mt-auto shrink-0 border-t border-border/80 bg-surface-muted/40">
             <AccountMenu
               user={authUser}
               onLogout={onLogout}
@@ -224,7 +224,7 @@ export function Sidebar({
                 @
               </button>
             </div>
-            <div className="mt-auto shrink-0 border-t border-border bg-surface-raised md:hidden">
+            <div className="mt-auto shrink-0 border-t border-border/80 bg-surface-muted/40 md:hidden">
               <AccountMenu
                 user={authUser}
                 onLogout={onLogout}
