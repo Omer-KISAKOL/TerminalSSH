@@ -1,5 +1,4 @@
 import type {
-  AuthUser,
   PasswordResetConfirmRequest,
   PasswordResetQuestionRequest,
   PasswordResetQuestionResponse,

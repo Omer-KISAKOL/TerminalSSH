@@ -60,6 +60,7 @@ export function PasswordInput({
       />
       <button
         type="button"
+        tabIndex={-1}
         disabled={disabled}
         aria-label={visible ? t('passwordInput.hide') : t('passwordInput.show')}
         aria-pressed={visible}

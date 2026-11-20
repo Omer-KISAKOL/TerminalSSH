@@ -381,14 +381,14 @@ export function SftpTabPanel({
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col bg-surface-muted">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-surface-muted">
       {transferMessage ? (
         <p className="border-b border-border bg-surface-raised px-4 py-2 text-sm text-text-muted">
           {transferMessage}
         </p>
       ) : null}
 
-      <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 p-3 lg:grid-cols-2">
+      <div className="grid min-h-0 min-w-0 flex-1 grid-cols-1 gap-3 overflow-hidden p-3 lg:grid-cols-2">
         <FilePane
           side="local"
           title={t('sftp.local')}

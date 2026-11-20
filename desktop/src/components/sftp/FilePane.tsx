@@ -163,7 +163,7 @@ export function FilePane({
 
     return (
       <th
-        className="px-3 py-2 font-medium"
+        className="truncate px-3 py-2 font-medium"
         aria-sort={active ? (sort.direction === 'asc' ? 'ascending' : 'descending') : 'none'}
       >
         <button
@@ -320,9 +320,15 @@ export function FilePane({
         />
       </div>
 
-      <div className="min-h-0 flex-1 overflow-auto">
-        <table className="w-full text-left text-sm">
-          <thead className="sticky top-0 bg-surface-raised text-xs text-text-muted">
+      <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
+        <table className="w-full table-fixed text-left text-sm">
+          <colgroup>
+            <col className="w-[42%]" />
+            <col className="w-[24%]" />
+            <col className="w-[14%]" />
+            <col className="w-[20%]" />
+          </colgroup>
+          <thead className="sticky top-0 z-[1] bg-surface-raised text-xs text-text-muted">
             <tr>
               {renderSortHeader('name', t('filePane.name'))}
               {renderSortHeader('modified', t('filePane.modified'))}
@@ -392,11 +398,11 @@ export function FilePane({
                         </div>
                       </div>
                     </td>
-                    <td className="px-3 py-2 text-text-muted">
+                    <td className="truncate px-3 py-2 text-text-muted">
                       {formatDate(entry.modifiedAt, locale)}
                     </td>
-                    <td className="px-3 py-2 text-text-muted">{formatSize(entry.size)}</td>
-                    <td className="px-3 py-2 text-text-muted">
+                    <td className="truncate px-3 py-2 text-text-muted">{formatSize(entry.size)}</td>
+                    <td className="truncate px-3 py-2 text-text-muted">
                       {entry.kind === 'directory'
                         ? t('filePane.kindFolder')
                         : entry.kind === 'symlink'

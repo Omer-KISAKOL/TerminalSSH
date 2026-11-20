@@ -67,6 +67,10 @@ export function registerAuthHandlers(): void {
         }
       }
 
+      if (!('accessToken' in result) || !('refreshToken' in result)) {
+        throw new Error('Giriş yanıtı geçersiz.')
+      }
+
       authStore.setSession(result)
       return {
         user: result.user,

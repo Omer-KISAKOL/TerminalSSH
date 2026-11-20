@@ -174,7 +174,7 @@ export function PathBreadcrumbs({
         />
       ) : (
         <nav
-          className="flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto rounded-md border border-transparent px-1 py-0.5 scrollbar-thin"
+          className="flex min-w-0 flex-1 items-center gap-0.5 overflow-hidden rounded-md border border-transparent px-1 py-0.5"
           aria-label={t('filePane.pathBreadcrumb')}
         >
           {crumbs.length === 0 ? (
@@ -187,7 +187,7 @@ export function PathBreadcrumbs({
             </button>
           ) : (
             crumbs.map((crumb, index) => (
-              <span key={`${crumb.path}-${index}`} className="flex shrink-0 items-center gap-0.5">
+              <span key={`${crumb.path}-${index}`} className="flex min-w-0 items-center gap-0.5">
                 {index > 0 ? <ChevronRight /> : null}
                 <button
                   type="button"
