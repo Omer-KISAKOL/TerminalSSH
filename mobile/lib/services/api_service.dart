@@ -20,8 +20,10 @@ class ApiService {
   String? refreshToken;
   SessionPersister? persistSession;
 
-  Map<String, String> _headers({bool auth = false}) {
-    final headers = {'Content-Type': 'application/json'};
+  /// Gövdesiz isteklerde (DELETE vb.) `json: false` verin; Fastify, boş gövdeyle
+  /// `Content-Type: application/json` gelirse 400 döndürür.
+  Map<String, String> _headers({bool auth = false, bool json = true}) {
+    final headers = <String, String>{if (json) 'Content-Type': 'application/json'};
 
     if (auth && accessToken != null) {
       headers['Authorization'] = 'Bearer $accessToken';
@@ -342,7 +344,7 @@ class ApiService {
 
   Future<void> deleteProfile(String profileId) async {
     final response = await _authorizedRequest(
-      () => http.delete(Uri.parse('$baseUrl/profiles/$profileId'), headers: _headers(auth: true)),
+      () => http.delete(Uri.parse('$baseUrl/profiles/$profileId'), headers: _headers(auth: true, json: false)),
     );
 
     if (response.statusCode >= 400) {
@@ -415,7 +417,7 @@ class ApiService {
 
   Future<void> deleteSnippet(String snippetId) async {
     final response = await _authorizedRequest(
-      () => http.delete(Uri.parse('$baseUrl/snippets/$snippetId'), headers: _headers(auth: true)),
+      () => http.delete(Uri.parse('$baseUrl/snippets/$snippetId'), headers: _headers(auth: true, json: false)),
     );
 
     if (response.statusCode >= 400) {
