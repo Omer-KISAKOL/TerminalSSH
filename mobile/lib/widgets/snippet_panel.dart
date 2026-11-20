@@ -166,8 +166,8 @@ class _SnippetPanelState extends State<SnippetPanel> {
             children: [
               ReorderableDragStartListener(
                 index: index,
-                child: const Padding(
-                  padding: EdgeInsets.only(right: 6),
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 6),
                   child: Icon(Icons.drag_indicator, size: 20, color: AppColors.textMuted),
                 ),
               ),
@@ -233,7 +233,7 @@ class _SnippetPanelState extends State<SnippetPanel> {
           ),
         ),
         if (_loading)
-          const Expanded(
+          Expanded(
             child: Center(child: CircularProgressIndicator(color: AppColors.green)),
           )
         else if (_error != null)
@@ -264,7 +264,7 @@ class _SnippetPanelState extends State<SnippetPanel> {
     if (widget.compact) {
       return Container(
         height: panelHeight,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: AppColors.card,
           border: Border(top: BorderSide(color: AppColors.border)),
         ),
@@ -318,7 +318,7 @@ class _SnippetCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Text('{}', style: TextStyle(color: AppColors.greenMuted, fontWeight: FontWeight.w700, fontSize: 12)),
+          Text('{}', style: TextStyle(color: AppColors.greenMuted, fontWeight: FontWeight.w700, fontSize: 12)),
           const SizedBox(width: 8),
           Expanded(
             child: Column(

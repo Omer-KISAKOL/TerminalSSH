@@ -5,12 +5,14 @@ import '../models/server_profile.dart';
 import '../services/command_queue.dart';
 import '../services/snippet_service.dart';
 import '../services/ssh_service.dart';
-import '../widgets/snippet_panel.dart';
 import '../theme/app_theme.dart';
 import '../theme/terminal_theme.dart';
+import '../widgets/snippet_panel.dart';
 
-class TerminalScreen extends StatefulWidget {
-  const TerminalScreen({
+/// Tek bir SSH oturumunun terminal içeriği. Sekme çubuğunu çalışma alanı çizer;
+/// bu widget sekme gizlendiğinde de bağlı kalır (IndexedStack içinde).
+class TerminalPanel extends StatefulWidget {
+  const TerminalPanel({
     super.key,
     required this.profile,
     this.snippetService,
@@ -20,13 +22,13 @@ class TerminalScreen extends StatefulWidget {
   final SnippetService? snippetService;
 
   @override
-  State<TerminalScreen> createState() => _TerminalScreenState();
+  State<TerminalPanel> createState() => _TerminalPanelState();
 }
 
-class _TerminalScreenState extends State<TerminalScreen> {
+class _TerminalPanelState extends State<TerminalPanel> {
   final _terminal = Terminal();
   final _terminalFocus = FocusNode();
-  final _sshService = SshService();
+  SshService _sshService = SshService();
   late final CommandQueue _queue;
   bool _connecting = true;
   bool _snippetPanelOpen = false;
@@ -42,7 +44,7 @@ class _TerminalScreenState extends State<TerminalScreen> {
         if (mounted) setState(() {});
       },
     );
-    _queue.bindSend(_sshService.write);
+    _queue.bindSend((data) => _sshService.write(data));
     _connect();
   }
 
@@ -72,13 +74,29 @@ class _TerminalScreenState extends State<TerminalScreen> {
 
       _terminal.onOutput = (data) => _queue.handleInput(data);
 
-      setState(() => _connecting = false);
+      if (mounted) setState(() => _connecting = false);
     } catch (error) {
+      if (!mounted) return;
       setState(() {
         _connecting = false;
-        _error = error.toString();
+        _error = error.toString().replaceFirst('Exception: ', '');
       });
     }
+  }
+
+  Future<void> _reconnect() async {
+    await _sshService.disconnect();
+    _sshService = SshService();
+    _queue.cancel();
+    _terminal.buffer.clear();
+    _terminal.buffer.setCursor(0, 0);
+
+    setState(() {
+      _connecting = true;
+      _error = null;
+    });
+
+    await _connect();
   }
 
   void _applySnippet(String content, {required bool appendNewline}) {
@@ -100,74 +118,85 @@ class _TerminalScreenState extends State<TerminalScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.terminalBg,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _TerminalTabBar(
-              title: widget.profile.name,
-              onClose: () => Navigator.of(context).pop(),
-              onAdd: () => Navigator.of(context).pop(),
-            ),
-            Expanded(
-              child: _connecting
-                  ? const Center(child: CircularProgressIndicator(color: AppColors.green))
-                  : _error != null
-                      ? Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(24),
-                            child: Text(_error!, style: const TextStyle(color: AppColors.green)),
-                          ),
-                        )
-                      : Stack(
+    final snippetService = widget.snippetService;
+
+    return Column(
+      children: [
+        Expanded(
+          child: _connecting
+              ? Center(child: CircularProgressIndicator(color: AppColors.green))
+              : _error != null
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            TerminalView(
-                              _terminal,
-                              focusNode: _terminalFocus,
-                              autofocus: true,
-                              theme: greenTerminalTheme,
-                              textStyle: greenTerminalStyle,
-                              backgroundOpacity: 1,
+                            Text(
+                              _error!,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(color: AppColors.danger),
                             ),
-                            if (_queue.phase != CommandQueuePhase.idle)
-                              Align(
-                                alignment: Alignment.bottomCenter,
-                                child: _CommandQueueBanner(
-                                  queue: _queue,
-                                  onBegin: () {
-                                    _queue.begin();
-                                    _terminalFocus.requestFocus();
-                                  },
-                                  onCancel: () {
-                                    _queue.cancel();
-                                    _terminalFocus.requestFocus();
-                                  },
-                                  onDropPending: () {
-                                    _queue.dropPending();
-                                    _terminalFocus.requestFocus();
-                                  },
-                                ),
-                              ),
+                            const SizedBox(height: 16),
+                            FilledButton.icon(
+                              onPressed: _reconnect,
+                              icon: const Icon(Icons.refresh),
+                              label: const Text('Yeniden bağlan'),
+                            ),
                           ],
                         ),
-            ),
-            if (!_connecting && _error == null && _snippetPanelOpen && widget.snippetService != null)
-              SnippetPanel(
-                snippetService: widget.snippetService!,
-                mode: SnippetPanelMode.terminal,
-                onApply: _applySnippet,
-                compact: true,
-                onClose: () => setState(() => _snippetPanelOpen = false),
-              ),
-            if (!_connecting && _error == null)
-              _TerminalToolbar(
-                onOpenSnippets: widget.snippetService == null ? null : _toggleSnippets,
-                snippetsOpen: _snippetPanelOpen,
-              ),
-          ],
+                      ),
+                    )
+                  : Container(
+                      color: AppColors.terminalBg,
+                      child: Stack(
+                        children: [
+                          TerminalView(
+                            _terminal,
+                            focusNode: _terminalFocus,
+                            autofocus: true,
+                            theme: buildTerminalTheme(),
+                            textStyle: greenTerminalStyle,
+                            backgroundOpacity: 1,
+                          ),
+                          if (_queue.phase != CommandQueuePhase.idle)
+                            Align(
+                              alignment: Alignment.bottomCenter,
+                              child: _CommandQueueBanner(
+                                queue: _queue,
+                                onBegin: () {
+                                  _queue.begin();
+                                  _terminalFocus.requestFocus();
+                                },
+                                onCancel: () {
+                                  _queue.cancel();
+                                  _terminalFocus.requestFocus();
+                                },
+                                onDropPending: () {
+                                  _queue.dropPending();
+                                  _terminalFocus.requestFocus();
+                                },
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
         ),
-      ),
+        if (!_connecting && _error == null && _snippetPanelOpen && snippetService != null)
+          SnippetPanel(
+            snippetService: snippetService,
+            mode: SnippetPanelMode.terminal,
+            onApply: _applySnippet,
+            compact: true,
+            onClose: () => setState(() => _snippetPanelOpen = false),
+          ),
+        // Snippet servisi yoksa hiçbir işlevi olmayan çubuk gösterilmez.
+        if (!_connecting && _error == null && snippetService != null)
+          _TerminalToolbar(
+            onOpenSnippets: _toggleSnippets,
+            snippetsOpen: _snippetPanelOpen,
+          ),
+      ],
     );
   }
 }
@@ -190,7 +219,7 @@ class _CommandQueueBanner extends StatelessWidget {
     final running = queue.phase == CommandQueuePhase.running;
 
     return Material(
-      color: const Color(0xF014161C),
+      color: AppColors.card.withValues(alpha: 0.96),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxHeight: 220),
         child: Column(
@@ -203,7 +232,7 @@ class _CommandQueueBanner extends StatelessWidget {
                 running
                     ? 'Komut çalışıyor. Bitince sıradaki gönderilecek.'
                     : 'Komutlar hazır. Enter ile sırayla çalışır.',
-                style: const TextStyle(color: AppColors.greenSoft, fontSize: 12),
+                style: TextStyle(color: AppColors.greenSoft, fontSize: 12),
               ),
             ),
             Padding(
@@ -248,69 +277,13 @@ class _CommandQueueBanner extends StatelessWidget {
   }
 }
 
-class _TerminalTabBar extends StatelessWidget {
-  const _TerminalTabBar({
-    required this.title,
-    required this.onClose,
-    required this.onAdd,
-  });
-
-  final String title;
-  final VoidCallback onClose;
-  final VoidCallback onAdd;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: AppColors.terminalTabBg,
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-      child: Row(
-        children: [
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                color: AppColors.terminalBg,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      title,
-                      style: const TextStyle(color: AppColors.green, fontWeight: FontWeight.w600),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: onClose,
-                    icon: const Icon(Icons.more_vert, color: AppColors.greenMuted, size: 18),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          IconButton(
-            onPressed: onAdd,
-            icon: const Icon(Icons.add, color: AppColors.green),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _TerminalToolbar extends StatelessWidget {
   const _TerminalToolbar({
-    this.onOpenSnippets,
-    this.snippetsOpen = false,
+    required this.onOpenSnippets,
+    required this.snippetsOpen,
   });
 
-  final VoidCallback? onOpenSnippets;
+  final VoidCallback onOpenSnippets;
   final bool snippetsOpen;
 
   @override
@@ -320,40 +293,22 @@ class _TerminalToolbar extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       child: Row(
         children: [
-          _ToolChip(
-            label: 'Snippet',
-            active: snippetsOpen,
-            onTap: onOpenSnippets ?? () {},
+          Material(
+            color: snippetsOpen ? AppColors.green.withValues(alpha: 0.18) : AppColors.terminalBg,
+            borderRadius: BorderRadius.circular(10),
+            child: InkWell(
+              onTap: onOpenSnippets,
+              borderRadius: BorderRadius.circular(10),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                child: Text(
+                  'Snippet',
+                  style: TextStyle(color: AppColors.green, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _ToolChip extends StatelessWidget {
-  const _ToolChip({
-    required this.label,
-    required this.onTap,
-    this.active = false,
-  });
-
-  final String label;
-  final VoidCallback onTap;
-  final bool active;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: active ? AppColors.green.withValues(alpha: 0.18) : AppColors.terminalBg,
-      borderRadius: BorderRadius.circular(10),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          child: Text(label, style: const TextStyle(color: AppColors.green, fontWeight: FontWeight.w600)),
-        ),
       ),
     );
   }

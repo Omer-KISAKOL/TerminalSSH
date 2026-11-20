@@ -438,7 +438,7 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
               Text(_subtitle, style: Theme.of(context).textTheme.bodySmall),
               const SizedBox(height: 20),
               if (_info != null) ...[
-                Text(_info!, style: const TextStyle(color: AppColors.greenMuted)),
+                Text(_info!, style: TextStyle(color: AppColors.greenMuted)),
                 const SizedBox(height: 12),
               ],
               ..._fields(),

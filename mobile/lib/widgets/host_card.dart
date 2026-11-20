@@ -3,17 +3,19 @@ import 'package:flutter/material.dart';
 import '../models/server_profile.dart';
 import '../theme/app_theme.dart';
 
+enum HostAction { connect, edit, delete }
+
 class HostCard extends StatelessWidget {
   const HostCard({
     super.key,
     required this.profile,
     required this.onTap,
-    this.onLongPress,
+    required this.onAction,
   });
 
   final ServerProfile profile;
-  final VoidCallback? onTap;
-  final VoidCallback? onLongPress;
+  final VoidCallback onTap;
+  final void Function(HostAction action) onAction;
 
   Color get _accentColor {
     final hash = profile.name.codeUnits.fold<int>(0, (sum, unit) => sum + unit);
@@ -36,10 +38,9 @@ class HostCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: onTap,
-        onLongPress: onLongPress,
         borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          padding: const EdgeInsets.only(left: 14, top: 8, bottom: 8, right: 4),
           child: Row(
             children: [
               CircleAvatar(
@@ -75,7 +76,41 @@ class HostCard extends StatelessWidget {
                   ],
                 ),
               ),
-              Icon(Icons.chevron_right, color: AppColors.greenMuted.withValues(alpha: 0.7)),
+              PopupMenuButton<HostAction>(
+                tooltip: 'Sunucu işlemleri',
+                color: AppColors.card,
+                icon: Icon(Icons.more_vert, color: AppColors.greenMuted),
+                onSelected: onAction,
+                itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    value: HostAction.connect,
+                    child: ListTile(
+                      dense: true,
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(Icons.terminal),
+                      title: Text('Bağlan'),
+                    ),
+                  ),
+                  const PopupMenuItem(
+                    value: HostAction.edit,
+                    child: ListTile(
+                      dense: true,
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(Icons.edit_outlined),
+                      title: Text('Düzenle'),
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: HostAction.delete,
+                    child: ListTile(
+                      dense: true,
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(Icons.delete_outline, color: AppColors.danger),
+                      title: Text('Sil', style: TextStyle(color: AppColors.danger)),
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
         ),

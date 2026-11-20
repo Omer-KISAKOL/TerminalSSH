@@ -1,22 +1,38 @@
 import 'package:flutter/material.dart';
 
+import 'appearance_themes.dart';
+
+/// Uygulama renkleri seçili temadan okunur. Tema değişince ThemeController tüm
+/// arayüzü yeniden çizdirir, bu yüzden bunlar const değil getter'dır.
 class AppColors {
-  static const green = Color(0xFF4ADE80);
-  static const greenDark = Color(0xFF14532D);
-  static const greenMuted = Color(0xFF86EFAC);
-  static const greenSoft = Color(0xFFA7F3D0);
-  static const text = Color(0xFFE5E7EB);
-  static const textMuted = Color(0xFF9CA3AF);
-  static const background = Color(0xFF0D0D12);
-  static const card = Color(0xFF16161D);
-  static const border = Color(0xFF2A2A33);
-  static const terminalBg = Color(0xFF0D0D12);
-  static const terminalTabBg = Color(0xFF16161D);
-  static const navActive = Color(0xFF14532D);
+  static AppearanceTheme get _t => ThemeController.instance.theme;
+
+  static Color get green => _t.accent;
+  static Color get greenDark => Color.lerp(_t.surfaceRaised, _t.accent, 0.28)!;
+  static Color get greenMuted => Color.lerp(_t.accent, _t.textMuted, 0.35)!;
+  static Color get greenSoft => Color.lerp(_t.accent, _t.text, 0.30)!;
+  static Color get text => _t.text;
+  static Color get textMuted => _t.textMuted;
+  static Color get background => _t.surface;
+  static Color get card => _t.surfaceRaised;
+  static Color get cardMuted => _t.surfaceMuted;
+  static Color get border => _t.border;
+  static Color get terminalBg => _t.terminalBackground;
+  static Color get terminalTabBg => _t.surfaceRaised;
+  static Color get navActive => greenDark;
+  static Color get statusConnected => _t.statusConnected;
+  static Color get danger => _t.isLight ? const Color(0xFFDC2626) : const Color(0xFFF87171);
+
+  /// Vurgu rengi üzerindeki yazı/ikon rengi.
+  static Color get onAccent =>
+      _t.accent.computeLuminance() > 0.58 ? const Color(0xFF101114) : const Color(0xFFF8FAFC);
 }
 
 ThemeData buildAppTheme() {
-  const textTheme = TextTheme(
+  final t = ThemeController.instance.theme;
+  final brightness = t.isLight ? Brightness.light : Brightness.dark;
+
+  final textTheme = TextTheme(
     displayLarge: TextStyle(color: AppColors.text),
     displayMedium: TextStyle(color: AppColors.text),
     displaySmall: TextStyle(color: AppColors.text),
@@ -34,49 +50,61 @@ ThemeData buildAppTheme() {
     labelSmall: TextStyle(color: AppColors.textMuted),
   );
 
+  final scheme = (t.isLight ? const ColorScheme.light() : const ColorScheme.dark()).copyWith(
+    primary: AppColors.green,
+    onPrimary: AppColors.onAccent,
+    surface: AppColors.card,
+    onSurface: AppColors.text,
+    outline: AppColors.border,
+    error: AppColors.danger,
+  );
+
   return ThemeData(
     useMaterial3: true,
-    brightness: Brightness.dark,
+    brightness: brightness,
     scaffoldBackgroundColor: AppColors.background,
-    colorScheme: const ColorScheme.dark(
-      primary: AppColors.green,
-      onPrimary: Color(0xFF052E16),
-      surface: AppColors.card,
-      onSurface: AppColors.text,
-      outline: AppColors.border,
-    ),
+    colorScheme: scheme,
     textTheme: textTheme,
-    iconTheme: const IconThemeData(color: AppColors.text),
+    iconTheme: IconThemeData(color: AppColors.text),
     dividerColor: AppColors.border,
-    appBarTheme: const AppBarTheme(
+    appBarTheme: AppBarTheme(
       backgroundColor: AppColors.background,
       foregroundColor: AppColors.text,
       elevation: 0,
       scrolledUnderElevation: 0,
     ),
-    floatingActionButtonTheme: const FloatingActionButtonThemeData(
+    floatingActionButtonTheme: FloatingActionButtonThemeData(
       backgroundColor: AppColors.green,
-      foregroundColor: Color(0xFF052E16),
+      foregroundColor: AppColors.onAccent,
       elevation: 2,
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: AppColors.card,
-      labelStyle: const TextStyle(color: AppColors.textMuted),
+      labelStyle: TextStyle(color: AppColors.textMuted),
       hintStyle: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.8)),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.border),
+        borderSide: BorderSide(color: AppColors.border),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.green),
+        borderSide: BorderSide(color: AppColors.green),
       ),
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
         backgroundColor: AppColors.green,
-        foregroundColor: const Color(0xFF052E16),
+        foregroundColor: AppColors.onAccent,
+      ),
+    ),
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(foregroundColor: AppColors.green),
+    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        foregroundColor: AppColors.text,
+        side: BorderSide(color: AppColors.border),
       ),
     ),
     navigationBarTheme: NavigationBarThemeData(

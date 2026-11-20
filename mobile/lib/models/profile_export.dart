@@ -40,18 +40,36 @@ class ProfileExportEntry {
     };
   }
 
+  /// Alanlar eksikse FormatException fırlatır; tip farklılıklarına
+  /// (ör. port değerinin yazı olarak gelmesi) toleranslıdır.
   factory ProfileExportEntry.fromJson(Map<String, dynamic> json) {
+    String requireString(String key) {
+      final value = json[key];
+      if (value is String && value.trim().isNotEmpty) return value.trim();
+      throw FormatException('"$key" alanı eksik.');
+    }
+
+    final rawPort = json['port'];
+    final port = rawPort is num ? rawPort.toInt() : int.tryParse('$rawPort') ?? 22;
+
+    if (port < 1 || port > 65535) {
+      throw const FormatException('Geçersiz port.');
+    }
+
+    final host = requireString('host');
+    final rawName = json['name'];
+
     return ProfileExportEntry(
-      name: json['name'] as String,
-      host: json['host'] as String,
-      port: json['port'] as int,
-      username: json['username'] as String,
-      authType: json['authType'] as String? ?? 'password',
-      savePassword: json['savePassword'] as bool? ?? false,
-      savePassphrase: json['savePassphrase'] as bool? ?? false,
-      password: json['password'] as String?,
-      passphrase: json['passphrase'] as String?,
-      privateKey: json['privateKey'] as String?,
+      name: rawName is String && rawName.trim().isNotEmpty ? rawName.trim() : host,
+      host: host,
+      port: port,
+      username: requireString('username'),
+      authType: json['authType'] == 'privateKey' ? 'privateKey' : 'password',
+      savePassword: json['savePassword'] == true,
+      savePassphrase: json['savePassphrase'] == true,
+      password: json['password'] is String ? json['password'] as String : null,
+      passphrase: json['passphrase'] is String ? json['passphrase'] as String : null,
+      privateKey: json['privateKey'] is String ? json['privateKey'] as String : null,
     );
   }
 }
@@ -79,24 +97,49 @@ class ProfileExportBundle {
 
   String toJsonString() => const JsonEncoder.withIndent('  ').convert(toJson());
 
-  factory ProfileExportBundle.fromJsonString(String raw) {
-    final json = jsonDecode(raw) as Map<String, dynamic>;
+  /// Geçerli kayıtları döndürür; okunamayan kayıtlar [skipped] listesine yazılır.
+  factory ProfileExportBundle.fromJsonString(String raw, {List<String>? skipped}) {
+    var text = raw;
+    if (text.isNotEmpty && text.codeUnitAt(0) == 0xFEFF) {
+      text = text.substring(1);
+    }
 
-    if (json['kind'] != 'terminalssh-profiles') {
+    final dynamic decoded;
+    try {
+      decoded = jsonDecode(text);
+    } catch (_) {
+      throw Exception('Dosya geçerli bir JSON değil.');
+    }
+
+    if (decoded is! Map<String, dynamic> || decoded['kind'] != 'terminalssh-profiles') {
       throw Exception('Bu dosya TerminalSSH profil dışa aktarımı değil.');
     }
 
-    if (json['version'] != 1) {
+    final version = decoded['version'];
+    if (version != null && version != 1) {
       throw Exception('Desteklenmeyen dışa aktarma sürümü.');
     }
 
-    final profiles = (json['profiles'] as List<dynamic>)
-        .map((item) => ProfileExportEntry.fromJson(item as Map<String, dynamic>))
-        .toList();
+    final list = decoded['profiles'];
+    if (list is! List<dynamic>) {
+      throw Exception('Dosyada profil listesi bulunamadı.');
+    }
+
+    final profiles = <ProfileExportEntry>[];
+
+    for (var index = 0; index < list.length; index += 1) {
+      final item = list[index];
+      try {
+        if (item is! Map<String, dynamic>) throw const FormatException('Geçersiz kayıt.');
+        profiles.add(ProfileExportEntry.fromJson(item));
+      } on FormatException catch (error) {
+        skipped?.add('${index + 1}. kayıt: ${error.message}');
+      }
+    }
 
     return ProfileExportBundle(
-      exportedAt: json['exportedAt'] as String? ?? DateTime.now().toUtc().toIso8601String(),
-      includeSecrets: json['includeSecrets'] as bool? ?? false,
+      exportedAt: decoded['exportedAt'] as String? ?? DateTime.now().toUtc().toIso8601String(),
+      includeSecrets: decoded['includeSecrets'] == true,
       profiles: profiles,
     );
   }

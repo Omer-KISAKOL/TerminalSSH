@@ -290,6 +290,47 @@ class ApiService {
     return ServerProfile.fromJson(body['profile'] as Map<String, dynamic>);
   }
 
+  Future<ServerProfile> updateProfile(
+    String profileId, {
+    required String name,
+    required String host,
+    required int port,
+    required String username,
+    String? authType,
+    bool? savePassword,
+    String? password,
+  }) async {
+    final response = await _authorizedRequest(
+      () => http.put(
+        Uri.parse('$baseUrl/profiles/$profileId'),
+        headers: _headers(auth: true),
+        body: jsonEncode({
+          'name': name,
+          'host': host,
+          'port': port,
+          'username': username,
+          if (authType != null) 'authType': authType,
+          if (savePassword != null) 'savePassword': savePassword,
+          if (password != null) 'password': password,
+        }),
+      ),
+    );
+
+    final body = await _decodeJson(response, fallback: 'Sunucu güncellenemedi');
+
+    return ServerProfile.fromJson(body['profile'] as Map<String, dynamic>);
+  }
+
+  Future<void> deleteProfile(String profileId) async {
+    final response = await _authorizedRequest(
+      () => http.delete(Uri.parse('$baseUrl/profiles/$profileId'), headers: _headers(auth: true)),
+    );
+
+    if (response.statusCode >= 400) {
+      _parseBody(response, fallback: 'Sunucu silinemedi');
+    }
+  }
+
   Future<List<Snippet>> listSnippets() async {
     final response = await _authorizedRequest(
       () => http.get(Uri.parse('$baseUrl/snippets'), headers: _headers(auth: true)),
