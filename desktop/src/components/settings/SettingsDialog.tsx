@@ -41,13 +41,13 @@ export function SettingsDialog({ open, onClose, onProfilesChanged }: SettingsDia
   const activeMeta = useMemo(() => {
     switch (section) {
       case 'language':
-        return { title: t('settings.language'), help: t('settings.languageHelp') }
+        return { title: t('settings.language'), help: null }
       case 'profiles':
         return { title: t('settings.profilesTitle'), help: t('settings.profilesHelp') }
       case 'snippets':
         return { title: t('settings.snippetsTitle'), help: t('settings.snippetsHelp') }
       case 'themes':
-        return { title: t('settings.themes'), help: t('settings.themesHelpExpanded') }
+        return { title: t('settings.themes'), help: null }
     }
   }, [section, t])
 
@@ -106,7 +106,9 @@ export function SettingsDialog({ open, onClose, onProfilesChanged }: SettingsDia
           <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
             <div className="shrink-0 border-b border-border px-5 py-4">
               <h3 className="text-base font-semibold text-text">{activeMeta.title}</h3>
-              <p className="mt-1 text-sm text-text-muted">{activeMeta.help}</p>
+              {activeMeta.help ? (
+                <p className="mt-1 text-sm text-text-muted">{activeMeta.help}</p>
+              ) : null}
             </div>
 
             <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">

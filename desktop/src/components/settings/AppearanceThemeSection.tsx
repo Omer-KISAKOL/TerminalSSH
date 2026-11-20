@@ -82,11 +82,11 @@ export function AppearanceThemeSection({ panelMode = false }: AppearanceThemeSec
       >
         <div className="min-w-0">
           <h3 className="text-sm font-medium text-text">{t('settings.themes')}</h3>
-          <p className="mt-0.5 text-xs text-text-muted">
-            {expanded
-              ? t('settings.themesHelpExpanded')
-              : t('settings.themesHelpCollapsed', { name: theme.name })}
-          </p>
+          {!expanded ? (
+            <p className="mt-0.5 text-xs text-text-muted">
+              {t('settings.themesHelpCollapsed', { name: theme.name })}
+            </p>
+          ) : null}
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {!expanded ? (

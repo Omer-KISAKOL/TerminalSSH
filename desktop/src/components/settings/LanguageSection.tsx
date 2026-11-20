@@ -47,7 +47,6 @@ export function LanguageSection({ panelMode = false }: LanguageSectionProps) {
   return (
     <section className="border-b border-border px-5 py-4">
       <h3 className="text-sm font-medium text-text">{t('settings.language')}</h3>
-      <p className="mt-1 text-xs text-text-muted">{t('settings.languageHelp')}</p>
       {picker}
     </section>
   )
