@@ -40,6 +40,11 @@ class SnippetService {
     return _api.updateSnippet(id, name: name, content: content);
   }
 
+  Future<List<Snippet>> reorderSnippets(List<String> orderedIds) async {
+    await _ensureAccessToken();
+    return _api.reorderSnippets(orderedIds);
+  }
+
   Future<void> deleteSnippet(String snippetId) async {
     await _ensureAccessToken();
     await _api.deleteSnippet(snippetId);

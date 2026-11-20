@@ -80,6 +80,28 @@ class _SnippetPanelState extends State<SnippetPanel> {
     await _loadSnippets();
   }
 
+  Future<void> _reorder(int oldIndex, int newIndex) async {
+    if (newIndex > oldIndex) newIndex -= 1;
+    if (oldIndex == newIndex) return;
+
+    final previous = _snippets;
+    final next = [..._snippets];
+    next.insert(newIndex, next.removeAt(oldIndex));
+    setState(() => _snippets = next);
+
+    try {
+      final saved = await widget.snippetService.reorderSnippets(next.map((s) => s.id).toList());
+      if (!mounted) return;
+      setState(() => _snippets = saved);
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _snippets = previous);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.toString().replaceFirst('Exception: ', ''))),
+      );
+    }
+  }
+
   Future<void> _deleteSnippet(Snippet snippet) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -97,6 +119,64 @@ class _SnippetPanelState extends State<SnippetPanel> {
 
     await widget.snippetService.deleteSnippet(snippet.id);
     await _loadSnippets();
+  }
+
+  Widget _cardFor(Snippet snippet) {
+    return _SnippetCard(
+      snippet: snippet,
+      mode: widget.mode,
+      onRun: widget.onApply == null
+          ? null
+          : () => widget.onApply!(snippet.content, appendNewline: true),
+      onPaste: widget.onApply == null
+          ? null
+          : () => widget.onApply!(snippet.content, appendNewline: false),
+      onEdit: () => _openEditor(snippet: snippet),
+      onDelete: () => _deleteSnippet(snippet),
+    );
+  }
+
+  Widget _buildList() {
+    final snippets = _filteredSnippets;
+    const padding = EdgeInsets.fromLTRB(12, 0, 12, 12);
+
+    // Arama aktifken sıralama kapalı; yalnızca tam listede sürükle-bırak çalışır.
+    if (_query.trim().isNotEmpty) {
+      return ListView.separated(
+        padding: padding,
+        itemCount: snippets.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 6),
+        itemBuilder: (context, index) => _cardFor(snippets[index]),
+      );
+    }
+
+    return ReorderableListView.builder(
+      padding: padding,
+      buildDefaultDragHandles: false,
+      itemCount: snippets.length,
+      onReorder: _reorder,
+      proxyDecorator: (child, _, __) => Material(color: Colors.transparent, child: child),
+      itemBuilder: (context, index) {
+        final snippet = snippets[index];
+        return Padding(
+          key: ValueKey(snippet.id),
+          padding: const EdgeInsets.only(bottom: 6),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              ReorderableDragStartListener(
+                index: index,
+                child: const Padding(
+                  padding: EdgeInsets.only(right: 6),
+                  child: Icon(Icons.drag_indicator, size: 20, color: AppColors.textMuted),
+                ),
+              ),
+              Expanded(child: _cardFor(snippet)),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -177,28 +257,7 @@ class _SnippetPanelState extends State<SnippetPanel> {
             child: Center(child: Text('Henüz snippet yok.')),
           )
         else
-          Expanded(
-            child: ListView.separated(
-              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-              itemCount: _filteredSnippets.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 6),
-              itemBuilder: (context, index) {
-                final snippet = _filteredSnippets[index];
-                return _SnippetCard(
-                  snippet: snippet,
-                  mode: widget.mode,
-                  onRun: widget.onApply == null
-                      ? null
-                      : () => widget.onApply!(snippet.content, appendNewline: true),
-                  onPaste: widget.onApply == null
-                      ? null
-                      : () => widget.onApply!(snippet.content, appendNewline: false),
-                  onEdit: () => _openEditor(snippet: snippet),
-                  onDelete: () => _deleteSnippet(snippet),
-                );
-              },
-            ),
-          ),
+          Expanded(child: _buildList()),
       ],
     );
 

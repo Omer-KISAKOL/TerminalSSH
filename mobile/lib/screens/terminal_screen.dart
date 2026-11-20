@@ -36,6 +36,8 @@ class _TerminalScreenState extends State<TerminalScreen> {
   void initState() {
     super.initState();
     _queue = CommandQueue(
+      // nano/vim gibi alternatif ekran kullanan uygulamalarda girdi kuyruğa alınmaz.
+      shouldBypass: () => _terminal.isUsingAltBuffer,
       onChanged: () {
         if (mounted) setState(() {});
       },
@@ -227,7 +229,7 @@ class _CommandQueueBanner extends StatelessWidget {
                   final active = running && index == queue.activeIndex;
                   final done = running && index < queue.activeIndex;
                   return Text(
-                    '${done ? '✓' : active ? '›' : '·'}  ${queue.lines[index]}',
+                    '${done ? '✓' : active ? '›' : '·'}  ${queue.lines[index].replaceAll('\n', ' ⏎ ')}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(

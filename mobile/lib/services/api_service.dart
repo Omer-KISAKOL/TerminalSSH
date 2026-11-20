@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:http/http.dart' as http;
 
@@ -28,8 +30,26 @@ class ApiService {
     return headers;
   }
 
-  Future<Map<String, dynamic>> _decodeJson(http.Response response, {String fallback = 'API isteği başarısız'}) async {
-    final body = jsonDecode(response.body) as Map<String, dynamic>;
+  Map<String, dynamic> _parseBody(http.Response response, {String fallback = 'API isteği başarısız'}) {
+    Map<String, dynamic>? body;
+
+    try {
+      final decoded = jsonDecode(response.body);
+      if (decoded is Map<String, dynamic>) body = decoded;
+    } catch (_) {
+      body = null;
+    }
+
+    if (body == null) {
+      if (response.statusCode >= 400) {
+        throw Exception(
+          response.statusCode == 429
+              ? 'Çok fazla istek gönderildi. Lütfen kısa bir süre bekleyin.'
+              : 'API isteği başarısız (HTTP ${response.statusCode}).',
+        );
+      }
+      throw Exception('API yanıtı okunamadı.');
+    }
 
     if (response.statusCode >= 400) {
       throw Exception(body['error'] ?? fallback);
@@ -38,12 +58,26 @@ class ApiService {
     return body;
   }
 
+  Future<Map<String, dynamic>> _decodeJson(http.Response response, {String fallback = 'API isteği başarısız'}) async {
+    return _parseBody(response, fallback: fallback);
+  }
+
   Future<void> refreshSession() async {
     await _rotateTokens();
   }
 
-  Future<http.Response> _send(Future<http.Response> request) {
-    return request.timeout(_requestTimeout);
+  Future<http.Response> _send(Future<http.Response> request) async {
+    const unreachable = 'API sunucusuna ulaşılamıyor. Bağlantı ve sunucunun çalıştığını kontrol edin.';
+
+    try {
+      return await request.timeout(_requestTimeout);
+    } on TimeoutException {
+      throw Exception(unreachable);
+    } on SocketException {
+      throw Exception(unreachable);
+    } on http.ClientException {
+      throw Exception(unreachable);
+    }
   }
 
   Future<void> _rotateTokens() async {
@@ -59,14 +93,8 @@ class ApiService {
       body: jsonEncode({'refreshToken': currentRefreshToken}),
     ));
 
-    final body = jsonDecode(response.body) as Map<String, dynamic>;
-
-    if (response.statusCode >= 400) {
-      throw Exception(body['error'] ?? 'Oturum yenilenemedi');
-    }
-
-    accessToken = body['accessToken'] as String;
-    refreshToken = body['refreshToken'] as String;
+    final body = _parseBody(response, fallback: 'Oturum yenilenemedi');
+    _applySessionBody(body);
 
     if (persistSession != null) {
       await persistSession!(accessToken!, refreshToken!);
@@ -122,8 +150,96 @@ class ApiService {
 
     final body = await _decodeJson(response, fallback: 'Giriş başarısız');
 
-    accessToken = body['accessToken'] as String;
-    refreshToken = body['refreshToken'] as String;
+    if (body['requiresSecuritySetup'] == true) {
+      return body;
+    }
+
+    _applySessionBody(body);
+    return body;
+  }
+
+  void _applySessionBody(Map<String, dynamic> body) {
+    final access = body['accessToken'];
+    final refresh = body['refreshToken'];
+
+    if (access is! String || refresh is! String || access.isEmpty || refresh.isEmpty) {
+      throw Exception('Sunucu yanıtı geçersiz: oturum belirteçleri eksik.');
+    }
+
+    accessToken = access;
+    refreshToken = refresh;
+  }
+
+  Future<Map<String, dynamic>> register({
+    required String email,
+    required String password,
+    required String securityQuestionId,
+    required String securityAnswer,
+  }) async {
+    final response = await _send(http.post(
+      Uri.parse('$baseUrl/auth/register'),
+      headers: _headers(),
+      body: jsonEncode({
+        'email': email,
+        'password': password,
+        'securityQuestionId': securityQuestionId,
+        'securityAnswer': securityAnswer,
+        'deviceName': 'Android',
+      }),
+    ));
+
+    final body = await _decodeJson(response, fallback: 'Kayıt başarısız');
+    _applySessionBody(body);
+    return body;
+  }
+
+  Future<String> getPasswordResetQuestion(String email) async {
+    final response = await _send(http.post(
+      Uri.parse('$baseUrl/auth/password-reset/question'),
+      headers: _headers(),
+      body: jsonEncode({'email': email}),
+    ));
+
+    final body = await _decodeJson(response, fallback: 'Güvenlik sorusu alınamadı');
+    return body['securityQuestionId'] as String;
+  }
+
+  Future<void> resetPasswordWithSecurityAnswer({
+    required String email,
+    required String securityAnswer,
+    required String newPassword,
+  }) async {
+    final response = await _send(http.post(
+      Uri.parse('$baseUrl/auth/password-reset/confirm'),
+      headers: _headers(),
+      body: jsonEncode({
+        'email': email,
+        'securityAnswer': securityAnswer,
+        'newPassword': newPassword,
+      }),
+    ));
+
+    await _decodeJson(response, fallback: 'Parola sıfırlanamadı');
+  }
+
+  Future<Map<String, dynamic>> completeSecuritySetupWithToken({
+    required String setupToken,
+    required String securityQuestionId,
+    required String securityAnswer,
+  }) async {
+    final response = await _send(http.post(
+      Uri.parse('$baseUrl/auth/security-setup'),
+      headers: _headers(),
+      body: jsonEncode({
+        'setupToken': setupToken,
+        'securityQuestionId': securityQuestionId,
+        'securityAnswer': securityAnswer,
+        'deviceName': 'Android',
+      }),
+    ));
+
+    final body = await _decodeJson(response, fallback: 'Güvenlik sorusu kaydedilemedi');
+    _applySessionBody(body);
     return body;
   }
 
@@ -220,14 +336,30 @@ class ApiService {
     return Snippet.fromJson(body['snippet'] as Map<String, dynamic>);
   }
 
+  Future<List<Snippet>> reorderSnippets(List<String> orderedIds) async {
+    for (var index = 0; index < orderedIds.length; index += 1) {
+      final id = orderedIds[index];
+      final response = await _authorizedRequest(
+        () => http.put(
+          Uri.parse('$baseUrl/snippets/$id'),
+          headers: _headers(auth: true),
+          body: jsonEncode({'sortOrder': index}),
+        ),
+      );
+
+      await _decodeJson(response, fallback: 'Snippet sırası güncellenemedi');
+    }
+
+    return listSnippets();
+  }
+
   Future<void> deleteSnippet(String snippetId) async {
     final response = await _authorizedRequest(
       () => http.delete(Uri.parse('$baseUrl/snippets/$snippetId'), headers: _headers(auth: true)),
     );
 
     if (response.statusCode >= 400) {
-      final body = jsonDecode(response.body) as Map<String, dynamic>;
-      throw Exception(body['error'] ?? 'Snippet silinemedi');
+      _parseBody(response, fallback: 'Snippet silinemedi');
     }
   }
 }

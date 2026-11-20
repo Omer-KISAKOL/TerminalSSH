@@ -1,6 +1,19 @@
 import 'api_service.dart';
 import 'secure_storage_service.dart';
 
+/// Giriş sonucu: ya oturum açıldı ya da güvenlik sorusu kurulumu gerekiyor.
+class LoginResult {
+  const LoginResult.signedIn(this.email)
+      : setupToken = null;
+
+  const LoginResult.needsSecuritySetup({required this.email, required String this.setupToken});
+
+  final String email;
+  final String? setupToken;
+
+  bool get requiresSecuritySetup => setupToken != null;
+}
+
 class AuthService {
   AuthService({
     ApiService? api,
@@ -22,6 +35,10 @@ class AuthService {
     _api.refreshToken = refreshToken;
   }
 
+  /// Oturum geri yüklendiyse true; kullanıcı güvenlik sorusu kurulumuna ihtiyaç
+  /// duyuyorsa [needsSecuritySetup] true olur.
+  bool needsSecuritySetup = false;
+
   Future<bool> restoreSession() async {
     final access = await _storage.read('accessToken');
     final refresh = await _storage.read('refreshToken');
@@ -34,12 +51,14 @@ class AuthService {
     _api.refreshToken = refresh;
 
     try {
-      await _api.me();
+      final info = await _api.me();
+      needsSecuritySetup = info['requiresSecuritySetup'] == true;
       return true;
     } catch (_) {
       try {
         await _api.refreshSession();
-        await _api.me();
+        final info = await _api.me();
+        needsSecuritySetup = info['requiresSecuritySetup'] == true;
         return true;
       } catch (_) {
         await logout();
@@ -48,13 +67,89 @@ class AuthService {
     }
   }
 
-  Future<String> login(String email, String password) async {
+  Future<LoginResult> login(String email, String password) async {
     final session = await _api.login(email, password);
+    final userEmail = (session['user'] as Map<String, dynamic>)['email'] as String;
+
+    if (session['requiresSecuritySetup'] == true) {
+      return LoginResult.needsSecuritySetup(
+        email: userEmail,
+        setupToken: session['setupToken'] as String,
+      );
+    }
+
     await _persistSession(
       session['accessToken'] as String,
       session['refreshToken'] as String,
     );
-    return session['user']['email'] as String;
+    needsSecuritySetup = false;
+    return LoginResult.signedIn(userEmail);
+  }
+
+  Future<String> register({
+    required String email,
+    required String password,
+    required String securityQuestionId,
+    required String securityAnswer,
+  }) async {
+    final session = await _api.register(
+      email: email,
+      password: password,
+      securityQuestionId: securityQuestionId,
+      securityAnswer: securityAnswer,
+    );
+    await _persistSession(
+      session['accessToken'] as String,
+      session['refreshToken'] as String,
+    );
+    needsSecuritySetup = false;
+    return (session['user'] as Map<String, dynamic>)['email'] as String;
+  }
+
+  Future<String> requestPasswordResetQuestion(String email) {
+    return _api.getPasswordResetQuestion(email);
+  }
+
+  Future<void> resetPassword({
+    required String email,
+    required String securityAnswer,
+    required String newPassword,
+  }) {
+    return _api.resetPasswordWithSecurityAnswer(
+      email: email,
+      securityAnswer: securityAnswer,
+      newPassword: newPassword,
+    );
+  }
+
+  /// Giriş sırasında alınan setupToken ile güvenlik sorusunu kaydedip oturumu açar.
+  Future<void> completeSecuritySetupWithToken({
+    required String setupToken,
+    required String securityQuestionId,
+    required String securityAnswer,
+  }) async {
+    final session = await _api.completeSecuritySetupWithToken(
+      setupToken: setupToken,
+      securityQuestionId: securityQuestionId,
+      securityAnswer: securityAnswer,
+    );
+    await _persistSession(
+      session['accessToken'] as String,
+      session['refreshToken'] as String,
+    );
+    needsSecuritySetup = false;
+  }
+
+  /// Oturum zaten açıkken (geri yüklenen oturum) güvenlik sorusunu kaydeder.
+  Future<void> completeSecuritySetupAuthenticated({
+    required String securityQuestionId,
+    required String securityAnswer,
+  }) async {
+    await _api.completeSecuritySetupAuthenticated(
+      securityQuestionId: securityQuestionId,
+      securityAnswer: securityAnswer,
+    );
+    needsSecuritySetup = false;
   }
 
   Future<void> logout() async {
@@ -67,5 +162,6 @@ class AuthService {
     await _storage.clearAll();
     _api.accessToken = null;
     _api.refreshToken = null;
+    needsSecuritySetup = false;
   }
 }
