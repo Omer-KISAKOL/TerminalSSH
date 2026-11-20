@@ -25,17 +25,17 @@ export function SftpHostPicker({
         <p className="mt-1 text-xs text-text-muted">{t('sftp.pickServerHelp')}</p>
       </header>
 
-      <div className="min-h-0 flex-1 overflow-y-auto p-4">
+      <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-5">
         {loading ? (
           <p className="text-sm text-text-muted">{t('profile.loading')}</p>
         ) : profiles.length === 0 ? (
           <p className="text-sm text-text-muted">{t('sftp.noProfiles')}</p>
         ) : (
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-4 md:gap-5">
             {profiles.map((profile) => (
               <div
                 key={profile.id}
-                className="rounded-lg border border-border bg-surface px-3 py-3"
+                className="rounded-lg border border-border bg-surface px-4 py-3.5"
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-text">{profile.name}</p>
@@ -45,7 +45,7 @@ export function SftpHostPicker({
                 </div>
                 <Button
                   variant="primary"
-                  className="mt-3 w-full py-1.5 text-xs"
+                  className="mt-4 w-full py-1.5 text-xs"
                   disabled={disabled}
                   onClick={() => onConnectProfile(profile)}
                 >

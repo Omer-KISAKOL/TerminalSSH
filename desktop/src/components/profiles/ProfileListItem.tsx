@@ -66,7 +66,9 @@ export function ProfileListItem({
 
   return (
     <div
-      className={`rounded-lg border px-3 py-2 transition ${
+      className={`rounded-lg border transition ${
+        dense ? 'px-4 py-3' : 'px-3 py-2'
+      } ${
         isSelected
           ? 'border-accent bg-accent/10'
           : 'border-border bg-surface hover:bg-surface-muted'
