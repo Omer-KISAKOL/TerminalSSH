@@ -243,6 +243,25 @@ class ApiService {
     return body;
   }
 
+  /// Oturum zaten açıkken (geri yüklenen oturum) güvenlik sorusunu kaydeder.
+  Future<void> completeSecuritySetupAuthenticated({
+    required String securityQuestionId,
+    required String securityAnswer,
+  }) async {
+    final response = await _authorizedRequest(
+      () => http.post(
+        Uri.parse('$baseUrl/auth/security-setup/complete'),
+        headers: _headers(auth: true),
+        body: jsonEncode({
+          'securityQuestionId': securityQuestionId,
+          'securityAnswer': securityAnswer,
+        }),
+      ),
+    );
+
+    await _decodeJson(response, fallback: 'Güvenlik sorusu kaydedilemedi');
+  }
+
   Future<List<ServerProfile>> listProfiles() async {
     final response = await _authorizedRequest(
       () => http.get(Uri.parse('$baseUrl/profiles'), headers: _headers(auth: true)),
