@@ -328,7 +328,7 @@ export function FilePane({
             <col className="w-[14%]" />
             <col className="w-[20%]" />
           </colgroup>
-          <thead className="sticky top-0 z-[1] bg-surface-raised text-xs text-text-muted">
+          <thead className="sticky top-0 z-1 bg-surface-raised text-xs text-text-muted">
             <tr>
               {renderSortHeader('name', t('filePane.name'))}
               {renderSortHeader('modified', t('filePane.modified'))}
