@@ -60,6 +60,9 @@ function LogoutIcon() {
   )
 }
 
+const accountActionButtonClass =
+  'h-8 w-full gap-1.5 bg-transparent py-1.5 text-xs text-text shadow-none hover:bg-surface-muted hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] active:bg-surface-raised'
+
 export function AccountMenu({ user, onLogout, onSync, syncing = false }: AccountMenuProps) {
   const { t } = useLocale()
   const initials = emailInitials(user.email)
@@ -87,18 +90,14 @@ export function AccountMenu({ user, onLogout, onSync, syncing = false }: Account
         <div className="mt-3 flex flex-col gap-1.5">
           <Button
             variant="secondary"
-            className="h-8 w-full gap-1.5 py-1.5 text-xs"
+            className={accountActionButtonClass}
             loading={syncing}
             onClick={onSync}
           >
             {!syncing ? <SyncIcon /> : null}
             {syncing ? t('account.syncing') : t('account.sync')}
           </Button>
-          <Button
-            variant="ghost"
-            className="h-8 w-full gap-1.5 border-transparent py-1.5 text-xs text-text-muted hover:border-status-error/40 hover:bg-status-error/10 hover:text-status-error"
-            onClick={onLogout}
-          >
+          <Button variant="secondary" className={accountActionButtonClass} onClick={onLogout}>
             <LogoutIcon />
             {t('account.logout')}
           </Button>
