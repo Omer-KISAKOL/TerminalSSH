@@ -1,6 +1,7 @@
 # GitHub 100MB üstü dosyalar — Git LFS (clone sonrası: git lfs pull)
 server/data/releases/electron/*.exe filter=lfs diff=lfs merge=lfs -text
 server/data/releases/electron/*.blockmap filter=lfs diff=lfs merge=lfs -text
+server/data/releases/electron/*.AppImage filter=lfs diff=lfs merge=lfs -text
 server/data/releases/android/*.apk filter=lfs diff=lfs merge=lfs -text
 desktop/release/*.exe filter=lfs diff=lfs merge=lfs -text
 desktop/release/*.AppImage filter=lfs diff=lfs merge=lfs -text
