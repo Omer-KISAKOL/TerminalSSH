@@ -76,6 +76,31 @@ pnpm test
 pnpm build
 ```
 
+### Windows paket (`pnpm dist:win`)
+
+```bash
+pnpm dist:win
+```
+
+Çıktı: `desktop/release/` ve güncelleme feed’i için kopyalanabilir dosyalar `server/data/releases/electron/` (bkz. [`deploy/README.md`](deploy/README.md)).
+
+### Git LFS ve GitHub’a push
+
+Kurulum dosyaları (`.exe`, `.blockmap`, `.apk`) **Git LFS** ile izlenir; normal commit ile GitHub 100MB sınırına takılırsınız.
+
+```bash
+git lfs install
+git lfs pull   # başka makinede clone sonrası
+```
+
+Windows’ta uzak depoya göndermek:
+
+1. **Bir kez (yönetici PowerShell):** `.\scripts\enable-ssh-agent.ps1`
+2. **Her oturum (gerekirse):** `ssh-add $env:USERPROFILE\.ssh\id_ed25519_second`
+3. **Push + LFS:** `.\scripts\git-push-sync.ps1`
+
+Yayınları canlı API’ye kopyalamak (Git’ten bağımsız): `bash scripts/publish-desktop-releases.sh`
+
 ## Hesap ve profil sync
 
 - Kullanıcı kaydı / girişi JWT ile yapılır

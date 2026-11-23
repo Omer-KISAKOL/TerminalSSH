@@ -4,14 +4,15 @@ $RepoRoot = Split-Path $PSScriptRoot -Parent
 
 Write-Host '=== SSH agent ===' -ForegroundColor Cyan
 $svc = Get-Service ssh-agent
-if ($svc.StartType -eq 'Disabled') {
-  Write-Host 'ssh-agent kapalı. Yönetici PowerShell ile bir kez çalıştırın:'
-  Write-Host '  Get-Service ssh-agent | Set-Service -StartupType Automatic'
-  Write-Host '  Start-Service ssh-agent'
-}
-
-if ($svc.Status -ne 'Running') {
-  Start-Service ssh-agent -ErrorAction SilentlyContinue
+if ($svc.StartType -eq 'Disabled' -or $svc.Status -ne 'Running') {
+  Write-Host 'ssh-agent çalışmıyor. Yönetici PowerShell ile bir kez:' -ForegroundColor Yellow
+  Write-Host '  Set-ExecutionPolicy -Scope Process Bypass -Force'
+  Write-Host '  & "$PSScriptRoot\enable-ssh-agent.ps1"'
+  & (Join-Path $PSScriptRoot 'enable-ssh-agent.ps1') -ErrorAction SilentlyContinue
+  $svc = Get-Service ssh-agent
+  if ($svc.Status -ne 'Running') {
+    exit 1
+  }
 }
 
 $key = Join-Path $env:USERPROFILE '.ssh\id_ed25519_second'
@@ -27,7 +28,13 @@ if (Test-Path $key) {
 }
 
 Write-Host "`n=== GitHub bağlantı testi ===" -ForegroundColor Cyan
-ssh -T git@github.com
+$sshTest = ssh -o BatchMode=yes -T git@github.com 2>&1 | Out-String
+if ($sshTest -notmatch 'successfully authenticated|Hi ') {
+  Write-Host $sshTest -ForegroundColor Red
+  Write-Host 'SSH başarısız: anahtar ekleyin (parola sorulabilir): ssh-add' -ForegroundColor Yellow
+  exit 1
+}
+Write-Host $sshTest.Trim()
 
 Set-Location $RepoRoot
 Write-Host "`n=== Uzak depo ile senkron ===" -ForegroundColor Cyan

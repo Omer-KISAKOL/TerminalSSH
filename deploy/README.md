@@ -53,6 +53,8 @@ Paketlenmiş uygulama **`electron-updater`** kullanır:
 
 **Yayın akışı:**
 
+Windows kurulum dosyası **~100MB+** olduğu için repoda **Git LFS** kullanılır (`.gitattributes`). Yeni clone: `git lfs install` ve `git lfs pull`. Push: `.\scripts\git-push-sync.ps1` (önce yönetici ile `.\scripts\enable-ssh-agent.ps1`).
+
 ```bash
 # İlgili platformda derle
 cd desktop
