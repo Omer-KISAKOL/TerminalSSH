@@ -13,6 +13,50 @@ TerminalSSH/
 └── docs/        API ve mimari dokümantasyon
 ```
 
+## Yerelde kurulum / güncelleme dosyaları (yalnızca geliştirici makinesi)
+
+Masaüstü installer ve OTA feed’i **canlı sunucuda üretilmez**; derleyip kopyalama işi **local** yapılır. Sunucu yalnızca `git pull` ile bu dosyaları alır ([`deploy/README.md`](deploy/README.md)).
+
+**Git Bash veya WSL** ile monorepo kökünden:
+
+```bash
+cd desktop
+pnpm dist:win
+pnpm dist:mac
+pnpm dist:linux
+cd ..
+
+# desktop/release → server/data/releases/electron + releases.json senkronu
+bash scripts/publish-desktop-releases.sh
+```
+
+Script şunları yapar:
+
+1. `latest*.yml`, `.exe`, `.blockmap`, AppImage, dmg vb. dosyaları `desktop/release/` içinden `server/data/releases/electron/` klasörüne kopyalar.
+2. `pnpm releases:sync` çalıştırır → `server/data/releases.json` sürüm ve indirme URL’leri güncellenir.
+
+Windows’ta yalnızca PowerShell kullanıyorsanız: dosyaları elle `desktop/release` → `server/data/releases/electron` kopyalayın, kökten `pnpm releases:sync` çalıştırın.
+
+Sonra commit + push (LFS) ve canlı sunucuda `deploy/README.md` akışı.
+
+### Git LFS ve GitHub’a push
+
+Kurulum dosyaları (`.exe`, `.blockmap`, `.apk`) **Git LFS** ile izlenir; normal commit ile GitHub 100MB sınırına takılırsınız.
+
+```bash
+git lfs install
+git lfs pull   # başka makinede clone sonrası
+```
+
+Windows’ta uzak depoya göndermek:
+
+1. **Bir kez (yönetici PowerShell):** `.\scripts\enable-ssh-agent.ps1`
+2. **Her oturum (gerekirse):** `ssh-add $env:USERPROFILE\.ssh\id_ed25519_second`
+3. **Push + LFS:** `.\scripts\git-push-sync.ps1`
+
+`publish-desktop-releases.sh` ve `pnpm releases:sync` **yalnızca local** çalıştırılır; canlıya dosyalar genelde **git push + sunucuda pull** ile gider.
+
+
 ## Geliştirme
 
 ### Bağımlılıklar
@@ -65,7 +109,7 @@ Canlı API (`188.34.155.223`) girişinde Postgres hatası alırsanız: [`deploy/
 pnpm dev
 ```
 
-Geliştirme modunda (`pnpm dev`, `flutter run`) desktop ve mobil **yerel API** (`http://localhost:8787`) kullanır. Paketlenmiş masaüstü (`pnpm dist:*`) ve release mobil derlemeleri **canlı API** (`http://188.34.155.223:8787`) adresine bağlanır.
+Geliştirme modunda (`pnpm dev`, `flutter run`) desktop ve mobil **yerel API** (`http://localhost:8787`) kullanır. Paketlenmiş masaüstü (`pnpm dist:`*) ve release mobil derlemeleri **canlı API** (`http://188.34.155.223:8787`) adresine bağlanır.
 
 ### Test ve derleme
 
@@ -76,54 +120,14 @@ pnpm test
 pnpm build
 ```
 
-### Yerelde kurulum / güncelleme dosyaları (yalnızca geliştirici makinesi)
-
-Masaüstü installer ve OTA feed’i **canlı sunucuda üretilmez**; derleyip kopyalama işi **local** yapılır. Sunucu yalnızca `git pull` ile bu dosyaları alır ([`deploy/README.md`](deploy/README.md)).
-
-**Git Bash veya WSL** ile monorepo kökünden:
-
-```bash
-cd desktop
-pnpm dist:win          # Windows; Fedora’da Linux için: pnpm dist:linux / dist:linux:appimage
-pnpm dist:mac          # macOS (Mac’te)
-cd ..
-
-# desktop/release → server/data/releases/electron + releases.json senkronu
-bash scripts/publish-desktop-releases.sh
-```
-
-Script şunları yapar:
-
-1. `latest*.yml`, `.exe`, `.blockmap`, AppImage, dmg vb. dosyaları `desktop/release/` içinden **`server/data/releases/electron/`** klasörüne kopyalar.
-2. **`pnpm releases:sync`** çalıştırır → `server/data/releases.json` sürüm ve indirme URL’leri güncellenir.
-
-Windows’ta yalnızca PowerShell kullanıyorsanız: dosyaları elle `desktop/release` → `server/data/releases/electron` kopyalayın, kökten `pnpm releases:sync` çalıştırın.
-
-Sonra commit + push (LFS) ve canlı sunucuda `deploy/README.md` akışı.
-
-### Git LFS ve GitHub’a push
-
-Kurulum dosyaları (`.exe`, `.blockmap`, `.apk`) **Git LFS** ile izlenir; normal commit ile GitHub 100MB sınırına takılırsınız.
-
-```bash
-git lfs install
-git lfs pull   # başka makinede clone sonrası
-```
-
-Windows’ta uzak depoya göndermek:
-
-1. **Bir kez (yönetici PowerShell):** `.\scripts\enable-ssh-agent.ps1`
-2. **Her oturum (gerekirse):** `ssh-add $env:USERPROFILE\.ssh\id_ed25519_second`
-3. **Push + LFS:** `.\scripts\git-push-sync.ps1`
-
-`publish-desktop-releases.sh` ve `pnpm releases:sync` **yalnızca local** çalıştırılır; canlıya dosyalar genelde **git push + sunucuda pull** ile gider.
-
 ## Hesap ve profil sync
 
 - Kullanıcı kaydı / girişi JWT ile yapılır
 - Profil sırları sunucuda AES-256-GCM vault ile saklanır
 - SSH trafiği istemciden doğrudan hedef sunucuya gider
 - API sözleşmesi: [`docs/api.md`](docs/api.md)
+
+
 
 ## Mobil
 
@@ -150,7 +154,7 @@ pnpm install
 pnpm --filter @terminalssh/api-client build
 ```
 
-**Windows — kurulum `.exe` (NSIS installer):**
+**Windows — kurulum** `.exe` **(NSIS installer):**
 
 Windows makinede (veya Linux’ta Wine ile cross-build):
 
@@ -166,7 +170,7 @@ pnpm dist:win
 | `TerminalSSH Setup x.x.x.exe` | Çift tıkla kurulum sihirbazı (masaüstü + Başlat menüsü kısayolu) |
 | `win-unpacked/` | Taşınabilir sürüm (kurulum yapmadan `TerminalSSH.exe` çalıştırılabilir) |
 
-Kullanıcıya vermek için genelde **`TerminalSSH Setup … .exe`** dosyasını paylaşın.
+Kullanıcıya vermek için genelde `TerminalSSH Setup … .exe` dosyasını paylaşın.
 
 OTA ve API feed için derleme sonrası **local** (köke dönüp): `bash scripts/publish-desktop-releases.sh` — ayrıntı: **Yerelde kurulum / güncelleme dosyaları** bölümü (Geliştirme).
 
@@ -188,7 +192,7 @@ pnpm dist:linux
 | `TerminalSSH-x.x.x.AppImage` | `chmod +x` sonrası doğrudan çalıştırılır |
 | `TerminalSSH-x.x.x.x86_64.rpm` | `sudo dnf install ./TerminalSSH-….rpm` |
 
-**macOS — `.dmg` (Mac’te derleyin):**
+**macOS —** `.dmg` **(Mac’te derleyin):**
 
 ```bash
 cd desktop

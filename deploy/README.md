@@ -4,8 +4,16 @@
 
 Sunucuda (`/var/www/TerminalSSH`, systemd servisi `terminalssh-api`):
 
+**Bir kerelik kurulum — Git LFS** (`git: 'lfs' is not a git command` hatası alırsanız; APK/exe/AppImage dosyaları LFS ile tutulur):
+
 ```bash
-ssh <kullanıcı>@188.34.155.223
+sudo apt install git-lfs     # Ubuntu/Debian
+git lfs install              # kullanıcı başına bir kez
+```
+
+Güncelleme:
+
+```bash
 cd /var/www/TerminalSSH
 
 git pull
@@ -47,14 +55,11 @@ Notlar:
 - Giriş sırasında Postgres hatası alırsanız aşağıdaki bölüme bakın (`fix-postgres-auth.sh`).
 - Masaüstü/Android istemci güncellemeleri ayrı akıştır: bkz. [Uygulama güncellemeleri](#uygulama-güncellemeleri).
 
-
-
 ## Uygulama güncellemeleri
 
 Tüm istemciler **yalnızca uygulama açılışında bir kez** kontrol eder; arka planda sürekli bildirim yok.
 
 **Platform seçimi (otomatik):**
-
 
 | Ortam                   | Nasıl anlar                                                                                           |
 | ----------------------- | ----------------------------------------------------------------------------------------------------- |
@@ -63,7 +68,6 @@ Tüm istemciler **yalnızca uygulama açılışında bir kez** kontrol eder; ark
 | Fedora / Linux masaüstü | `latest-linux.yml` + **AppImage** (OTA için; RPM manuel kurulum)                                      |
 | Android                 | `platform=android` + `releases.json`                                                                  |
 | Manuel indirme          | `GET /releases/installer?platform=desktop-windows` (veya `desktop-linux`, `desktop-macos`, `android`) |
-
 
 Sunucu `GET /releases/check` çağrısında istemci `platform` gönderir; masaüstünde sürüm önceliği sunucudaki `latest*.yml` dosyalarındadır.
 
@@ -98,8 +102,6 @@ Canlı sunucuda dosyalar: `server/data/releases/electron/`
 - **macOS:** İmzasız derlemelerde Gatekeeper uyarısı olabilir; ekip içi için ad-hoc imza veya Apple Developer notarization gerekir.
 - **Linux RPM:** Otomatik güncelleme için **AppImage** hedefini kullanın (`electron-builder` generic feed).
 - Geliştirme modu (`pnpm dev`) eski manifest kontrolünü kullanır; `electron-updater` yalnızca paketli exe/dmg/AppImage’de çalışır.
-
-
 
 ### Android (Play Store yok) — ekip içi APK OTA
 
