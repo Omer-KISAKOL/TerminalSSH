@@ -1,5 +1,5 @@
 import { app, type BrowserWindow } from 'electron'
-import { autoUpdater } from 'electron-updater'
+import electronUpdater from 'electron-updater'
 
 import type { DesktopUpdatePhase, ReleaseCheckResponse } from '@shared/contracts/release'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
@@ -12,6 +12,9 @@ type DesktopUpdateSnapshot = ReleaseCheckResponse & {
   nativeAutoUpdate: boolean
   errorMessage: string | null
 }
+
+// electron-updater CommonJS; ana süreç ESM olduğu için named import çalışmaz.
+const { autoUpdater } = electronUpdater
 
 let mainWindow: BrowserWindow | null = null
 let started = false
