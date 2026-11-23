@@ -21,6 +21,11 @@ desktop/release
 server/dist
 packages/*/dist
 release
+# Sunucuya manuel kopyalanan kurulum dosyaları (GitHub 100MB limiti)
+server/data/releases/electron/**
+!server/data/releases/electron/.gitkeep
+server/data/releases/android/**
+!server/data/releases/android/.gitkeep
 mobile/build
 mobile/.dart_tool
 *.local

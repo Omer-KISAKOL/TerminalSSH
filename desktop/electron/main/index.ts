@@ -12,6 +12,10 @@ import { registerSnippetHandlers } from './ipc/snippet.handlers'
 import { registerSftpHandlers } from './ipc/sftp.handlers'
 import { registerSshHandlers } from './ipc/ssh.handlers'
 import { clearApplicationMenu } from './application-menu'
+import {
+  bindDesktopAutoUpdaterWindow,
+  startDesktopAutoUpdater,
+} from './services/desktop-auto-updater'
 import { sftpSessionManager } from './services/sftp-session-manager'
 import { sshSessionManager } from './services/ssh-session-manager'
 
@@ -93,11 +97,14 @@ registerSftpHandlers()
 
 app.whenReady().then(() => {
   clearApplicationMenu()
-  createMainWindow()
+  const mainWindow = createMainWindow()
+  bindDesktopAutoUpdaterWindow(mainWindow)
+  startDesktopAutoUpdater()
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
-      createMainWindow()
+      const window = createMainWindow()
+      bindDesktopAutoUpdaterWindow(window)
     }
   })
 })

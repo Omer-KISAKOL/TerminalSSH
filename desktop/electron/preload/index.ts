@@ -5,7 +5,30 @@ import type { SftpStatusEvent } from '@shared/contracts/sftp'
 import type { SshDataEvent, SshStatusEvent } from '@shared/contracts/ssh'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
 
+import type { ReleaseCheckResponse } from '@shared/contracts/release'
+
 import type { DesktopApi } from './api.types'
+
+type UpdateStatusListener = (status: ReleaseCheckResponse) => void
+
+const updateStatusListeners = new Set<UpdateStatusListener>()
+let updateStatusBridgeRegistered = false
+
+function ensureUpdateStatusBridge(): void {
+  if (updateStatusBridgeRegistered) {
+    return
+  }
+
+  updateStatusBridgeRegistered = true
+
+  ipcRenderer.on(IPC_CHANNELS.app.updateStatus, (_event, payload: unknown) => {
+    const status = payload as ReleaseCheckResponse
+
+    for (const listener of updateStatusListeners) {
+      listener(status)
+    }
+  })
+}
 
 type HostVerifyListener = (event: HostVerifyRequestEvent) => void
 
@@ -52,6 +75,17 @@ function ensureSftpStatusBridge(): void {
 const desktopApi: DesktopApi = {
   app: {
     getVersion: () => ipcRenderer.invoke(IPC_CHANNELS.app.getVersion),
+    checkForUpdate: () => ipcRenderer.invoke(IPC_CHANNELS.app.checkForUpdate),
+    openUpdateDownload: (downloadUrl) =>
+      ipcRenderer.invoke(IPC_CHANNELS.app.openUpdateDownload, downloadUrl),
+    quitAndInstall: () => ipcRenderer.invoke(IPC_CHANNELS.app.quitAndInstall),
+    onUpdateStatus: (callback) => {
+      ensureUpdateStatusBridge()
+      updateStatusListeners.add(callback)
+      return () => {
+        updateStatusListeners.delete(callback)
+      }
+    },
     syncLocale: (locale) => ipcRenderer.invoke(IPC_CHANNELS.app.syncLocale, locale),
     onOpenSftpTab: (callback) => {
       const listener = () => callback()

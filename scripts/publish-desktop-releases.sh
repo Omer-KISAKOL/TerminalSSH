@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SOURCE_DIR="${1:-$ROOT_DIR/desktop/release}"
+DEST_DIR="$ROOT_DIR/server/data/releases/electron"
+
+if [[ ! -d "$SOURCE_DIR" ]]; then
+  echo "Hata: Kaynak klasör yok: $SOURCE_DIR" >&2
+  echo "Önce desktop/release üretin (pnpm dist:win / dist:linux / mac)." >&2
+  exit 1
+fi
+
+mkdir -p "$DEST_DIR"
+
+shopt -s nullglob
+copied=0
+for pattern in 'latest*.yml' 'TerminalSSH*.exe' 'TerminalSSH*.AppImage' 'TerminalSSH*.rpm' 'TerminalSSH*.dmg' 'TerminalSSH*.zip' '*.blockmap'; do
+  for file in "$SOURCE_DIR"/$pattern; do
+  cp -f "$file" "$DEST_DIR/"
+  echo "Kopyalandı: $(basename "$file")"
+    copied=$((copied + 1))
+  done
+done
+
+if [[ "$copied" -eq 0 ]]; then
+  echo "Uyarı: Kopyalanacak electron-builder çıktısı bulunamadı." >&2
+  exit 1
+fi
+
+echo "Tamam: $DEST_DIR"

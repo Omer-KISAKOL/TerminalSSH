@@ -102,6 +102,18 @@ export interface SaveCloudSnippetInput {
   sortOrder?: number
 }
 
+export interface ReleaseCheckResponse {
+  updateAvailable: boolean
+  currentVersion: string
+  latestVersion: string | null
+  downloadUrl: string | null
+  releaseNotes: string | null
+  phase?: 'idle' | 'checking' | 'available' | 'downloading' | 'ready' | 'error'
+  percent?: number | null
+  nativeAutoUpdate?: boolean
+  errorMessage?: string | null
+}
+
 export class ApiClientError extends Error {
   statusCode: number
 

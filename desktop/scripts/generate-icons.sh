@@ -1,11 +1,20 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -eu
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ICON_DIR="$ROOT_DIR/resources/icons"
 SVG="$ICON_DIR/icon.svg"
 
 mkdir -p "$ICON_DIR/icons"
+
+if ! command -v magick >/dev/null 2>&1; then
+  if [[ -f "$ICON_DIR/icon.ico" && -f "$ICON_DIR/icon.png" ]]; then
+    echo "ImageMagick yok; mevcut ikonlar kullanılıyor ($ICON_DIR)"
+    exit 0
+  fi
+  echo "ImageMagick (magick) gerekli veya önceden üretilmiş icon.ico/icon.png olmalı." >&2
+  exit 1
+fi
 
 magick -background none "$SVG" -resize 512x512 "$ICON_DIR/icon.png"
 magick -background none "$SVG" -resize 256x256 "$ICON_DIR/icons/256x256.png"

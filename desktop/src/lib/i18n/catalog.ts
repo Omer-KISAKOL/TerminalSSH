@@ -158,6 +158,18 @@ export const messagesTr = {
     syncing: 'Senkronize ediliyor…',
     logout: 'Çıkış',
   },
+  update: {
+    title: 'Güncelleme mevcut',
+    body: 'Yeni bir sürüm yayınlandı. İndirme sayfasını açarak güncelleyebilirsiniz.',
+    bodyNative:
+      'Yeni sürüm arka planda indirilir. Hazır olunca yeniden başlatarak kurulum tamamlanır.',
+    versionLine: 'Kurulu: {current} → Yeni: {latest}',
+    install: 'Güncelle',
+    restart: 'Yeniden başlat ve kur',
+    later: 'Sonra',
+    downloading: 'İndiriliyor… %{percent}',
+    downloadingWait: 'İndiriliyor…',
+  },
   profileList: {
     emptySidebar: 'Kayıtlı sunucu yok.',
   },
@@ -463,6 +475,17 @@ export const messagesEn = {
     sync: 'Sync',
     syncing: 'Syncing…',
     logout: 'Sign out',
+  },
+  update: {
+    title: 'Update available',
+    body: 'A new version is available. Open the download page to update.',
+    bodyNative: 'The update downloads in the background. Restart when ready to finish installing.',
+    versionLine: 'Installed: {current} → New: {latest}',
+    install: 'Update',
+    restart: 'Restart and install',
+    later: 'Later',
+    downloading: 'Downloading… {percent}%',
+    downloadingWait: 'Downloading…',
   },
   profileList: {
     emptySidebar: 'No saved servers.',

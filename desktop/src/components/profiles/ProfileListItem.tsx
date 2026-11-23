@@ -94,53 +94,95 @@ export function ProfileListItem({
         </p>
       ) : null}
 
-      <div
-        className={
-          dense
-            ? 'mt-3 grid grid-cols-2 gap-1.5'
-            : 'mt-3 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_2.25rem_2.25rem] items-stretch gap-2'
-        }
-      >
-        <Button
-          variant="primary"
-          className="h-8 min-w-0 px-2 py-1 text-[11px]"
-          disabled={connectDisabled || isConnecting}
-          onClick={() => onConnect(profile)}
-          aria-label={t('profile.connectTerminalAria', { name: profile.name })}
-          aria-busy={isConnecting || undefined}
-        >
-          {t('profile.terminal')}
-        </Button>
-        <Button
-          variant="success"
-          className="h-8 min-w-0 px-2 py-1 text-[11px] font-semibold"
-          disabled={connectDisabled}
-          onClick={() => onSftpConnect(profile)}
-          aria-label={t('profile.connectSftpAria', { name: profile.name })}
-        >
-          {t('profile.sftp')}
-        </Button>
-        <Button
-          variant="secondary"
-          className="h-8 w-9 shrink-0 p-0"
-          disabled={connectDisabled}
-          onClick={() => onEdit(profile)}
-          aria-label={t('profile.editProfileAria', { name: profile.name })}
-          title={t('profile.edit')}
-        >
-          <EditIcon />
-        </Button>
-        <Button
-          variant="danger"
-          className="h-8 w-9 shrink-0 p-0"
-          disabled={connectDisabled}
-          onClick={() => onDelete(profile)}
-          aria-label={t('profile.deleteProfileAria', { name: profile.name })}
-          title={t('profile.delete')}
-        >
-          <DeleteIcon />
-        </Button>
-      </div>
+      {dense ? (
+        <div className="mt-3 flex flex-col gap-2">
+          <div className="grid grid-cols-2 gap-1.5">
+            <Button
+              variant="primary"
+              className="h-8 min-w-0 px-2 py-1 text-[11px]"
+              disabled={connectDisabled || isConnecting}
+              onClick={() => onConnect(profile)}
+              aria-label={t('profile.connectTerminalAria', { name: profile.name })}
+              aria-busy={isConnecting || undefined}
+            >
+              {t('profile.terminal')}
+            </Button>
+            <Button
+              variant="success"
+              className="h-8 min-w-0 px-2 py-1 text-[11px] font-semibold"
+              disabled={connectDisabled}
+              onClick={() => onSftpConnect(profile)}
+              aria-label={t('profile.connectSftpAria', { name: profile.name })}
+            >
+              {t('profile.sftp')}
+            </Button>
+          </div>
+          <div className="flex items-center justify-center gap-1.5 border-t border-border/60 pt-2">
+            <Button
+              variant="secondary"
+              className="h-8 min-w-[4.25rem] flex-1 gap-1 px-2 py-1 text-[11px]"
+              disabled={connectDisabled}
+              onClick={() => onEdit(profile)}
+              aria-label={t('profile.editProfileAria', { name: profile.name })}
+            >
+              <EditIcon />
+              {t('profile.edit')}
+            </Button>
+            <Button
+              variant="danger"
+              className="h-8 min-w-[4.25rem] flex-1 gap-1 px-2 py-1 text-[11px]"
+              disabled={connectDisabled}
+              onClick={() => onDelete(profile)}
+              aria-label={t('profile.deleteProfileAria', { name: profile.name })}
+            >
+              <DeleteIcon />
+              {t('profile.delete')}
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="mt-3 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_2.25rem_2.25rem] items-stretch gap-2">
+          <Button
+            variant="primary"
+            className="h-8 min-w-0 px-2 py-1 text-[11px]"
+            disabled={connectDisabled || isConnecting}
+            onClick={() => onConnect(profile)}
+            aria-label={t('profile.connectTerminalAria', { name: profile.name })}
+            aria-busy={isConnecting || undefined}
+          >
+            {t('profile.terminal')}
+          </Button>
+          <Button
+            variant="success"
+            className="h-8 min-w-0 px-2 py-1 text-[11px] font-semibold"
+            disabled={connectDisabled}
+            onClick={() => onSftpConnect(profile)}
+            aria-label={t('profile.connectSftpAria', { name: profile.name })}
+          >
+            {t('profile.sftp')}
+          </Button>
+          <Button
+            variant="secondary"
+            className="h-8 w-9 shrink-0 p-0"
+            disabled={connectDisabled}
+            onClick={() => onEdit(profile)}
+            aria-label={t('profile.editProfileAria', { name: profile.name })}
+            title={t('profile.edit')}
+          >
+            <EditIcon />
+          </Button>
+          <Button
+            variant="danger"
+            className="h-8 w-9 shrink-0 p-0"
+            disabled={connectDisabled}
+            onClick={() => onDelete(profile)}
+            aria-label={t('profile.deleteProfileAria', { name: profile.name })}
+            title={t('profile.delete')}
+          >
+            <DeleteIcon />
+          </Button>
+        </div>
+      )}
     </div>
   )
 }

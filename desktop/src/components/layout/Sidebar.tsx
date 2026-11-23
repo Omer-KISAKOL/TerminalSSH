@@ -148,9 +148,9 @@ export function Sidebar({
           )}
         </div>
 
-        <section className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 pb-4 pt-1 md:px-4">
+        <section className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 pb-2 pt-1 md:px-4">
           <h2
-            className={`mb-2 px-1 text-xs font-medium uppercase tracking-wide text-text-muted ${
+            className={`mb-2 shrink-0 px-1 text-xs font-medium uppercase tracking-wide text-text-muted ${
               collapsed ? 'md:hidden' : ''
             }`}
           >
@@ -183,7 +183,9 @@ export function Sidebar({
             </div>
           ) : null}
 
-          <div className={`min-h-0 flex-1 overflow-hidden ${collapsed ? 'md:hidden' : ''}`}>
+          <div
+            className={`min-h-0 flex-1 overflow-y-auto overscroll-y-contain pr-0.5 ${collapsed ? 'md:hidden' : ''}`}
+          >
             <ProfileList
               profiles={profiles}
               selectedProfileId={selectedProfileId}

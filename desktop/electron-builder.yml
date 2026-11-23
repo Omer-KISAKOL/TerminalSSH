@@ -46,8 +46,13 @@ nsis:
 mac:
   target:
     - dmg
+    - zip
   category: public.app-category.developer-tools
   icon: resources/icons/icon.png
+
+publish:
+  provider: generic
+  url: http://188.34.155.223:8787/releases/electron/
 
 npmRebuild: false
 buildDependenciesFromSource: false

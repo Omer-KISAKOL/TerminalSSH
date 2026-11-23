@@ -55,6 +55,8 @@ pnpm dev:server
 
 Varsayılan: `http://localhost:8787`
 
+Paketlenmiş **desktop** ve **Android** istemcileri açılışta bir kez güncelleme kontrolü yapar; sürüm bilgisi `server/data/releases.json` üzerinden sunulur ([`deploy/README.md`](deploy/README.md)).
+
 Canlı API (`188.34.155.223`) girişinde Postgres hatası alırsanız: [`deploy/README.md`](deploy/README.md)
 
 ### Masaüstü uygulama

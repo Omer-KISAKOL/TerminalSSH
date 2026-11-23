@@ -4,6 +4,10 @@ export const IPC_CHANNELS = {
     openSftpTab: 'app:open-sftp-tab',
     focusSftpTab: 'app:focus-sftp-tab',
     syncLocale: 'app:sync-locale',
+    checkForUpdate: 'app:check-for-update',
+    openUpdateDownload: 'app:open-update-download',
+    quitAndInstall: 'app:quit-and-install',
+    updateStatus: 'app:update-status',
   },
   ssh: {
     connect: 'ssh:connect',

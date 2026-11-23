@@ -22,6 +22,7 @@ import type {
   SftpConnectResponse,
   SftpStatusEvent,
 } from '@shared/contracts/sftp'
+import type { ReleaseCheckResponse } from '@shared/contracts/release'
 import type {
   ConnectRequest,
   ConnectResponse,
@@ -32,6 +33,10 @@ import type {
 export interface DesktopApi {
   app: {
     getVersion(): Promise<string>
+    checkForUpdate(): Promise<ReleaseCheckResponse>
+    openUpdateDownload(downloadUrl: string): Promise<boolean>
+    quitAndInstall(): Promise<boolean>
+    onUpdateStatus(callback: (status: ReleaseCheckResponse) => void): () => void
     syncLocale(locale: 'tr' | 'en'): Promise<boolean>
     onOpenSftpTab(callback: () => void): () => void
     onFocusSftpTab(callback: () => void): () => void

@@ -23,14 +23,14 @@ type ProfileListProps = {
 
 function profileListLayoutClass(columns: ProfileListColumns): string {
   if (columns === 4) {
-    return 'grid grid-cols-2 gap-4 overflow-y-auto md:grid-cols-4 md:gap-5'
+    return 'grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-5'
   }
 
   if (columns === 2) {
-    return 'grid grid-cols-2 gap-4 overflow-y-auto'
+    return 'grid grid-cols-2 gap-4'
   }
 
-  return 'space-y-4 overflow-y-auto'
+  return 'space-y-4 pb-1'
 }
 
 export function ProfileList({

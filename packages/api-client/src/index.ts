@@ -11,6 +11,7 @@ import type {
   SecuritySetupAuthenticatedInput,
   SecuritySetupWithTokenInput,
   SyncCloudProfileInput,
+  ReleaseCheckResponse,
 } from './types.js'
 
 export type {
@@ -27,6 +28,7 @@ export type {
   SecuritySetupAuthenticatedInput,
   SecuritySetupWithTokenInput,
   SyncCloudProfileInput,
+  ReleaseCheckResponse,
 } from './types.js'
 export { ApiClientError } from './types.js'
 
@@ -254,5 +256,14 @@ export class TerminalSshApiClient {
     return this.request<{ ok: boolean }>(`/snippets/${snippetId}`, {
       method: 'DELETE',
     })
+  }
+
+  checkForUpdate(platform: string, currentVersion: string) {
+    const query = new URLSearchParams({
+      platform,
+      current: currentVersion,
+    })
+
+    return this.request<ReleaseCheckResponse>(`/releases/check?${query.toString()}`)
   }
 }
