@@ -31,14 +31,16 @@ ssh -T git@github.com
 
 Set-Location $RepoRoot
 Write-Host "`n=== Uzak depo ile senkron ===" -ForegroundColor Cyan
+git lfs install 2>$null | Out-Null
 git fetch origin
 $status = git status -sb
 Write-Host $status
 
 if ($status -match 'behind') {
   git pull --rebase origin main
+  git lfs pull origin main
 }
 
-Write-Host "`n=== Push ===" -ForegroundColor Cyan
+Write-Host "`n=== Push (LFS dahil) ===" -ForegroundColor Cyan
 git push origin main
 Write-Host 'Tamam.' -ForegroundColor Green
