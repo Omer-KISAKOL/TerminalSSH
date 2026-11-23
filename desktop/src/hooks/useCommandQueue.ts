@@ -48,6 +48,8 @@ export function useCommandQueue(
     begin: queue.begin,
     cancel: queue.cancel,
     dropPending: queue.dropPending,
+    getEditorText: queue.getEditorText,
+    applyEditorText: queue.applyEditorText,
     setWriteLocal(writeLocal: (data: string) => void) {
       writeLocalRef.current = writeLocal
     },

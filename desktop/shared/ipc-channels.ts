@@ -8,6 +8,11 @@ export const IPC_CHANNELS = {
     openUpdateDownload: 'app:open-update-download',
     quitAndInstall: 'app:quit-and-install',
     updateStatus: 'app:update-status',
+    windowMinimize: 'app:window-minimize',
+    windowToggleMaximize: 'app:window-toggle-maximize',
+    windowClose: 'app:window-close',
+    windowIsMaximized: 'app:window-is-maximized',
+    windowMaximizeChanged: 'app:window-maximize-changed',
   },
   ssh: {
     connect: 'ssh:connect',

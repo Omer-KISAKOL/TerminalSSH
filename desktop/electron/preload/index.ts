@@ -101,6 +101,20 @@ const desktopApi: DesktopApi = {
         ipcRenderer.removeListener(IPC_CHANNELS.app.focusSftpTab, listener)
       }
     },
+    windowMinimize: () => ipcRenderer.invoke(IPC_CHANNELS.app.windowMinimize),
+    windowToggleMaximize: () => ipcRenderer.invoke(IPC_CHANNELS.app.windowToggleMaximize),
+    windowClose: () => ipcRenderer.invoke(IPC_CHANNELS.app.windowClose),
+    windowIsMaximized: () => ipcRenderer.invoke(IPC_CHANNELS.app.windowIsMaximized),
+    onWindowMaximizeChanged: (callback) => {
+      const listener = (_event: Electron.IpcRendererEvent, maximized: unknown) => {
+        callback(Boolean(maximized))
+      }
+
+      ipcRenderer.on(IPC_CHANNELS.app.windowMaximizeChanged, listener)
+      return () => {
+        ipcRenderer.removeListener(IPC_CHANNELS.app.windowMaximizeChanged, listener)
+      }
+    },
   },
   ssh: {
     connect: (input) => ipcRenderer.invoke(IPC_CHANNELS.ssh.connect, input),

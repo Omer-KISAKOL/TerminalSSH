@@ -83,7 +83,9 @@ export function Sidebar({
         aria-label={t('nav.openSidebar')}
         aria-expanded={!collapsed}
       >
-        <header className={`shrink-0 border-b border-border ${collapsed ? 'px-2 py-3' : 'px-5 py-4'}`}>
+        <header
+          className={`titlebar-drag shrink-0 border-b border-border ${collapsed ? 'px-2 py-3' : 'px-5 py-4'}`}
+        >
           <div className={`flex items-center ${collapsed ? 'flex-col gap-2' : 'gap-3'}`}>
             <img
               src={appIconUrl}
@@ -101,7 +103,7 @@ export function Sidebar({
             ) : null}
             <button
               type="button"
-              className={`shrink-0 rounded-lg border border-border bg-surface px-2 py-1 text-sm text-text-muted transition hover:bg-surface-muted hover:text-text ${
+              className={`titlebar-no-drag shrink-0 rounded-lg border border-border bg-surface px-2 py-1 text-sm text-text-muted transition hover:bg-surface-muted hover:text-text ${
                 collapsed ? 'w-full' : ''
               }`}
               aria-label={collapsed ? t('sidebar.expand') : t('sidebar.collapse')}

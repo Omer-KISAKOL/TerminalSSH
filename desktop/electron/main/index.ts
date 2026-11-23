@@ -3,6 +3,8 @@ import { fileURLToPath } from 'node:url'
 
 import { app, BrowserWindow, nativeImage } from 'electron'
 
+import { IPC_CHANNELS } from '../../shared/ipc-channels'
+
 import { registerAuthHandlers } from './ipc/auth.handlers'
 import { registerAppHandlers } from './ipc/app.handlers'
 import { registerDialogHandlers } from './ipc/dialog.handlers'
@@ -51,6 +53,7 @@ function createMainWindow(): BrowserWindow {
     minHeight: 640,
     show: false,
     title: 'TerminalSSH',
+    frame: false,
     backgroundColor: '#0f1117',
     icon: windowIcon.isEmpty() ? undefined : windowIcon,
     webPreferences: {
@@ -60,6 +63,13 @@ function createMainWindow(): BrowserWindow {
       sandbox: true,
     },
   })
+
+  const sendMaximizeState = () => {
+    mainWindow.webContents.send(IPC_CHANNELS.app.windowMaximizeChanged, mainWindow.isMaximized())
+  }
+
+  mainWindow.on('maximize', sendMaximizeState)
+  mainWindow.on('unmaximize', sendMaximizeState)
 
   mainWindow.once('ready-to-show', () => {
     mainWindow.show()

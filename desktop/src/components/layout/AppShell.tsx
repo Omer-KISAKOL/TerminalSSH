@@ -34,6 +34,7 @@ import { SettingsDialog } from '@/components/settings/SettingsDialog'
 
 import { MainModeBar } from './MainModeBar'
 import { Sidebar } from './Sidebar'
+import { WindowControls } from './WindowControls'
 
 import type { TerminalApi } from '@/components/terminal/TerminalView'
 
@@ -504,7 +505,12 @@ export function AppShell({ appVersion }: AppShellProps) {
 
   if (showAuthGate) {
     return (
-      <div className="flex h-full items-center justify-center bg-black px-4 py-8 sm:px-6">
+      <div className="flex h-full flex-col bg-black">
+        <div className="titlebar-drag flex h-11 shrink-0 items-stretch px-2 md:px-3">
+          <div className="min-w-0 flex-1" aria-hidden="true" />
+          <WindowControls />
+        </div>
+        <div className="flex flex-1 items-center justify-center px-4 py-8 sm:px-6">
         <AuthScreen>
           {auth.requiresSecuritySetup && auth.user ? (
             <SecuritySetupForm
@@ -562,6 +568,7 @@ export function AppShell({ appVersion }: AppShellProps) {
             />
           )}
         </AuthScreen>
+        </div>
       </div>
     )
   }

@@ -118,13 +118,36 @@ input[type='number'] {
   height: 0;
 }
 
+.titlebar-drag {
+  -webkit-app-region: drag;
+  app-region: drag;
+}
+
+.titlebar-no-drag {
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
+
+.window-chrome-btn {
+  color: rgb(203 213 225 / 0.82);
+  outline: none;
+  box-shadow: none;
+}
+
+.window-chrome-btn:hover {
+  color: rgb(248 250 252);
+}
+
+.window-chrome-btn:focus-visible {
+  color: rgb(248 250 252);
+}
+
 .terminal-host {
   background-color: var(--color-terminal-background);
 }
 
 .terminal-surface {
   box-sizing: border-box;
-  padding: 0;
 }
 
 .terminal-host .xterm {

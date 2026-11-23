@@ -62,14 +62,14 @@ export function SettingsDialog({ open, onClose, onProfilesChanged }: SettingsDia
       onClick={onClose}
     >
       <div
-        className="flex max-h-[85vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-border bg-surface-raised shadow-2xl"
+        className="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-xl border border-border bg-surface-raised shadow-2xl"
         role="dialog"
         aria-modal="true"
         aria-labelledby="settings-dialog-title"
         onClick={(event) => event.stopPropagation()}
       >
-        <header className="flex shrink-0 items-center justify-between border-b border-border px-5 py-4">
-          <h2 id="settings-dialog-title" className="text-lg font-semibold text-text">
+        <header className="flex shrink-0 items-center justify-between border-b border-border px-6 py-5">
+          <h2 id="settings-dialog-title" className="text-xl font-semibold text-text">
             {t('settings.title')}
           </h2>
           <Button type="button" variant="ghost" onClick={onClose}>
@@ -77,9 +77,9 @@ export function SettingsDialog({ open, onClose, onProfilesChanged }: SettingsDia
           </Button>
         </header>
 
-        <div className="flex min-h-[min(32rem,70vh)] flex-1">
+        <div className="flex min-h-[min(40rem,78vh)] flex-1">
           <nav
-            className="flex w-44 shrink-0 flex-col gap-0.5 border-r border-border bg-surface/50 p-2 sm:w-52"
+            className="flex w-48 shrink-0 flex-col gap-1 border-r border-border bg-surface/50 p-3 sm:w-56"
             aria-label={t('settings.menuNav')}
           >
             {menuItems.map((item) => {
@@ -89,7 +89,7 @@ export function SettingsDialog({ open, onClose, onProfilesChanged }: SettingsDia
                 <button
                   key={item.id}
                   type="button"
-                  className={`rounded-lg px-3 py-2.5 text-left text-sm font-medium transition ${
+                  className={`rounded-lg px-3 py-3 text-left text-base font-medium transition ${
                     active
                       ? 'border border-border bg-surface-muted text-text shadow-sm'
                       : 'border border-transparent text-text-muted hover:bg-surface-muted/70 hover:text-text'
@@ -104,20 +104,24 @@ export function SettingsDialog({ open, onClose, onProfilesChanged }: SettingsDia
           </nav>
 
           <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-            <div className="shrink-0 border-b border-border px-5 py-4">
-              <h3 className="text-base font-semibold text-text">{activeMeta.title}</h3>
+            <div className="shrink-0 border-b border-border px-6 py-4">
+              <h3 className="text-lg font-semibold text-text">{activeMeta.title}</h3>
               {activeMeta.help ? (
                 <p className="mt-1 text-sm text-text-muted">{activeMeta.help}</p>
               ) : null}
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+            <div
+              className={`min-h-0 flex-1 px-6 py-5 ${
+                section === 'snippets' ? 'flex flex-col overflow-hidden' : 'overflow-y-auto'
+              }`}
+            >
               {section === 'language' ? <LanguageSection panelMode /> : null}
               {section === 'profiles' ? (
                 <ProfileExportSection panelMode onChanged={onProfilesChanged} />
               ) : null}
               {section === 'snippets' ? (
-                <div className="overflow-hidden rounded-lg border border-border">
+                <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border">
                   <SnippetPanel mode="settings" embedded />
                 </div>
               ) : null}

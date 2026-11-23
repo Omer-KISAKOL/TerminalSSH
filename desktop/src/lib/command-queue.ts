@@ -227,23 +227,10 @@ function isSubmitKey(data: string): boolean {
   return true
 }
 
-function visibleCommand(line: string): string {
-  let result = ''
-
-  for (const char of line) {
-    const code = char.charCodeAt(0)
-
-    if (code === 9 || code >= 32) {
-      result += char
-    }
-  }
-
-  return result
-}
-
 export class CommandQueue {
   private phase: CommandQueuePhase = 'idle'
   private lines: string[] = []
+  private previewRaw = ''
   private activeIndex = 0
   private output = ''
   private sawNewline = false
@@ -298,15 +285,20 @@ export class CommandQueue {
       this.lines = pasted
       this.activeIndex = 0
 
-      if (options?.autoStart) {
+      if (options?.autoStart === false) {
+        this.send(data)
+        return
+      }
+
+      if (options?.autoStart === true) {
         this.phase = 'running'
         this.emit()
         this.dispatchCurrent()
         return
       }
 
+      this.previewRaw = data
       this.phase = 'preview'
-      this.renderPreview()
       this.emit()
       return
     }
@@ -348,9 +340,45 @@ export class CommandQueue {
     this.armIdle()
   }
 
+  getEditorText = (): string => {
+    if (this.previewRaw.trim().length > 0) {
+      return this.previewRaw.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+    }
+
+    return this.lines.join('\n')
+  }
+
+  applyEditorText = (text: string): boolean => {
+    if (this.phase !== 'preview') {
+      return false
+    }
+
+    const normalized = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+    const parsed = splitPastedCommands(normalized.endsWith('\n') ? normalized : `${normalized}\n`)
+
+    if (!parsed || parsed.length === 0) {
+      this.cancel()
+      return false
+    }
+
+    this.previewRaw = normalized
+    this.lines = parsed
+    this.emit()
+    return true
+  }
+
   begin = (): void => {
     if (this.phase !== 'preview' || this.lines.length === 0) {
       return
+    }
+
+    if (this.previewRaw.trim()) {
+      const parsed = splitPastedCommands(
+        this.previewRaw.endsWith('\n') ? this.previewRaw : `${this.previewRaw}\n`,
+      )
+      if (parsed) {
+        this.lines = parsed
+      }
     }
 
     this.clearPreview()
@@ -364,6 +392,7 @@ export class CommandQueue {
     this.clearPreview()
     this.phase = 'idle'
     this.lines = []
+    this.previewRaw = ''
     this.activeIndex = 0
     this.output = ''
     this.sawNewline = false
@@ -433,23 +462,11 @@ export class CommandQueue {
     this.clearPreview()
     this.phase = 'idle'
     this.lines = []
+    this.previewRaw = ''
     this.activeIndex = 0
     this.output = ''
     this.sawNewline = false
     this.emit()
-  }
-
-  private renderPreview(): void {
-    if (this.lines.reduce((count, unit) => count + unit.split('\n').length, 0) > 40) {
-      return
-    }
-
-    const body = this.lines
-      .flatMap((unit) => unit.split('\n'))
-      .map(visibleCommand)
-      .join('\r\n')
-    this.writeLocal(`\u001b7\r\n\u001b[90m${body}\u001b[0m\u001b8`)
-    this.previewDrawn = true
   }
 
   private clearPreview(): void {

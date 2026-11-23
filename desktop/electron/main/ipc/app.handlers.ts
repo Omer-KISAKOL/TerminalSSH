@@ -1,4 +1,4 @@
-import { app, ipcMain, shell } from 'electron'
+import { app, BrowserWindow, ipcMain, shell } from 'electron'
 
 import type { ReleaseCheckResponse } from '@shared/contracts/release'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
@@ -65,5 +65,33 @@ export function registerAppHandlers(): void {
     }
 
     return true
+  })
+
+  ipcMain.handle(IPC_CHANNELS.app.windowMinimize, (event) => {
+    BrowserWindow.fromWebContents(event.sender)?.minimize()
+  })
+
+  ipcMain.handle(IPC_CHANNELS.app.windowToggleMaximize, (event) => {
+    const window = BrowserWindow.fromWebContents(event.sender)
+
+    if (!window) {
+      return false
+    }
+
+    if (window.isMaximized()) {
+      window.unmaximize()
+      return false
+    }
+
+    window.maximize()
+    return true
+  })
+
+  ipcMain.handle(IPC_CHANNELS.app.windowClose, (event) => {
+    BrowserWindow.fromWebContents(event.sender)?.close()
+  })
+
+  ipcMain.handle(IPC_CHANNELS.app.windowIsMaximized, (event) => {
+    return BrowserWindow.fromWebContents(event.sender)?.isMaximized() ?? false
   })
 }

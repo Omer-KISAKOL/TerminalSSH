@@ -12,6 +12,13 @@ export const messagesTr = {
     expand: '▾',
     collapse: '▴',
   },
+  window: {
+    minimize: 'Küçült',
+    maximize: 'Büyüt',
+    restore: 'Eski boyut',
+    close: 'Kapat',
+    controls: 'Pencere düğmeleri',
+  },
   nav: {
     servers: 'Sunucular',
     sftp: 'SFTP',
@@ -214,6 +221,8 @@ export const messagesTr = {
   commandQueue: {
     runningHint: 'Komut çalışıyor. Bitince sıradaki gönderilecek.',
     readyHint: 'Komutlar hazır. Enter ile sırayla çalışır.',
+    editTitle: 'Çoklu komut',
+    editHint: 'Düzenleyip çalıştırın',
     cancel: 'İptal',
     run: 'Çalıştır',
     dropQueue: 'Sırayı iptal et',
@@ -222,6 +231,7 @@ export const messagesTr = {
     panelTitle: "Snippet'ler",
     collapse: 'Snippet panelini daralt',
     expand: 'Snippet panelini genişlet',
+    collapsedSnippetAria: '{name} — paneli genişletmek için tıklayın',
     new: 'Yeni Snippet',
     searchPlaceholder: 'Snippet ara…',
     empty: 'Henüz snippet yok.',
@@ -330,6 +340,13 @@ export const messagesEn = {
     version: 'App version',
     expand: '▾',
     collapse: '▴',
+  },
+  window: {
+    minimize: 'Minimize',
+    maximize: 'Maximize',
+    restore: 'Restore',
+    close: 'Close',
+    controls: 'Window controls',
   },
   nav: {
     servers: 'Servers',
@@ -531,6 +548,8 @@ export const messagesEn = {
   commandQueue: {
     runningHint: 'Running a command. The next one will run when it finishes.',
     readyHint: 'Commands are queued. Press Enter to run them in order.',
+    editTitle: 'Multiple commands',
+    editHint: 'Edit, then run',
     cancel: 'Cancel',
     run: 'Run',
     dropQueue: 'Cancel queue',
@@ -539,6 +558,7 @@ export const messagesEn = {
     panelTitle: 'Snippets',
     collapse: 'Collapse snippet panel',
     expand: 'Expand snippet panel',
+    collapsedSnippetAria: '{name} — click to expand the panel',
     new: 'New snippet',
     searchPlaceholder: 'Search snippets…',
     empty: 'No snippets yet.',

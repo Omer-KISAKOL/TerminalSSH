@@ -40,6 +40,11 @@ export interface DesktopApi {
     syncLocale(locale: 'tr' | 'en'): Promise<boolean>
     onOpenSftpTab(callback: () => void): () => void
     onFocusSftpTab(callback: () => void): () => void
+    windowMinimize(): Promise<void>
+    windowToggleMaximize(): Promise<boolean>
+    windowClose(): Promise<void>
+    windowIsMaximized(): Promise<boolean>
+    onWindowMaximizeChanged(callback: (maximized: boolean) => void): () => void
   }
   ssh: {
     connect(input: ConnectRequest): Promise<ConnectResponse>

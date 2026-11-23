@@ -30,7 +30,7 @@ export function TerminalToolbar({
   const canDisconnect = status === 'connected' || status === 'connecting' || status === 'error'
 
   return (
-    <header className="flex h-11 shrink-0 items-center justify-between gap-3 border-b border-border bg-surface-raised px-3 md:px-4">
+    <header className="flex h-11 shrink-0 items-center justify-between gap-3 border-b border-border bg-surface-raised px-4 sm:px-5 md:px-6">
       <div className="flex min-w-0 flex-1 items-center gap-2 md:gap-3">
         {onOpenSidebar ? (
           <Button

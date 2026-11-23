@@ -15,6 +15,9 @@ type SnippetPanelProps = {
   onApply?: (content: string, appendNewline: boolean) => void
 }
 
+const WIDTH_EXPANDED = 'w-80 lg:w-96'
+const WIDTH_COLLAPSED = 'w-11'
+
 function buildReorderedIds(ids: string[], draggedId: string, targetId: string): string[] | null {
   const from = ids.indexOf(draggedId)
   const to = ids.indexOf(targetId)
@@ -40,12 +43,15 @@ export function SnippetPanel({ mode, embedded = false, onApply }: SnippetPanelPr
     () => mode === 'terminal' && !embedded && loadSnippetPanelCollapsed(),
   )
 
-  const setCollapsedPersisted = useCallback((next: boolean) => {
-    setCollapsed(next)
-    if (mode === 'terminal' && !embedded) {
-      saveSnippetPanelCollapsed(next)
-    }
-  }, [embedded, mode])
+  const setCollapsedPersisted = useCallback(
+    (next: boolean) => {
+      setCollapsed(next)
+      if (mode === 'terminal' && !embedded) {
+        saveSnippetPanelCollapsed(next)
+      }
+    },
+    [embedded, mode],
+  )
 
   const filteredSnippets = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -105,205 +111,220 @@ export function SnippetPanel({ mode, embedded = false, onApply }: SnippetPanelPr
 
   const isTerminalDocked = mode === 'terminal' && !embedded
 
-  if (isTerminalDocked && collapsed) {
-    return (
-      <aside className="flex w-11 shrink-0 flex-col items-center border-l border-border bg-surface-raised py-2">
-        <button
-          type="button"
-          className="rounded-lg border border-border px-1.5 py-2 text-xs font-medium text-text-muted transition hover:bg-surface-muted hover:text-text"
-          aria-label={t('snippets.expand')}
-          title={t('snippets.panelTitle')}
-          onClick={() => setCollapsedPersisted(false)}
-        >
-          {'{ }'}
-        </button>
-        <button
-          type="button"
-          className="mt-2 rounded-lg border border-border px-2 py-1 text-sm text-text-muted hover:bg-surface-muted hover:text-text"
-          aria-label={t('snippets.expand')}
-          onClick={() => setCollapsedPersisted(false)}
-        >
-          «
-        </button>
-      </aside>
-    )
-  }
-
   const rootClass = embedded
-    ? 'flex max-h-96 flex-col bg-surface-raised'
-    : mode === 'terminal'
-      ? 'flex min-h-0 w-80 shrink-0 flex-col border-l border-border bg-surface-raised lg:w-96'
+    ? 'flex min-h-0 w-full flex-1 flex-col bg-surface-raised'
+    : isTerminalDocked
+      ? `flex h-full min-h-0 shrink-0 flex-col overflow-hidden border-l border-border bg-surface-raised transition-[width] duration-300 ease-in-out ${
+          collapsed ? WIDTH_COLLAPSED : WIDTH_EXPANDED
+        }`
       : 'flex w-96 shrink-0 flex-col border-l border-border bg-surface-raised'
 
   return (
-    <aside className={rootClass}>
-      <div
-        className={
-          isTerminalDocked ? 'shrink-0 border-b border-border px-3 py-2.5' : 'border-b border-border p-3'
-        }
-      >
-        <div className="flex items-center gap-2">
-          {isTerminalDocked ? (
-            <button
-              type="button"
-              className="shrink-0 rounded-lg border border-border px-2 py-1.5 text-sm text-text-muted hover:bg-surface-muted hover:text-text"
-              aria-label={t('snippets.collapse')}
-              onClick={() => setCollapsedPersisted(true)}
-            >
-              »
-            </button>
-          ) : null}
-          <Button
+    <aside className={rootClass} aria-expanded={embedded || !collapsed}>
+      {isTerminalDocked && collapsed ? (
+        <div className="flex flex-col items-center gap-2 py-2">
+          <button
             type="button"
-            variant="secondary"
-            className="h-8 min-w-0 flex-1 justify-start text-xs font-medium"
+            className="rounded-lg border border-border px-1.5 py-2 text-xs font-medium text-text-muted transition hover:bg-surface-muted hover:text-text"
+            aria-label={t('snippets.new')}
+            title={t('snippets.panelTitle')}
             onClick={openCreate}
           >
-            {'{ }'} {t('snippets.new')}
-          </Button>
+            {'{ }'}
+          </button>
+          <button
+            type="button"
+            className="rounded-lg border border-border px-2 py-1 text-sm text-text-muted transition hover:bg-surface-muted hover:text-text"
+            aria-label={t('snippets.expand')}
+            onClick={() => setCollapsedPersisted(false)}
+          >
+            «
+          </button>
         </div>
-        <input
-          className="field-input mt-2 text-sm"
-          placeholder={t('snippets.searchPlaceholder')}
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-        />
-        {query.trim().length > 0 && snippets.length > 1 ? (
-          <p className="mt-1.5 text-[11px] text-text-muted">{t('snippets.reorderWhileSearch')}</p>
-        ) : null}
-      </div>
+      ) : (
+        <>
+          <div
+            className={
+              isTerminalDocked
+                ? 'shrink-0 border-b border-border px-3 py-2.5'
+                : embedded
+                  ? 'shrink-0 border-b border-border p-4'
+                  : 'border-b border-border p-3'
+            }
+          >
+            <div className="flex items-center gap-2">
+              {isTerminalDocked ? (
+                <button
+                  type="button"
+                  className="shrink-0 rounded-lg border border-border px-2 py-1.5 text-sm text-text-muted transition hover:bg-surface-muted hover:text-text"
+                  aria-label={t('snippets.collapse')}
+                  onClick={() => setCollapsedPersisted(true)}
+                >
+                  »
+                </button>
+              ) : null}
+              <Button
+                type="button"
+                variant="secondary"
+                className={`min-w-0 flex-1 justify-start font-medium ${
+                  embedded ? 'h-10 text-sm' : 'h-8 text-xs'
+                }`}
+                onClick={openCreate}
+              >
+                {'{ }'} {t('snippets.new')}
+              </Button>
+            </div>
+            <input
+              className="field-input mt-2 text-sm"
+              placeholder={t('snippets.searchPlaceholder')}
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+            />
+            {query.trim().length > 0 && snippets.length > 1 ? (
+              <p className="mt-1.5 text-[11px] text-text-muted">{t('snippets.reorderWhileSearch')}</p>
+            ) : null}
+          </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto p-3">
-        {isLoading ? <p className="text-sm text-text-muted">{t('common.loading')}</p> : null}
-        {error ? <p className="text-sm text-status-error">{error}</p> : null}
+          <div className={`min-h-0 flex-1 overflow-y-auto ${embedded ? 'p-4' : 'p-3'}`}>
+          {isLoading ? <p className="text-sm text-text-muted">{t('common.loading')}</p> : null}
+          {error ? <p className="text-sm text-status-error">{error}</p> : null}
 
-        {!isLoading && filteredSnippets.length === 0 ? (
-          <p className="text-sm text-text-muted">{t('snippets.empty')}</p>
-        ) : null}
+          {!isLoading && filteredSnippets.length === 0 ? (
+            <p className="text-sm text-text-muted">{t('snippets.empty')}</p>
+          ) : null}
 
-        <div className="space-y-3">
-          {filteredSnippets.map((snippet) => (
-            <article
-              key={snippet.id}
-              className={`rounded-lg border bg-surface p-3 transition ${
-                dropTargetId === snippet.id && draggingId !== snippet.id
-                  ? 'border-status-connected ring-1 ring-status-connected/40'
-                  : 'border-border'
-              } ${draggingId === snippet.id ? 'opacity-55' : ''}`}
-              onDragOver={(event) => {
-                if (!canReorder || !draggingId || draggingId === snippet.id) {
-                  return
-                }
-                event.preventDefault()
-                event.dataTransfer.dropEffect = 'move'
-                setDropTargetId(snippet.id)
-              }}
-              onDragLeave={(event) => {
-                if (event.currentTarget.contains(event.relatedTarget as Node)) {
-                  return
-                }
-                if (dropTargetId === snippet.id) {
-                  setDropTargetId(null)
-                }
-              }}
-              onDrop={(event) => {
-                event.preventDefault()
-                const draggedId = event.dataTransfer.getData('text/plain') || draggingId
-                handleDropOnSnippet(snippet.id, draggedId)
-                resetDragState()
-              }}
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex min-w-0 items-start gap-2">
-                  {canReorder ? (
-                    <div
-                      draggable
-                      onDragStart={(event) => {
-                        event.dataTransfer.setData('text/plain', snippet.id)
-                        event.dataTransfer.effectAllowed = 'move'
-                        setDraggingId(snippet.id)
-                      }}
-                      onDragEnd={resetDragState}
-                      className="mt-0.5 shrink-0 cursor-grab rounded p-1 text-text-muted active:cursor-grabbing hover:bg-surface-muted hover:text-text"
-                      aria-label={t('snippets.dragHandle')}
-                      title={t('snippets.dragHandle')}
-                    >
-                      <GripIcon />
+          <div className="space-y-3">
+            {filteredSnippets.map((snippet) => (
+              <article
+                key={snippet.id}
+                className={`rounded-lg border bg-surface transition ${
+                  embedded ? 'p-4' : 'p-3'
+                } ${
+                  dropTargetId === snippet.id && draggingId !== snippet.id
+                    ? 'border-status-connected ring-1 ring-status-connected/40'
+                    : 'border-border'
+                } ${draggingId === snippet.id ? 'opacity-55' : ''}`}
+                onDragOver={(event) => {
+                  if (!canReorder || !draggingId || draggingId === snippet.id) {
+                    return
+                  }
+                  event.preventDefault()
+                  event.dataTransfer.dropEffect = 'move'
+                  setDropTargetId(snippet.id)
+                }}
+                onDragLeave={(event) => {
+                  if (event.currentTarget.contains(event.relatedTarget as Node)) {
+                    return
+                  }
+                  if (dropTargetId === snippet.id) {
+                    setDropTargetId(null)
+                  }
+                }}
+                onDrop={(event) => {
+                  event.preventDefault()
+                  const draggedId = event.dataTransfer.getData('text/plain') || draggingId
+                  handleDropOnSnippet(snippet.id, draggedId)
+                  resetDragState()
+                }}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex min-w-0 items-start gap-2">
+                    {canReorder ? (
+                      <div
+                        draggable
+                        onDragStart={(event) => {
+                          event.dataTransfer.setData('text/plain', snippet.id)
+                          event.dataTransfer.effectAllowed = 'move'
+                          setDraggingId(snippet.id)
+                        }}
+                        onDragEnd={resetDragState}
+                        className="mt-0.5 shrink-0 cursor-grab rounded p-1 text-text-muted active:cursor-grabbing hover:bg-surface-muted hover:text-text"
+                        aria-label={t('snippets.dragHandle')}
+                        title={t('snippets.dragHandle')}
+                      >
+                        <GripIcon />
+                      </div>
+                    ) : null}
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-text-muted">{'{ }'}</span>
+                        <h4 className="truncate text-sm font-medium text-text">{snippet.name}</h4>
+                      </div>
+                    </div>
+                  </div>
+                  {mode === 'terminal' ? (
+                    <div className="flex shrink-0 gap-0.5">
+                      <button
+                        type="button"
+                        aria-label={t('snippets.edit')}
+                        title={t('snippets.edit')}
+                        className="rounded p-1 text-text-muted hover:bg-surface-muted hover:text-text"
+                        onClick={() => openEdit(snippet)}
+                      >
+                        <PencilIcon />
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={t('snippets.delete')}
+                        title={t('snippets.delete')}
+                        className="rounded p-1 text-text-muted hover:bg-status-error/10 hover:text-status-error"
+                        onClick={() => void handleDelete(snippet)}
+                      >
+                        <TrashIcon />
+                      </button>
                     </div>
                   ) : null}
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-text-muted">{'{ }'}</span>
-                      <h4 className="truncate text-sm font-medium text-text">{snippet.name}</h4>
-                    </div>
-                  </div>
                 </div>
+
+                <pre className="mt-2 overflow-hidden text-ellipsis whitespace-pre-wrap font-mono text-xs text-text-muted">
+                  {snippet.content}
+                </pre>
+
                 {mode === 'terminal' ? (
-                  <div className="flex shrink-0 gap-0.5">
-                    <button
+                  <div className="mt-3 flex gap-2">
+                    <Button
                       type="button"
-                      aria-label={t('snippets.edit')}
-                      title={t('snippets.edit')}
-                      className="rounded p-1 text-text-muted hover:bg-surface-muted hover:text-text"
+                      variant="primary"
+                      className="flex-1 px-2 py-1.5 text-xs"
+                      onClick={() => onApply?.(snippet.content, true)}
+                    >
+                      RUN
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      className="flex-1 px-2 py-1.5 text-xs"
+                      onClick={() => onApply?.(snippet.content, false)}
+                    >
+                      PASTE
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="mt-3 flex gap-2">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      className="px-2 py-1 text-xs"
                       onClick={() => openEdit(snippet)}
                     >
-                      <PencilIcon />
-                    </button>
-                    <button
+                      {t('snippets.edit')}
+                    </Button>
+                    <Button
                       type="button"
-                      aria-label={t('snippets.delete')}
-                      title={t('snippets.delete')}
-                      className="rounded p-1 text-text-muted hover:bg-status-error/10 hover:text-status-error"
+                      variant="danger"
+                      className="px-2 py-1 text-xs"
                       onClick={() => void handleDelete(snippet)}
                     >
-                      <TrashIcon />
-                    </button>
+                      {t('snippets.delete')}
+                    </Button>
                   </div>
-                ) : null}
-              </div>
-
-              <pre className="mt-2 overflow-hidden text-ellipsis whitespace-pre-wrap font-mono text-xs text-text-muted">
-                {snippet.content}
-              </pre>
-
-              {mode === 'terminal' ? (
-                <div className="mt-3 flex gap-2">
-                  <Button
-                    type="button"
-                    variant="primary"
-                    className="flex-1 px-2 py-1.5 text-xs"
-                    onClick={() => onApply?.(snippet.content, true)}
-                  >
-                    RUN
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    className="flex-1 px-2 py-1.5 text-xs"
-                    onClick={() => onApply?.(snippet.content, false)}
-                  >
-                    PASTE
-                  </Button>
-                </div>
-              ) : (
-                <div className="mt-3 flex gap-2">
-                  <Button type="button" variant="secondary" className="px-2 py-1 text-xs" onClick={() => openEdit(snippet)}>
-                    {t('snippets.edit')}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="danger"
-                    className="px-2 py-1 text-xs"
-                    onClick={() => void handleDelete(snippet)}
-                  >
-                    {t('snippets.delete')}
-                  </Button>
-                </div>
-              )}
-            </article>
-          ))}
-        </div>
-      </div>
+                )}
+              </article>
+            ))}
+          </div>
+          </div>
+        </>
+      )}
 
       <SnippetEditorDialog
         snippet={editingSnippet}

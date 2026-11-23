@@ -103,13 +103,14 @@ describe('CommandQueue tam ekran uygulama (nano/vim)', () => {
 })
 
 describe('CommandQueue', () => {
-  it('çok satırlı yapıştırmayı Enter ile başlatır ve komut bitmeden sıradakini göndermez', () => {
+  it('çok satırlı yapıştırmayı önizlemede tutar; begin ile çalışır', () => {
     const { queue, sent, flush } = createHarness()
 
     queue.handleInput('git pull\necho hi\n')
     expect(sent).toEqual([])
+    expect(queue.getSnapshot().phase).toBe('preview')
 
-    queue.handleInput('\r')
+    queue.begin()
     expect(sent).toEqual(['\u0015git pull\r'])
 
     queue.observeOutput("git pull\r\nUsername for 'https://github.com': ")
@@ -121,14 +122,23 @@ describe('CommandQueue', () => {
     expect(sent).toEqual(['\u0015git pull\r', '\u0015echo hi\r'])
   })
 
-  it('Esc ile bekleyen komutları iptal eder', () => {
+  it('önizlemede metin düzenlenebilir', () => {
     const { queue, sent } = createHarness()
 
     queue.handleInput('git pull\nls\n')
-    queue.handleInput('\u001b')
+    expect(queue.applyEditorText('git status\necho ok\n')).toBe(true)
+    queue.begin()
+    expect(sent).toEqual(['\u0015git status\r'])
+    expect(queue.getSnapshot().lines).toEqual(['git status', 'echo ok'])
+  })
 
+  it('PASTE modunda çok satırı tek seferde iletir', () => {
+    const { queue, sent } = createHarness()
+
+    queue.handleInput('line1\nline2\n', { autoStart: false })
+
+    expect(sent).toEqual(['line1\nline2\n'])
     expect(queue.getSnapshot().phase).toBe('idle')
-    expect(sent).toEqual([])
   })
 
   it('Ctrl+C kalan komutları düşürür', () => {

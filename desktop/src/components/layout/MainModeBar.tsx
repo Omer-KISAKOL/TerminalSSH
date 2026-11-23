@@ -3,6 +3,8 @@ import { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { useLocale } from '@/hooks/useLocale'
 
+import { WindowControls } from './WindowControls'
+
 type MainModeBarProps = {
   serversActive: boolean
   sftpActive: boolean
@@ -93,34 +95,51 @@ export function MainModeBar({
   }, [menuOpen])
 
   return (
-    <header className="flex shrink-0 items-center gap-2 border-b border-border bg-surface-raised px-2 py-2 md:px-3">
+    <header className="titlebar-drag flex h-11 shrink-0 items-stretch gap-2 border-b border-border bg-surface-raised px-2 md:px-3">
       <Button
         variant="ghost"
-        className="px-2 py-1.5 md:hidden"
+        className="titlebar-no-drag my-1 px-2 py-1.5 md:hidden"
         onClick={onOpenSidebar}
         aria-label={t('nav.openSidebar')}
       >
         ☰
       </Button>
 
-      <nav className="flex min-w-0 flex-wrap items-center gap-1.5" aria-label={t('nav.servers')}>
-        <button type="button" className={modePillClass(serversActive)} onClick={onSelectServers}>
+      <nav
+        className="titlebar-no-drag my-1 flex shrink-0 flex-wrap items-center gap-1.5"
+        aria-label={t('nav.servers')}
+      >
+        <button
+          type="button"
+          className={`titlebar-no-drag ${modePillClass(serversActive)}`}
+          onClick={onSelectServers}
+        >
           <ServersIcon />
           <span className="truncate">{t('nav.servers')}</span>
         </button>
-        <button type="button" className={modePillClass(sftpActive)} onClick={onSelectSftp}>
+        <button
+          type="button"
+          className={`titlebar-no-drag ${modePillClass(sftpActive)}`}
+          onClick={onSelectSftp}
+        >
           <FolderIcon />
           <span>{t('nav.sftp')}</span>
         </button>
-        <button type="button" className={modePillClass(settingsActive)} onClick={onSelectSettings}>
+        <button
+          type="button"
+          className={`titlebar-no-drag ${modePillClass(settingsActive)}`}
+          onClick={onSelectSettings}
+        >
           <SettingsIcon />
           <span>{t('sidebar.settings')}</span>
         </button>
 
-        <div ref={menuRef} className="relative shrink-0">
+        <div ref={menuRef} className="titlebar-no-drag relative shrink-0">
           <button
             type="button"
-            className={modePillClass(false) + ' min-w-[2.25rem] justify-center px-2.5 py-1.5 text-lg leading-none'}
+            className={
+              modePillClass(false) + ' min-w-[2.25rem] justify-center px-2.5 py-1.5 text-lg leading-none'
+            }
             aria-label={t('nav.addNew')}
             aria-expanded={menuOpen}
             aria-haspopup="menu"
@@ -171,6 +190,10 @@ export function MainModeBar({
           ) : null}
         </div>
       </nav>
+
+      <div className="titlebar-drag min-h-9 min-w-8 flex-1 self-stretch" aria-hidden="true" />
+
+      <WindowControls />
     </header>
   )
 }

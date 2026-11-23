@@ -7,7 +7,7 @@ import { useTerminal } from '@/hooks/useTerminal'
 
 import { useLocale } from '@/hooks/useLocale'
 
-import { CommandQueueBanner } from './CommandQueueBanner'
+import { CommandQueueEditor } from './CommandQueueEditor'
 import { TerminalContextMenu } from './TerminalContextMenu'
 
 export type TerminalApi = {
@@ -33,8 +33,16 @@ type ContextMenuState = {
 export function TerminalView({ isActive = true, onReady, onInput, onResize }: TerminalViewProps) {
   const { t } = useLocale()
   const fullScreenRef = useRef<() => boolean>(() => false)
-  const { snapshot, handleInput, observeOutput, begin, cancel, dropPending, setWriteLocal } =
-    useCommandQueue(onInput, () => fullScreenRef.current())
+  const {
+    snapshot,
+    handleInput,
+    observeOutput,
+    begin,
+    cancel,
+    setWriteLocal,
+    getEditorText,
+    applyEditorText,
+  } = useCommandQueue(onInput, () => fullScreenRef.current())
   const terminal = useTerminal({ onInput: handleInput, onResize, layoutActive: isActive })
   fullScreenRef.current = terminal.isFullScreen
   const { clear, containerRef, copySelection, focus, pasteFromClipboard, write, writeln } = terminal
@@ -75,24 +83,22 @@ export function TerminalView({ isActive = true, onReady, onInput, onResize }: Te
     <div className="terminal-host relative min-h-0 flex-1 overflow-hidden">
       <div
         ref={containerRef}
-        className="terminal-surface h-full min-h-0 w-full"
+        className="terminal-surface h-full min-h-0 w-full px-4 py-2.5 sm:px-5 md:px-6"
         onContextMenu={handleContextMenu}
         role="application"
         aria-label={t('terminal.ariaLabel')}
       />
 
-      <CommandQueueBanner
+      <CommandQueueEditor
         snapshot={snapshot}
+        getEditorText={getEditorText}
+        onApplyEditorText={applyEditorText}
         onBegin={() => {
           begin()
           focus()
         }}
         onCancel={() => {
           cancel()
-          focus()
-        }}
-        onDropPending={() => {
-          dropPending()
           focus()
         }}
       />
