@@ -76,13 +76,30 @@ pnpm test
 pnpm build
 ```
 
-### Windows paket (`pnpm dist:win`)
+### Yerelde kurulum / güncelleme dosyaları (yalnızca geliştirici makinesi)
+
+Masaüstü installer ve OTA feed’i **canlı sunucuda üretilmez**; derleyip kopyalama işi **local** yapılır. Sunucu yalnızca `git pull` ile bu dosyaları alır ([`deploy/README.md`](deploy/README.md)).
+
+**Git Bash veya WSL** ile monorepo kökünden:
 
 ```bash
-pnpm dist:win
+cd desktop
+pnpm dist:win          # Windows; Fedora’da Linux için: pnpm dist:linux / dist:linux:appimage
+pnpm dist:mac          # macOS (Mac’te)
+cd ..
+
+# desktop/release → server/data/releases/electron + releases.json senkronu
+bash scripts/publish-desktop-releases.sh
 ```
 
-Çıktı: `desktop/release/` ve güncelleme feed’i için kopyalanabilir dosyalar `server/data/releases/electron/` (bkz. [`deploy/README.md`](deploy/README.md)).
+Script şunları yapar:
+
+1. `latest*.yml`, `.exe`, `.blockmap`, AppImage, dmg vb. dosyaları `desktop/release/` içinden **`server/data/releases/electron/`** klasörüne kopyalar.
+2. **`pnpm releases:sync`** çalıştırır → `server/data/releases.json` sürüm ve indirme URL’leri güncellenir.
+
+Windows’ta yalnızca PowerShell kullanıyorsanız: dosyaları elle `desktop/release` → `server/data/releases/electron` kopyalayın, kökten `pnpm releases:sync` çalıştırın.
+
+Sonra commit + push (LFS) ve canlı sunucuda `deploy/README.md` akışı.
 
 ### Git LFS ve GitHub’a push
 
@@ -99,7 +116,7 @@ Windows’ta uzak depoya göndermek:
 2. **Her oturum (gerekirse):** `ssh-add $env:USERPROFILE\.ssh\id_ed25519_second`
 3. **Push + LFS:** `.\scripts\git-push-sync.ps1`
 
-Yayınları canlı API’ye kopyalamak (Git’ten bağımsız): `bash scripts/publish-desktop-releases.sh`
+`publish-desktop-releases.sh` ve `pnpm releases:sync` **yalnızca local** çalıştırılır; canlıya dosyalar genelde **git push + sunucuda pull** ile gider.
 
 ## Hesap ve profil sync
 
@@ -150,6 +167,8 @@ pnpm dist:win
 | `win-unpacked/` | Taşınabilir sürüm (kurulum yapmadan `TerminalSSH.exe` çalıştırılabilir) |
 
 Kullanıcıya vermek için genelde **`TerminalSSH Setup … .exe`** dosyasını paylaşın.
+
+OTA ve API feed için derleme sonrası **local** (köke dönüp): `bash scripts/publish-desktop-releases.sh` — ayrıntı: **Yerelde kurulum / güncelleme dosyaları** bölümü (Geliştirme).
 
 **Linux — AppImage veya RPM (Fedora vb.):**
 

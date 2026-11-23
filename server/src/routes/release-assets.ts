@@ -7,8 +7,20 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 const serverRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..')
 const releasesRoot = path.join(serverRoot, 'data', 'releases')
 
+function decodeFileName(raw: string): string {
+  try {
+    return decodeURIComponent(raw)
+  } catch {
+    return raw
+  }
+}
+
 function isSafeFileName(fileName: string): boolean {
-  return /^[A-Za-z0-9._-]+$/.test(fileName)
+  if (!fileName || fileName.includes('/') || fileName.includes('\\') || fileName.includes('..')) {
+    return false
+  }
+
+  return /^[\w .()+-]+$/.test(fileName)
 }
 
 function sendAsset(
@@ -16,7 +28,7 @@ function sendAsset(
   reply: FastifyReply,
   subdir: 'electron' | 'android',
 ) {
-  const fileName = request.params.file
+  const fileName = decodeFileName(request.params.file)
 
   if (!isSafeFileName(fileName)) {
     return reply.code(400).send({ error: 'invalid_file_name' })

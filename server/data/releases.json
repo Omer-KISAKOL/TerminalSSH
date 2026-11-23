@@ -1,22 +1,22 @@
 {
-  "desktop-windows": {
-    "version": "2.0.0",
-    "downloadUrl": "https://github.com/Omer-KISAKOL/TerminalSSH/releases/latest",
-    "releaseNotes": ""
-  },
-  "desktop-linux": {
-    "version": "2.0.0",
-    "downloadUrl": "https://github.com/Omer-KISAKOL/TerminalSSH/releases/latest",
-    "releaseNotes": ""
-  },
-  "desktop-macos": {
-    "version": "2.0.0",
-    "downloadUrl": "https://github.com/Omer-KISAKOL/TerminalSSH/releases/latest",
-    "releaseNotes": ""
-  },
-  "android": {
-    "version": "0.1.0",
-    "downloadUrl": "http://188.34.155.223:8787/releases/android/terminalssh.apk",
-    "releaseNotes": ""
-  }
+    "desktop-windows": {
+        "version": "2.0.0",
+        "downloadUrl": "http://188.34.155.223:8787/releases/electron/TerminalSSH%20Setup%202.0.0.exe",
+        "releaseNotes": ""
+    },
+    "desktop-linux": {
+        "version": "2.1.0",
+        "downloadUrl": "https://github.com/Omer-KISAKOL/TerminalSSH/releases/latest",
+        "releaseNotes": ""
+    },
+    "desktop-macos": {
+        "version": "2.1.0",
+        "downloadUrl": "https://github.com/Omer-KISAKOL/TerminalSSH/releases/latest",
+        "releaseNotes": ""
+    },
+    "android": {
+        "version": "0.1.0",
+        "downloadUrl": "http://188.34.155.223:8787/releases/android/terminalssh.apk",
+        "releaseNotes": ""
+    }
 }

@@ -2,6 +2,12 @@ import { readFileSync, statSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+import {
+  buildReleaseAssetUrl,
+  isDesktopElectronPlatform,
+  readElectronFeed,
+} from './release-electron-yml.js'
+
 export const APP_RELEASE_PLATFORMS = [
   'desktop-windows',
   'desktop-linux',
@@ -81,13 +87,59 @@ export function isAppReleasePlatform(value: string): value is AppReleasePlatform
   return (APP_RELEASE_PLATFORMS as readonly string[]).includes(value)
 }
 
+export type CheckReleaseOptions = {
+  manifestPath?: string
+  releasesDataDir?: string
+  publicReleaseBaseUrl?: string
+}
+
+const defaultReleasesDataDir = path.join(serverRoot, 'data', 'releases')
+
+function resolvePublicReleaseBaseUrl(override?: string): string {
+  const value = override?.trim() || process.env.PUBLIC_RELEASE_BASE_URL?.trim() || ''
+  return value.replace(/\/$/, '')
+}
+
+function resolvePlatformRelease(
+  platform: AppReleasePlatform,
+  manifest: ReleasesManifest,
+  releasesDataDir: string,
+  publicBaseUrl: string,
+): PlatformRelease | null {
+  const manifestEntry = manifest[platform]
+
+  if (isDesktopElectronPlatform(platform)) {
+    const feed = readElectronFeed(platform, path.join(releasesDataDir, 'electron'))
+
+    if (feed) {
+      const downloadUrl = publicBaseUrl
+        ? buildReleaseAssetUrl(publicBaseUrl, feed.fileName)
+        : manifestEntry?.downloadUrl?.trim() || ''
+
+      return {
+        version: feed.version,
+        downloadUrl,
+        releaseNotes: manifestEntry?.releaseNotes,
+      }
+    }
+  }
+
+  if (!manifestEntry?.version) {
+    return null
+  }
+
+  return manifestEntry
+}
+
 export function checkRelease(
   platform: AppReleasePlatform,
   currentVersion: string,
-  manifestPath?: string,
+  options: CheckReleaseOptions = {},
 ): ReleaseCheckResult {
-  const manifest = loadManifest(manifestPath)
-  const entry = manifest[platform]
+  const manifest = loadManifest(options.manifestPath)
+  const releasesDataDir = options.releasesDataDir ?? defaultReleasesDataDir
+  const publicBaseUrl = resolvePublicReleaseBaseUrl(options.publicReleaseBaseUrl)
+  const entry = resolvePlatformRelease(platform, manifest, releasesDataDir, publicBaseUrl)
 
   if (!entry?.version) {
     return {
@@ -105,7 +157,7 @@ export function checkRelease(
     updateAvailable,
     currentVersion,
     latestVersion: entry.version,
-    downloadUrl: updateAvailable ? entry.downloadUrl : null,
+    downloadUrl: updateAvailable && entry.downloadUrl ? entry.downloadUrl : null,
     releaseNotes: entry.releaseNotes?.trim() || null,
   }
 }

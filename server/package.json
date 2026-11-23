@@ -10,7 +10,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "oxlint src",
     "test": "vitest run",
-    "db:migrate": "tsx src/db/migrate.ts"
+    "db:migrate": "tsx src/db/migrate.ts",
+    "releases:sync": "tsx src/scripts/sync-releases-manifest.ts"
   },
   "dependencies": {
     "@fastify/cors": "^11.0.1",

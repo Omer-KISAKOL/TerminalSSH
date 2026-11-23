@@ -29,3 +29,10 @@ if [[ "$copied" -eq 0 ]]; then
 fi
 
 echo "Tamam: $DEST_DIR"
+
+export PUBLIC_RELEASE_BASE_URL="${PUBLIC_RELEASE_BASE_URL:-http://188.34.155.223:8787}"
+if command -v pnpm >/dev/null 2>&1; then
+  pnpm --filter @terminalssh/server releases:sync
+else
+  echo "Uyarı: pnpm yok; releases.json için 'pnpm releases:sync' çalıştırın."
+fi
