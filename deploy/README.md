@@ -1,5 +1,38 @@
 # Canlı sunucu (API)
 
+## Sunucu güncelleme (backend)
+
+Sunucuda (`/var/www/TerminalSSH`, systemd servisi `terminalssh-api`):
+
+```bash
+ssh <kullanıcı>@188.34.155.223
+cd /var/www/TerminalSSH
+
+git pull                                      # APK/exe dosyaları için gerekirse: git lfs pull
+pnpm install                                  # bağımlılık değiştiyse
+pnpm --filter @terminalssh/api-client build   # server bunu kullanıyorsa
+pnpm --filter @terminalssh/server build       # server/dist üretir (tsc)
+
+pnpm --filter @terminalssh/server db:migrate  # yalnızca şema/migration değiştiyse
+
+sudo systemctl restart terminalssh-api
+```
+
+Kontrol:
+
+```bash
+systemctl status terminalssh-api --no-pager
+journalctl -u terminalssh-api -n 50 --no-pager
+curl -s http://127.0.0.1:8787/health          # {"ok":true}
+```
+
+Notlar:
+
+- Servis `server/dist/index.js` çalıştırır; `git pull` tek başına yetmez, **build alıp restart** gerekir.
+- `deploy/install-api-service.sh` yalnızca ilk kurulum içindir (systemd servisini yazar). `.service` dosyasını veya Node yolunu değiştirmediyseniz güncellemede çalıştırmayın.
+- Giriş sırasında Postgres hatası alırsanız aşağıdaki bölüme bakın (`fix-postgres-auth.sh`).
+- Masaüstü/Android istemci güncellemeleri ayrı akıştır: bkz. [Uygulama güncellemeleri](#uygulama-güncellemeleri).
+
 ## Giriş hatası: `password authentication failed for user "terminalssh"`
 
 Bu mesaj **mobil/desktop kaynaklı değildir**; canlı API PostgreSQL’e bağlanamıyor demektir.
