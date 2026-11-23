@@ -8,7 +8,8 @@ Sunucuda (`/var/www/TerminalSSH`, systemd servisi `terminalssh-api`):
 ssh <kullanıcı>@188.34.155.223
 cd /var/www/TerminalSSH
 
-git pull                                      # APK/exe dosyaları için gerekirse: git lfs pull
+git pull 
+git lfs pull                                     # APK/exe dosyaları için gerekirse: git lfs pull
 pnpm install                                  # bağımlılık değiştiyse
 pnpm --filter @terminalssh/api-client build   # server bunu kullanıyorsa
 pnpm --filter @terminalssh/server build       # server/dist üretir (tsc)
