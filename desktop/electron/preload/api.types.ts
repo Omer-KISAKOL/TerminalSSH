@@ -24,6 +24,12 @@ import type {
 } from '@shared/contracts/sftp'
 import type { ReleaseCheckResponse } from '@shared/contracts/release'
 import type {
+  CollectIntelligenceResponse,
+  ListTimelineRequest,
+  ListTimelineResponse,
+  ServerOpsContextResponse,
+} from '@shared/contracts/server-ops'
+import type {
   ConnectRequest,
   ConnectResponse,
   SshDataEvent,
@@ -95,6 +101,17 @@ export interface DesktopApi {
     selectPrivateKey(): Promise<string | null>
     getHomeDir(): Promise<string>
     listLocalDir(path: string): Promise<FileEntry[]>
+  }
+  serverOps: {
+    getContext(sessionId: string): Promise<ServerOpsContextResponse>
+    collectIntelligence(sessionId: string): Promise<CollectIntelligenceResponse>
+    listTimeline(input: ListTimelineRequest): Promise<ListTimelineResponse>
+    purgeTimeline(): Promise<{ ok: boolean }>
+    recordSuggestion(input: {
+      sessionId: string
+      label: string
+      command: string
+    }): Promise<void>
   }
 }
 

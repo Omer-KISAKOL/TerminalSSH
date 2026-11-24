@@ -7,7 +7,7 @@ import type { TerminalWorkspaceTab } from '@shared/contracts/workspace'
 import { ConnectionForm } from '@/components/connection/ConnectionForm'
 import { TerminalHostPicker } from '@/components/terminal/TerminalHostPicker'
 import { useLocale } from '@/hooks/useLocale'
-import { SnippetPanel } from '@/components/snippets/SnippetPanel'
+import { TerminalCompanionPanel } from '@/components/workspace/TerminalCompanionPanel'
 import { TerminalStateOverlay } from '@/components/terminal/TerminalStateOverlay'
 import { TerminalToolbar } from '@/components/terminal/TerminalToolbar'
 import { TerminalView, type TerminalApi } from '@/components/terminal/TerminalView'
@@ -132,6 +132,10 @@ export function TerminalTabPanel({
     })
   }
 
+  const handlePasteCommand = (command: string) => {
+    apiRef.current?.submit(command, { autoStart: false })
+  }
+
   if (showHostPicker && connectionFormOpen && onConnectionFormSubmit) {
     return (
       <div className={isActive ? 'flex min-h-0 flex-1 flex-col overflow-hidden' : 'hidden'}>
@@ -221,7 +225,14 @@ export function TerminalTabPanel({
           />
         ) : null}
       </div>
-      {showSnippets ? <SnippetPanel mode="terminal" onApply={handleApplySnippet} /> : null}
+      {showSnippets ? (
+        <TerminalCompanionPanel
+          sessionId={tab.sessionId}
+          connected={tab.status === 'connected'}
+          onApplySnippet={handleApplySnippet}
+          onPasteCommand={handlePasteCommand}
+        />
+      ) : null}
     </div>
   )
 }

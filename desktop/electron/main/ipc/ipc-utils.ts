@@ -22,21 +22,21 @@ function toIpcError(error: unknown): Error {
   }
 
   if (error instanceof Error) {
-    const message = error.message.toLowerCase()
+    const lowered = error.message.toLowerCase()
 
     if (
-      message.includes('fetch failed') ||
-      message.includes('econnrefused') ||
-      message.includes('network') ||
-      message.includes('enotfound')
+      lowered.includes('fetch failed') ||
+      lowered.includes('econnrefused') ||
+      lowered.includes('network') ||
+      lowered.includes('enotfound')
     ) {
       return new Error(
         'API sunucusuna bağlanılamadı. Docker Desktop ve `pnpm dev:server` çalışıyor mu?',
       )
     }
 
-    const message = error.message.trim()
-    return new Error(message || 'İşlem tamamlanamadı.')
+    const trimmed = error.message.trim()
+    return new Error(trimmed || 'İşlem tamamlanamadı.')
   }
 
   return new Error('İşlem tamamlanamadı.')

@@ -206,6 +206,15 @@ const desktopApi: DesktopApi = {
     getHomeDir: () => ipcRenderer.invoke(IPC_CHANNELS.files.getHomeDir),
     listLocalDir: (path) => ipcRenderer.invoke(IPC_CHANNELS.files.listLocalDir, { path }),
   },
+  serverOps: {
+    getContext: (sessionId) =>
+      ipcRenderer.invoke(IPC_CHANNELS.serverOps.getContext, { sessionId }),
+    collectIntelligence: (sessionId) =>
+      ipcRenderer.invoke(IPC_CHANNELS.serverOps.collectIntelligence, { sessionId }),
+    listTimeline: (input) => ipcRenderer.invoke(IPC_CHANNELS.serverOps.listTimeline, input),
+    purgeTimeline: () => ipcRenderer.invoke(IPC_CHANNELS.serverOps.purgeTimeline),
+    recordSuggestion: (input) => ipcRenderer.invoke(IPC_CHANNELS.serverOps.recordSuggestion, input),
+  },
 }
 
 contextBridge.exposeInMainWorld('desktopApi', desktopApi)

@@ -12,10 +12,23 @@ import type {
 } from '@shared/contracts/ssh'
 import { IPC_CHANNELS } from '@shared/ipc-channels'
 
+import { buildServerKey, operationalTimelineStore } from './operational-timeline-store'
 import { hostVerificationService } from './host-verification-service'
 import { logger } from './logger'
+import { profileManager } from './profile-manager'
+import { clearCachedIntelligence } from './server-intelligence-cache'
 import { mapSshError } from './ssh-errors'
 import { buildSshConnectConfig, CONNECTION_TIMEOUT_MS } from './ssh-connection-builder'
+
+export interface SshSessionMeta {
+  sessionId: string
+  serverKey: string
+  host: string
+  port: number
+  username: string
+  profileId: string | null
+  profileName: string | null
+}
 
 interface Session {
   sessionId: string
@@ -25,6 +38,10 @@ interface Session {
   webContentsId: number
   connectRequest: ConnectRequest
   timeoutId: ReturnType<typeof setTimeout> | null
+  serverKey: string
+  profileName: string | null
+  commandLineBuffer: string
+  closeLogged: boolean
 }
 
 export class SshSessionManager {
@@ -34,6 +51,10 @@ export class SshSessionManager {
     const sessionId = randomUUID()
     const client = new Client()
 
+    const profileName = request.profileId
+      ? (profileManager.get(request.profileId)?.name ?? null)
+      : null
+
     const session: Session = {
       sessionId,
       client,
@@ -42,6 +63,15 @@ export class SshSessionManager {
       webContentsId,
       connectRequest: request,
       timeoutId: null,
+      serverKey: buildServerKey({
+        host: request.host,
+        port: request.port,
+        username: request.username,
+        profileId: request.profileId,
+      }),
+      profileName,
+      commandLineBuffer: '',
+      closeLogged: false,
     }
 
     this.sessions.set(sessionId, session)
@@ -113,6 +143,15 @@ export class SshSessionManager {
             session.status = 'connected'
             this.attachStreamHandlers(session, stream)
             this.emitStatus(session, 'connected')
+            operationalTimelineStore.append({
+              serverKey: session.serverKey,
+              host: session.connectRequest.host,
+              profileId: session.connectRequest.profileId ?? null,
+              profileName: session.profileName,
+              type: 'connect',
+              summary: 'SSH oturumu açıldı',
+              detail: `${session.connectRequest.username}@${session.connectRequest.host}:${session.connectRequest.port}`,
+            })
             settle(() => resolve({ sessionId }))
           },
         )
@@ -162,7 +201,86 @@ export class SshSessionManager {
       throw new Error('Aktif bir SSH oturumu bulunamadı.')
     }
 
+    this.trackCommandInput(session, data)
     session.stream.write(data)
+  }
+
+  getSessionMeta(webContentsId: number, sessionId: string): SshSessionMeta | null {
+    const session = this.sessions.get(sessionId)
+
+    if (!session || session.webContentsId !== webContentsId) {
+      return null
+    }
+
+    return {
+      sessionId: session.sessionId,
+      serverKey: session.serverKey,
+      host: session.connectRequest.host,
+      port: session.connectRequest.port,
+      username: session.connectRequest.username,
+      profileId: session.connectRequest.profileId ?? null,
+      profileName: session.profileName,
+    }
+  }
+
+  exec(
+    webContentsId: number,
+    sessionId: string,
+    command: string,
+    timeoutMs = 20_000,
+  ): Promise<{ stdout: string; stderr: string; code: number | null }> {
+    const session = this.getOwnedSession(webContentsId, sessionId)
+
+    if (session.status !== 'connected') {
+      throw new Error('Aktif bir SSH oturumu bulunamadı.')
+    }
+
+    return new Promise((resolve, reject) => {
+      let settled = false
+
+      const timer = setTimeout(() => {
+        if (settled) {
+          return
+        }
+
+        settled = true
+        reject(new Error('Komut zaman aşımına uğradı.'))
+      }, timeoutMs)
+
+      session.client.exec(command, (error, stream) => {
+        if (error) {
+          clearTimeout(timer)
+          if (!settled) {
+            settled = true
+            reject(error)
+          }
+
+          return
+        }
+
+        let stdout = ''
+        let stderr = ''
+
+        stream.on('data', (chunk: Buffer) => {
+          stdout += chunk.toString('utf8')
+        })
+
+        stream.stderr.on('data', (chunk: Buffer) => {
+          stderr += chunk.toString('utf8')
+        })
+
+        stream.on('close', (code: number | null) => {
+          clearTimeout(timer)
+
+          if (settled) {
+            return
+          }
+
+          settled = true
+          resolve({ stdout, stderr, code })
+        })
+      })
+    })
   }
 
   resize(webContentsId: number, sessionId: string, cols: number, rows: number): void {
@@ -202,6 +320,7 @@ export class SshSessionManager {
       session.stream = null
     }
 
+    this.recordSessionClosed(session)
     session.client.end()
     this.finalizeSession(session, 'disconnected')
   }
@@ -250,7 +369,62 @@ export class SshSessionManager {
     return session
   }
 
+  private recordSessionClosed(session: Session): void {
+    if (session.closeLogged) {
+      return
+    }
+
+    session.closeLogged = true
+    operationalTimelineStore.append({
+      serverKey: session.serverKey,
+      host: session.connectRequest.host,
+      profileId: session.connectRequest.profileId ?? null,
+      profileName: session.profileName,
+      type: 'disconnect',
+      summary: 'SSH oturumu kapatıldı',
+    })
+    clearCachedIntelligence(session.sessionId)
+  }
+
+  private trackCommandInput(session: Session, data: string): void {
+    for (const char of data) {
+      if (char === '\r' || char === '\n') {
+        const command = session.commandLineBuffer.trim()
+        session.commandLineBuffer = ''
+
+        if (command.length > 0 && command.length <= 400) {
+          operationalTimelineStore.append({
+            serverKey: session.serverKey,
+            host: session.connectRequest.host,
+            profileId: session.connectRequest.profileId ?? null,
+            profileName: session.profileName,
+            type: 'command',
+            summary: command.length > 72 ? `${command.slice(0, 72)}…` : command,
+            detail: command,
+          })
+        }
+
+        continue
+      }
+
+      if (char === '\u007f' || char === '\b') {
+        session.commandLineBuffer = session.commandLineBuffer.slice(0, -1)
+        continue
+      }
+
+      if (char >= ' ' || char === '\t') {
+        if (session.commandLineBuffer.length < 512) {
+          session.commandLineBuffer += char
+        }
+      }
+    }
+  }
+
   private finalizeSession(session: Session, status: ConnectionStatus, message?: string): void {
+    if (session.status === 'connected' && status !== 'connected') {
+      this.recordSessionClosed(session)
+    }
+
     session.status = status
     this.emitStatus(session, status, message)
     this.sessions.delete(session.sessionId)

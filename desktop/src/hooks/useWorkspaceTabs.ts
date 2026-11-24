@@ -370,6 +370,31 @@ export function useWorkspaceTabs({
     [connectSftpTab, connectTerminalTab],
   )
 
+  const resetTerminalTabToHome = useCallback(
+    async (tabId: string) => {
+      const tab = tabsRef.current.find((item) => item.id === tabId)
+
+      if (!tab || tab.type !== 'terminal') {
+        return
+      }
+
+      if (tab.sessionId) {
+        try {
+          await window.desktopApi.ssh.disconnect(tab.sessionId)
+        } catch {
+          // Oturum zaten kapalı olabilir (zaman aşımı vb.).
+        }
+      }
+
+      updateTab(tabId, {
+        status: 'idle',
+        sessionId: null,
+        errorMessage: null,
+      })
+    },
+    [updateTab],
+  )
+
   const disconnectTab = useCallback(
     async (tabId: string) => {
       const tab = tabsRef.current.find((item) => item.id === tabId)
@@ -462,6 +487,7 @@ export function useWorkspaceTabs({
     connectTerminalTab,
     connectSftpTab,
     reconnectTab,
+    resetTerminalTabToHome,
     disconnectTab,
     writeToTerminalTab,
     resizeTerminalTab,

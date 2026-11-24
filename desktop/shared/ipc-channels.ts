@@ -64,4 +64,11 @@ export const IPC_CHANNELS = {
     getHomeDir: 'files:get-home-dir',
     listLocalDir: 'files:list-local-dir',
   },
+  serverOps: {
+    getContext: 'server-ops:get-context',
+    collectIntelligence: 'server-ops:collect-intelligence',
+    listTimeline: 'server-ops:list-timeline',
+    purgeTimeline: 'server-ops:purge-timeline',
+    recordSuggestion: 'server-ops:record-suggestion',
+  },
 } as const

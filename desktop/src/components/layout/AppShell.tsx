@@ -284,14 +284,9 @@ export function AppShell({ appVersion }: AppShellProps) {
   const handleTerminalTabNavigateHome = useCallback(
     (tabId: string) => {
       setConnectionFormTabId(null)
-
-      if (workspace.tabs.length > 0) {
-        setView('workspace')
-        workspace.setActiveTabId(tabId)
-        return
-      }
-
-      setView('servers')
+      void workspace.resetTerminalTabToHome(tabId)
+      workspace.setActiveTabId(tabId)
+      setView(workspace.tabs.length > 0 ? 'workspace' : 'servers')
     },
     [workspace],
   )

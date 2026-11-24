@@ -12,7 +12,9 @@ import { registerFilesHandlers } from './ipc/files.handlers'
 import { registerProfileHandlers } from './ipc/profile.handlers'
 import { registerSnippetHandlers } from './ipc/snippet.handlers'
 import { registerSftpHandlers } from './ipc/sftp.handlers'
+import { registerServerOpsHandlers } from './ipc/server-ops.handlers'
 import { registerSshHandlers } from './ipc/ssh.handlers'
+import { operationalTimelineStore } from './services/operational-timeline-store'
 import { clearApplicationMenu } from './application-menu'
 import {
   bindDesktopAutoUpdaterWindow,
@@ -104,8 +106,10 @@ registerDialogHandlers()
 registerFilesHandlers()
 registerSshHandlers()
 registerSftpHandlers()
+registerServerOpsHandlers()
 
 app.whenReady().then(() => {
+  operationalTimelineStore.purgeExpired()
   clearApplicationMenu()
   const mainWindow = createMainWindow()
   bindDesktopAutoUpdaterWindow(mainWindow)
