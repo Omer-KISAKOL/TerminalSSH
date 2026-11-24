@@ -24,6 +24,8 @@
         "dist:linux": "pnpm icons && pnpm build && pnpm exec electron-builder --config electron-builder.yml --linux",
         "dist:linux:appimage": "pnpm icons && pnpm build && pnpm exec electron-builder --config electron-builder.yml --linux AppImage",
         "dist:linux:rpm": "pnpm icons && pnpm build && pnpm exec electron-builder --config electron-builder.yml --linux rpm",
+        "dist:mac": "pnpm icons && pnpm build && pnpm exec electron-builder --config electron-builder.yml --mac",
+        "dist:mac:zip": "pnpm icons && pnpm build && pnpm exec electron-builder --config electron-builder.yml --mac zip",
         "dist:win": "node scripts/dist-win.mjs",
         "preview": "vite preview"
     },
