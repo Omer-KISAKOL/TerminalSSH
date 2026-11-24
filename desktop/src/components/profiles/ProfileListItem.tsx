@@ -66,8 +66,8 @@ export function ProfileListItem({
 
   return (
     <div
-      className={`rounded-lg border transition ${
-        dense ? 'px-4 py-3' : 'px-3 py-2'
+      className={`@container rounded-lg border transition ${
+        dense ? 'px-3 py-3 sm:px-4' : 'px-3 py-2'
       } ${
         isSelected
           ? 'border-accent bg-accent/10'
@@ -99,7 +99,7 @@ export function ProfileListItem({
           <div className="grid grid-cols-2 gap-1.5">
             <Button
               variant="primary"
-              className="h-8 min-w-0 px-2 py-1 text-[11px]"
+              className="h-8 min-w-0 px-2 py-1 text-[11px] leading-tight"
               disabled={connectDisabled || isConnecting}
               onClick={() => onConnect(profile)}
               aria-label={t('profile.connectTerminalAria', { name: profile.name })}
@@ -109,7 +109,7 @@ export function ProfileListItem({
             </Button>
             <Button
               variant="success"
-              className="h-8 min-w-0 px-2 py-1 text-[11px] font-semibold"
+              className="h-8 min-w-0 px-2 py-1 text-[11px] font-semibold leading-tight"
               disabled={connectDisabled}
               onClick={() => onSftpConnect(profile)}
               aria-label={t('profile.connectSftpAria', { name: profile.name })}
@@ -117,26 +117,28 @@ export function ProfileListItem({
               {t('profile.sftp')}
             </Button>
           </div>
-          <div className="flex items-center justify-center gap-1.5 border-t border-border/60 pt-2">
+          <div className="grid grid-cols-2 gap-1.5 border-t border-border/60 pt-2">
             <Button
               variant="secondary"
-              className="h-8 min-w-[4.25rem] flex-1 gap-1 px-2 py-1 text-[11px]"
+              className="h-8 min-w-0 gap-1 px-1.5 py-1 text-[11px] leading-tight @min-[12rem]:gap-1.5 @min-[12rem]:px-2"
               disabled={connectDisabled}
               onClick={() => onEdit(profile)}
               aria-label={t('profile.editProfileAria', { name: profile.name })}
+              title={t('profile.edit')}
             >
               <EditIcon />
-              {t('profile.edit')}
+              <span className="hidden truncate @min-[12rem]:inline">{t('profile.edit')}</span>
             </Button>
             <Button
               variant="danger"
-              className="h-8 min-w-[4.25rem] flex-1 gap-1 px-2 py-1 text-[11px]"
+              className="h-8 min-w-0 gap-1 px-1.5 py-1 text-[11px] leading-tight @min-[12rem]:gap-1.5 @min-[12rem]:px-2"
               disabled={connectDisabled}
               onClick={() => onDelete(profile)}
               aria-label={t('profile.deleteProfileAria', { name: profile.name })}
+              title={t('profile.delete')}
             >
               <DeleteIcon />
-              {t('profile.delete')}
+              <span className="hidden truncate @min-[12rem]:inline">{t('profile.delete')}</span>
             </Button>
           </div>
         </div>

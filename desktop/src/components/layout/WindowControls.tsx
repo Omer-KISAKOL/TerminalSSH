@@ -36,26 +36,6 @@ function MaximizeIcon() {
   )
 }
 
-function RestoreIcon() {
-  return (
-    <svg viewBox="0 0 11 11" className={iconClass} aria-hidden="true" fill="none">
-      <path
-        d="M3 1.5h5.5v5.5H3V1.5Z"
-        stroke="currentColor"
-        strokeWidth="1"
-        vectorEffect="non-scaling-stroke"
-      />
-      <path
-        d="M5.5 4h4.5v4.5H5.5V4Z"
-        stroke="currentColor"
-        strokeWidth="1"
-        vectorEffect="non-scaling-stroke"
-        fill="#161922"
-      />
-    </svg>
-  )
-}
-
 function CloseIcon() {
   return (
     <svg viewBox="0 0 11 11" className={iconClass} aria-hidden="true">
@@ -119,7 +99,7 @@ export function WindowControls() {
           })
         }}
       >
-        {maximized ? <RestoreIcon /> : <MaximizeIcon />}
+        <MaximizeIcon />
       </button>
       <button
         type="button"

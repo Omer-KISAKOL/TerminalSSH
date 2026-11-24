@@ -60,8 +60,15 @@ async function parseJson<T>(response: Response): Promise<T> {
   }
 
   if (!response.ok) {
+    const detail = [payload.message, payload.error]
+      .map((value) => (typeof value === 'string' ? value.trim() : ''))
+      .find((value) => value.length > 0)
+
     throw new ApiClientError(
-      payload.message ?? payload.error ?? 'API isteği başarısız.',
+      detail ??
+        (response.status === 503
+          ? 'Sunucu geçici olarak kullanılamıyor. Veritabanı veya API hazır değil.'
+          : 'API isteği başarısız.'),
       response.status,
     )
   }

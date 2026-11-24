@@ -17,7 +17,8 @@ function toIpcError(error: unknown): Error {
       )
     }
 
-    return new Error(error.message)
+    const message = error.message.trim()
+    return new Error(message || 'API isteği başarısız.')
   }
 
   if (error instanceof Error) {
@@ -34,7 +35,8 @@ function toIpcError(error: unknown): Error {
       )
     }
 
-    return new Error(error.message)
+    const message = error.message.trim()
+    return new Error(message || 'İşlem tamamlanamadı.')
   }
 
   return new Error('İşlem tamamlanamadı.')

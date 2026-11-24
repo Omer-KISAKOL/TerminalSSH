@@ -12,6 +12,24 @@ type AuthState = {
   securitySetupToken: string | null
 }
 
+function toAuthErrorMessage(error: unknown, fallback: string): string {
+  if (!(error instanceof Error)) {
+    return fallback
+  }
+
+  const raw = error.message.trim()
+  if (!raw) {
+    return fallback
+  }
+
+  const ipcMatch = /^Error invoking remote method '[^']+':\s*(?:Error:\s*)?(.+)$/i.exec(raw)
+  if (ipcMatch?.[1]?.trim()) {
+    return ipcMatch[1].trim()
+  }
+
+  return raw
+}
+
 function applySessionResponse(response: SessionResponse): Pick<
   AuthState,
   'user' | 'isAuthenticated' | 'requiresSecuritySetup' | 'securitySetupToken' | 'error'
@@ -75,7 +93,7 @@ export function useAuth() {
         user: null,
         isAuthenticated: false,
         isLoading: false,
-        error: error instanceof Error ? error.message : 'Oturum doğrulanamadı.',
+        error: toAuthErrorMessage(error, 'Oturum doğrulanamadı.'),
         requiresSecuritySetup: false,
         securitySetupToken: null,
       })
@@ -118,9 +136,9 @@ export function useAuth() {
       })
       return response
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Giriş başarısız.'
+      const message = toAuthErrorMessage(error, 'Giriş başarısız.')
       setState((current) => ({ ...current, isLoading: false, error: message }))
-      throw error
+      return
     }
   }, [])
 
@@ -151,9 +169,9 @@ export function useAuth() {
         })
         return session
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Kayıt başarısız.'
+        const message = toAuthErrorMessage(error, 'Kayıt başarısız.')
         setState((current) => ({ ...current, isLoading: false, error: message }))
-        throw error
+        return
       }
     },
     [],

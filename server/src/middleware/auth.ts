@@ -4,10 +4,45 @@ import { config } from '../config.js'
 import { AuthError } from '../services/auth-service.js'
 import { verifyAccessToken } from '../services/token-service.js'
 
+function collectErrorText(error: Error): string {
+  const parts: string[] = []
+
+  if (error.message.trim()) {
+    parts.push(error.message)
+  }
+
+  const aggregate = error as Error & { errors?: unknown[] }
+
+  if (Array.isArray(aggregate.errors)) {
+    for (const nested of aggregate.errors) {
+      if (nested instanceof Error && nested.message.trim()) {
+        parts.push(nested.message)
+      }
+    }
+  }
+
+  return parts.join(' ')
+}
+
 function isInfrastructureError(error: Error): boolean {
-  return /password authentication failed|ECONNREFUSED|connection refused|getaddrinfo|timeout expired/i.test(
-    error.message,
+  const text = collectErrorText(error)
+
+  return /password authentication failed|ECONNREFUSED|connection refused|getaddrinfo|timeout expired|terminating connection/i.test(
+    text,
   )
+}
+
+function infrastructureMessage(error: Error): string {
+  if (config.nodeEnv === 'production') {
+    return 'Sunucu geçici olarak kullanılamıyor. Lütfen daha sonra tekrar deneyin.'
+  }
+
+  if (isInfrastructureError(error)) {
+    return 'Veritabanına bağlanılamadı. Docker Desktop açıkken `docker compose -f server/docker-compose.yml up -d` çalıştırın.'
+  }
+
+  const text = collectErrorText(error).trim()
+  return text || 'Beklenmeyen bir hata oluştu.'
 }
 
 declare module 'fastify' {
@@ -44,14 +79,12 @@ export function handleAuthError(error: unknown): { statusCode: number; message: 
     if (isInfrastructureError(error)) {
       return {
         statusCode: 503,
-        message:
-          config.nodeEnv === 'production'
-            ? 'Sunucu geçici olarak kullanılamıyor. Lütfen daha sonra tekrar deneyin.'
-            : error.message,
+        message: infrastructureMessage(error),
       }
     }
 
-    return { statusCode: 400, message: error.message }
+    const message = collectErrorText(error).trim()
+    return { statusCode: 400, message: message || 'İstek işlenemedi.' }
   }
 
   return { statusCode: 500, message: 'Beklenmeyen bir hata oluştu.' }

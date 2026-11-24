@@ -23,7 +23,7 @@ type ProfileListProps = {
 
 function profileListLayoutClass(columns: ProfileListColumns): string {
   if (columns === 4) {
-    return 'grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-5'
+    return 'grid grid-cols-[repeat(auto-fill,minmax(13.75rem,1fr))] gap-3 sm:gap-4 lg:gap-5'
   }
 
   if (columns === 2) {
