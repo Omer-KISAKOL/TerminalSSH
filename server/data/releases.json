@@ -1,16 +1,16 @@
 {
     "desktop-windows": {
-        "version": "2.0.0",
+        "version": "2.2.0",
         "downloadUrl": "http://188.34.155.223:8787/releases/electron/TerminalSSH%20Setup%202.0.0.exe",
         "releaseNotes": ""
     },
     "desktop-linux": {
-        "version": "2.1.1",
-        "downloadUrl": "http://188.34.155.223:8787/releases/electron/TerminalSSH-2.1.1.AppImage",
+        "version": "2.2.0",
+        "downloadUrl": "http://188.34.155.223:8787/releases/electron/TerminalSSH-2.2.0.AppImage",
         "releaseNotes": ""
     },
     "desktop-macos": {
-        "version": "2.1.1",
+        "version": "2.2.0",
         "downloadUrl": "https://github.com/Omer-KISAKOL/TerminalSSH/releases/latest",
         "releaseNotes": ""
     },
