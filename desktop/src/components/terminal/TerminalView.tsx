@@ -81,13 +81,15 @@ export function TerminalView({ isActive = true, onReady, onInput, onResize }: Te
 
   return (
     <div className="terminal-host relative min-h-0 flex-1 overflow-hidden">
-      <div
-        ref={containerRef}
-        className="terminal-surface h-full min-h-0 w-full px-4 py-2.5 sm:px-5 md:px-6"
-        onContextMenu={handleContextMenu}
-        role="application"
-        aria-label={t('terminal.ariaLabel')}
-      />
+      <div className="terminal-inset h-full min-h-0 w-full px-4 pt-3 pb-7 sm:px-5 sm:pb-8 md:px-6 md:pb-9">
+        <div
+          ref={containerRef}
+          className="terminal-surface h-full min-h-0 w-full"
+          onContextMenu={handleContextMenu}
+          role="application"
+          aria-label={t('terminal.ariaLabel')}
+        />
+      </div>
 
       <CommandQueueEditor
         snapshot={snapshot}
