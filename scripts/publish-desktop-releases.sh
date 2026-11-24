@@ -15,10 +15,12 @@ mkdir -p "$DEST_DIR"
 
 shopt -s nullglob
 copied=0
-for pattern in 'latest*.yml' 'TerminalSSH*.exe' 'TerminalSSH*.AppImage' 'TerminalSSH*.rpm' 'TerminalSSH*.dmg' 'TerminalSSH*.zip' '*.blockmap'; do
+# AppImage kopyalanmaz (git/LFS ile dağıtılır). RPM dosya adı küçük harflidir:
+# terminalssh-<sürüm>.x86_64.rpm — bu yüzden 'terminalssh*.rpm' kullanılır.
+for pattern in 'latest*.yml' 'TerminalSSH*.exe' 'terminalssh*.rpm' 'TerminalSSH*.dmg' 'TerminalSSH*.zip' '*.blockmap'; do
   for file in "$SOURCE_DIR"/$pattern; do
-  cp -f "$file" "$DEST_DIR/"
-  echo "Kopyalandı: $(basename "$file")"
+    cp -f "$file" "$DEST_DIR/"
+    echo "Kopyalandı: $(basename "$file")"
     copied=$((copied + 1))
   done
 done

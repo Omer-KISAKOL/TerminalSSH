@@ -1,7 +1,6 @@
 import type {
   CollectIntelligenceResponse,
   ListTimelineResponse,
-  ServerIntelligenceSnapshot,
   ServerOpsContextResponse,
 } from '@shared/contracts/server-ops'
 import { OPERATIONAL_TIMELINE_RETENTION_DAYS } from '@shared/constants/timeline'

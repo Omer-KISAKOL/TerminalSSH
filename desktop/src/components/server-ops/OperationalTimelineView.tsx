@@ -20,7 +20,6 @@ const typeBadgeClass: Record<OperationalTimelineEvent['type'], string> = {
 
 export function OperationalTimelineView({
   events,
-  retentionDays,
   isLoading,
   onRefresh,
 }: OperationalTimelineViewProps) {
