@@ -5,8 +5,8 @@
         "releaseNotes": ""
     },
     "desktop-linux": {
-        "version": "2.3.0",
-        "downloadUrl": "http://188.34.155.223:8787/releases/electron/TerminalSSH-2.3.0.AppImage",
+        "version": "2.4.0",
+        "downloadUrl": "http://188.34.155.223:8787/releases/electron/TerminalSSH-2.4.0.AppImage",
         "releaseNotes": ""
     },
     "desktop-macos": {
