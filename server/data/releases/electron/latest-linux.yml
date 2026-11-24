@@ -1,12 +1,12 @@
-version: 2.1.0
+version: 2.1.1
 files:
-  - url: TerminalSSH-2.1.0.AppImage
-    sha512: FmB7JSyL+daP7BNFbjQdidcNRd4xAJbYhfDcFHJia1BUk2QfPLPC3Kk7RiGjVNRdqvG9zgM5VeJ5tZPhFCPzvQ==
-    size: 127949355
-    blockMapSize: 133695
-  - url: terminalssh-2.1.0.x86_64.rpm
-    sha512: hAyqSLyQ3f/0oroL7Xln2jsmTlb6ruJAyCL1WXpZDakFBCSQxk7MnsFeBJv72L92WqjD4h8OXOqaX5hLfMZGUw==
-    size: 90026417
-path: TerminalSSH-2.1.0.AppImage
-sha512: FmB7JSyL+daP7BNFbjQdidcNRd4xAJbYhfDcFHJia1BUk2QfPLPC3Kk7RiGjVNRdqvG9zgM5VeJ5tZPhFCPzvQ==
-releaseDate: '2026-11-23T13:04:23.764Z'
+  - url: TerminalSSH-2.1.1.AppImage
+    sha512: MDKQOXqWeJb1fhAaTE20KcgZBx6y+FknoCsOBNV9P0xqdx1Mzx9s0/FQV/EHeHnhcWjMm0WJUZ0rCsgia6tDQA==
+    size: 127949295
+    blockMapSize: 133635
+  - url: terminalssh-2.1.1.x86_64.rpm
+    sha512: QDxZdfNwH3KBUoScQ0kYZQqK1YpFotvih4K6jDrrMlpPfp1D/2tmCShJsrBBh7p1h/j1iWQKj4AqQx3ClIH3eA==
+    size: 90037873
+path: TerminalSSH-2.1.1.AppImage
+sha512: MDKQOXqWeJb1fhAaTE20KcgZBx6y+FknoCsOBNV9P0xqdx1Mzx9s0/FQV/EHeHnhcWjMm0WJUZ0rCsgia6tDQA==
+releaseDate: '2026-11-23T14:05:26.379Z'
