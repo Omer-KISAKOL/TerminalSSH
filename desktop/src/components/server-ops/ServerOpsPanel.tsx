@@ -14,6 +14,7 @@ type ServerOpsTab = 'intelligence' | 'timeline' | 'context'
 type ServerOpsPanelProps = {
   sessionId: string | null
   connected: boolean
+  embedded?: boolean
   onPasteCommand: (command: string) => void
 }
 
@@ -21,7 +22,12 @@ const TAB_CLASS_ACTIVE =
   'border-accent bg-accent/15 text-text shadow-[inset_0_0_0_1px_rgba(var(--color-accent-rgb),0.25)]'
 const TAB_CLASS_IDLE = 'border-transparent text-text-muted hover:bg-surface-muted hover:text-text'
 
-export function ServerOpsPanel({ sessionId, connected, onPasteCommand }: ServerOpsPanelProps) {
+export function ServerOpsPanel({
+  sessionId,
+  connected,
+  embedded = false,
+  onPasteCommand,
+}: ServerOpsPanelProps) {
   const { t } = useLocale()
   const [tab, setTab] = useState<ServerOpsTab>('intelligence')
   const ops = useServerOps(sessionId, connected)
@@ -52,23 +58,39 @@ export function ServerOpsPanel({ sessionId, connected, onPasteCommand }: ServerO
     await ops.recordSuggestion(suggestion)
   }
 
+  const rootClass = embedded
+    ? 'flex min-h-0 w-full flex-1 flex-col overflow-hidden bg-surface-raised'
+    : 'flex w-80 min-h-0 shrink-0 flex-col border-l border-border bg-surface lg:w-96'
+
   if (!connected || !sessionId) {
     return (
-      <aside className="flex w-80 shrink-0 flex-col border-l border-border bg-surface lg:w-96">
-        <div className="border-b border-border px-4 py-3">
-          <h2 className="text-sm font-semibold text-text">{t('serverOps.panelTitle')}</h2>
-        </div>
+      <aside className={rootClass}>
+        {!embedded ? (
+          <div className="border-b border-border px-4 py-3">
+            <h2 className="text-sm font-semibold text-text">{t('serverOps.panelTitle')}</h2>
+          </div>
+        ) : null}
         <p className="p-4 text-sm text-text-muted">{t('serverOps.panelDisconnected')}</p>
       </aside>
     )
   }
 
   return (
-    <aside className="flex w-80 min-h-0 shrink-0 flex-col border-l border-border bg-surface lg:w-96">
-      <div className="border-b border-border px-3 py-2.5">
-        <h2 className="px-1 text-sm font-semibold text-text">{t('serverOps.panelTitle')}</h2>
+    <aside className={rootClass}>
+      <div className="shrink-0 border-b border-border px-3 py-2.5">
+        {!embedded ? (
+          <h2 className="px-1 text-sm font-semibold text-text">{t('serverOps.panelTitle')}</h2>
+        ) : null}
         {ops.context ? (
-          <p className="mt-0.5 truncate px-1 text-xs text-text-muted">{ops.context.host}</p>
+          <p
+            className={
+              embedded
+                ? 'truncate px-1 text-sm font-medium text-text'
+                : 'mt-0.5 truncate px-1 text-xs text-text-muted'
+            }
+          >
+            {ops.context.host}
+          </p>
         ) : null}
       </div>
 
@@ -87,7 +109,7 @@ export function ServerOpsPanel({ sessionId, connected, onPasteCommand }: ServerO
         ))}
       </nav>
 
-      <div className="flex min-h-0 flex-1 flex-col px-3 py-3">
+      <div className="scroll-thin flex min-h-0 flex-1 flex-col overflow-y-auto px-3 py-3">
         {ops.error ? (
           <p className="mb-2 rounded-lg border border-status-error/35 bg-status-error/10 px-2 py-1.5 text-xs text-status-error">
             {ops.error}

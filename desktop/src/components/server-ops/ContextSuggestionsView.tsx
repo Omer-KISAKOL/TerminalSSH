@@ -44,7 +44,7 @@ export function ContextSuggestionsView({ suggestions, onApprovePaste }: ContextS
           {t('serverOps.contextEmpty')}
         </p>
       ) : (
-        <ul className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
+        <ul className="scroll-thin min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
           {suggestions.map((suggestion) => (
             <li
               key={suggestion.id}

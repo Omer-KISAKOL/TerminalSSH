@@ -44,7 +44,7 @@ export function OperationalTimelineView({
           {t('serverOps.timelineEmpty')}
         </p>
       ) : (
-        <ol className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
+        <ol className="scroll-thin min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
           {events.map((event) => (
             <li
               key={event.id}

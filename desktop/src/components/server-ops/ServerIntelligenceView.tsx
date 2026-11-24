@@ -71,7 +71,7 @@ export function ServerIntelligenceView({
           {t('serverOps.intelligenceEmpty')}
         </p>
       ) : (
-        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
+        <div className="scroll-thin min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
           {!snapshotHasMetrics(snapshot) ? (
             <p className="rounded-lg border border-status-error/40 bg-status-error/10 px-3 py-2 text-xs leading-relaxed text-status-error">
               {t('serverOps.intelligenceScanEmpty')}

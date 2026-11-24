@@ -185,7 +185,7 @@ export function SnippetPanel({ mode, embedded = false, onApply }: SnippetPanelPr
             ) : null}
           </div>
 
-          <div className={`min-h-0 flex-1 overflow-y-auto ${embedded ? 'p-4' : 'p-3'}`}>
+          <div className={`scroll-thin min-h-0 flex-1 overflow-y-auto ${embedded ? 'p-4' : 'p-3'}`}>
           {isLoading ? <p className="text-sm text-text-muted">{t('common.loading')}</p> : null}
           {error ? <p className="text-sm text-status-error">{error}</p> : null}
 

@@ -51,7 +51,7 @@ export function ServerHome({
         </Button>
       </header>
 
-      <section className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4 md:p-8">
+      <section className="scroll-thin flex min-h-0 flex-1 flex-col overflow-y-auto p-4 md:p-8">
         <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col">
           {showEmpty ? (
             <EmptyState

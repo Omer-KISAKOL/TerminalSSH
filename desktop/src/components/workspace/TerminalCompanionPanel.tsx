@@ -5,6 +5,11 @@ import { ServerOpsPanel } from '@/components/server-ops/ServerOpsPanel'
 import { useLocale } from '@/hooks/useLocale'
 import { loadSnippetPanelCollapsed, saveSnippetPanelCollapsed } from '@/lib/sidebar-storage'
 
+import {
+  TERMINAL_COMPANION_COLLAPSED_CLASS,
+  TERMINAL_COMPANION_PANEL_CLASS,
+} from './terminal-companion-constants'
+
 type CompanionTab = 'snippets' | 'serverOps'
 
 type TerminalCompanionPanelProps = {
@@ -12,6 +17,28 @@ type TerminalCompanionPanelProps = {
   connected: boolean
   onApplySnippet: (content: string, appendNewline: boolean) => void
   onPasteCommand: (command: string) => void
+}
+
+const tabButtonBase =
+  'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border transition-colors duration-150'
+
+function SnippetTabIcon() {
+  return (
+    <span className="font-mono text-sm font-semibold leading-none" aria-hidden="true">
+      {'{ }'}
+    </span>
+  )
+}
+
+function ServerTabIcon() {
+  return (
+    <svg viewBox="0 0 16 16" className="h-4 w-4" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M2 2.5h12v2.5H2V2.5Zm0 4h12V9H2V6.5Zm0 4.5h9v2.5H2V11Z"
+      />
+    </svg>
+  )
 }
 
 export function TerminalCompanionPanel({
@@ -29,12 +56,17 @@ export function TerminalCompanionPanel({
     saveSnippetPanelCollapsed(next)
   }
 
+  const tabActiveClass = 'border-accent/50 bg-accent/15 text-text'
+  const tabIdleClass = 'border-border/70 bg-surface text-text-muted hover:bg-surface-muted hover:text-text'
+
   if (collapsed) {
     return (
-      <aside className="flex w-11 shrink-0 flex-col border-l border-border bg-surface">
+      <aside
+        className={`flex ${TERMINAL_COMPANION_COLLAPSED_CLASS} h-full min-h-0 shrink-0 flex-col border-l border-border bg-surface-raised`}
+      >
         <button
           type="button"
-          className="flex h-11 w-full items-center justify-center border-b border-border text-sm text-text-muted transition hover:bg-surface-muted hover:text-text"
+          className={`${tabButtonBase} mx-1.5 mt-2 border-border/70 text-text-muted hover:bg-surface-muted hover:text-text`}
           onClick={() => setCollapsedPersisted(false)}
           aria-label={t('terminalCompanion.expand')}
           title={t('terminalCompanion.expand')}
@@ -43,56 +75,85 @@ export function TerminalCompanionPanel({
         </button>
         <button
           type="button"
-          className="mt-2 px-1 text-[10px] font-medium leading-tight text-text-muted"
+          className={`${tabButtonBase} mx-1.5 mt-2 ${tab === 'snippets' ? tabActiveClass : tabIdleClass}`}
+          onClick={() => {
+            setCollapsedPersisted(false)
+            setTab('snippets')
+          }}
+          aria-label={t('snippets.panelTitle')}
+          title={t('snippets.panelTitle')}
+        >
+          <SnippetTabIcon />
+        </button>
+        <button
+          type="button"
+          className={`${tabButtonBase} mx-1.5 mt-1.5 ${tab === 'serverOps' ? tabActiveClass : tabIdleClass}`}
           onClick={() => {
             setCollapsedPersisted(false)
             setTab('serverOps')
           }}
+          aria-label={t('serverOps.panelTitle')}
+          title={t('serverOps.panelTitle')}
         >
-          {t('serverOps.panelShort')}
+          <ServerTabIcon />
         </button>
       </aside>
     )
   }
 
   return (
-    <div className="flex min-h-0 shrink-0">
-      <aside className="flex w-9 shrink-0 flex-col items-stretch border-l border-border bg-surface-muted/40">
+    <aside
+      className={`flex ${TERMINAL_COMPANION_PANEL_CLASS} h-full min-h-0 shrink-0 flex-col overflow-hidden border-l border-border bg-surface-raised`}
+    >
+      <div className="flex shrink-0 items-center gap-1.5 border-b border-border px-2 py-2">
         <button
           type="button"
-          className={`border-b border-border px-1 py-3 text-[10px] font-semibold leading-tight ${
-            tab === 'snippets' ? 'bg-surface text-text' : 'text-text-muted hover:bg-surface/80'
-          }`}
+          className={`${tabButtonBase} ${tab === 'snippets' ? tabActiveClass : tabIdleClass}`}
           onClick={() => setTab('snippets')}
+          aria-label={t('snippets.panelTitle')}
+          title={t('snippets.panelTitle')}
+          aria-pressed={tab === 'snippets'}
         >
-          {t('terminalCompanion.snippets')}
+          <SnippetTabIcon />
         </button>
         <button
           type="button"
-          className={`px-1 py-3 text-[10px] font-semibold leading-tight ${
-            tab === 'serverOps' ? 'bg-surface text-text' : 'text-text-muted hover:bg-surface/80'
-          }`}
+          className={`${tabButtonBase} ${tab === 'serverOps' ? tabActiveClass : tabIdleClass}`}
           onClick={() => setTab('serverOps')}
+          aria-label={t('serverOps.panelTitle')}
+          title={t('serverOps.panelTitle')}
+          aria-pressed={tab === 'serverOps'}
         >
-          {t('terminalCompanion.serverOps')}
+          <ServerTabIcon />
         </button>
-        <div className="mt-auto border-t border-border">
-          <button
-            type="button"
-            className="flex h-10 w-full items-center justify-center text-sm text-text-muted hover:bg-surface hover:text-text"
-            onClick={() => setCollapsedPersisted(true)}
-            aria-label={t('terminalCompanion.collapse')}
-          >
-            ›
-          </button>
-        </div>
-      </aside>
+        <InputSpacer className="flex-1" />
+        <button
+          type="button"
+          className={`${tabButtonBase} border-border/70 text-text-muted hover:bg-surface-muted hover:text-text`}
+          onClick={() => setCollapsedPersisted(true)}
+          aria-label={t('terminalCompanion.collapse')}
+          title={t('terminalCompanion.collapse')}
+        >
+          ›
+        </button>
+      </div>
 
-      {tab === 'snippets' ? (
-        <SnippetPanel mode="terminal" embedded onApply={onApplySnippet} />
-      ) : (
-        <ServerOpsPanel sessionId={sessionId} connected={connected} onPasteCommand={onPasteCommand} />
-      )}
-    </div>
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        {tab === 'snippets' ? (
+          <SnippetPanel mode="terminal" embedded onApply={onApplySnippet} />
+        ) : (
+          <ServerOpsPanel
+            sessionId={sessionId}
+            connected={connected}
+            embedded
+            onPasteCommand={onPasteCommand}
+          />
+        )}
+      </div>
+    </aside>
   )
+}
+
+function InputSpacer({ className }: { className: string }) {
+  return <span className={className} aria-hidden="true" />
 }

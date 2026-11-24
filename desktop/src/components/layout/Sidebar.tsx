@@ -186,7 +186,7 @@ export function Sidebar({
           ) : null}
 
           <div
-            className={`min-h-0 flex-1 overflow-y-auto overscroll-y-contain pr-0.5 ${collapsed ? 'md:hidden' : ''}`}
+            className={`scroll-thin min-h-0 flex-1 overflow-y-auto overscroll-y-contain pr-0.5 ${collapsed ? 'md:hidden' : ''}`}
           >
             <ProfileList
               profiles={profiles}
