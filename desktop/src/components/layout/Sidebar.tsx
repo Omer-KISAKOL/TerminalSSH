@@ -171,7 +171,7 @@ export function Sidebar({
                   className={`flex h-9 w-full min-h-9 items-center justify-center rounded-lg border px-0.5 transition ${
                     selectedProfileId === profile.id
                       ? 'border-accent/60 bg-accent/15 text-text'
-                      : 'border-border/60 bg-surface text-text hover:bg-surface-muted'
+                      : 'surface-hover-green border-border/60 bg-surface text-text'
                   }`}
                   title={profile.name}
                   aria-label={t('sidebar.collapsedProfileAria', { name: profile.name })}

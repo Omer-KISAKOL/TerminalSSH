@@ -61,7 +61,7 @@ function LogoutIcon() {
 }
 
 const accountActionButtonClass =
-  'h-8 w-full gap-1.5 bg-transparent py-1.5 text-xs text-text shadow-none hover:bg-surface-muted hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] active:bg-surface-raised'
+  'surface-hover-green h-8 w-full gap-1.5 border-border bg-transparent py-1.5 text-xs text-text shadow-none active:bg-surface-muted'
 
 export function AccountMenu({ user, onLogout, onSync, syncing = false }: AccountMenuProps) {
   const { t } = useLocale()

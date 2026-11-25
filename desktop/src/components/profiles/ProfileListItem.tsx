@@ -66,12 +66,12 @@ export function ProfileListItem({
 
   return (
     <div
-      className={`@container rounded-lg border transition-[background-color,border-color,box-shadow] duration-150 ${
+      className={`@container surface-hover-green rounded-lg border ${
         dense ? 'px-3 py-3 sm:px-4' : 'px-3 py-2'
       } ${
         isSelected
           ? 'border-accent bg-accent/10 shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--color-accent)_35%,transparent)]'
-          : 'border-border bg-surface hover:border-status-connected/60 hover:bg-surface-raised hover:shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--color-status-connected)_28%,transparent),0_6px_18px_rgba(0,0,0,0.35)]'
+          : 'border-border bg-surface'
       }`}
     >
       <div className="flex items-start justify-between gap-2">
