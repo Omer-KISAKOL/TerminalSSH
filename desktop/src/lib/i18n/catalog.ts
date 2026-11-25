@@ -352,6 +352,11 @@ export const messagesTr = {
     endpointsTitle: 'Endpoint Monitor',
     endpointsSubtitle: 'HTTP kodu, yanıt süresi ve SSL doğrulama özeti.',
     endpointsEmpty: 'Yerel endpoint kontrolü için Tara’ya basın.',
+    endpointListening: 'Dinliyor',
+    endpointHttpSection: 'HTTP yanıtları',
+    endpointListenersSection: 'Açık portlar',
+    endpointHttpMissing:
+      'HTTP kodu alınamadı; altta dinleyen portlar listeleniyor. curl yüklü değilse yalnızca portlar görünür.',
     incidentTitle: 'Incident Analyzer',
     incidentSubtitle: 'Son saatlerdeki hatalar, kaynak ve terminal sinyalleri.',
     incidentEmpty: 'Olay analizi için Tara’ya basın.',
@@ -812,6 +817,11 @@ export const messagesEn = {
     endpointsTitle: 'Endpoint Monitor',
     endpointsSubtitle: 'HTTP status, response time, and SSL verification summary.',
     endpointsEmpty: 'Tap Scan to probe local endpoints.',
+    endpointListening: 'Listening',
+    endpointHttpSection: 'HTTP responses',
+    endpointListenersSection: 'Open ports',
+    endpointHttpMissing:
+      'No HTTP status codes yet; open listeners are listed below. Install curl on the server for HTTP checks.',
     incidentTitle: 'Incident Analyzer',
     incidentSubtitle: 'Recent errors, resource signals, and terminal activity.',
     incidentEmpty: 'Tap Scan to build an incident picture.',

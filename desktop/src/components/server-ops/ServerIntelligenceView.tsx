@@ -155,7 +155,13 @@ export function ServerIntelligenceView({
           ) : null}
 
           {snapshot.warnings.length > 0 ? (
-            <ul className="space-y-1 text-xs text-status-error">
+            <ul
+              className={`space-y-1 rounded-lg border px-2 py-1.5 text-xs ${
+                snapshotHasMetrics(snapshot)
+                  ? 'border-status-warning/35 bg-status-warning/10 text-text-muted'
+                  : 'border-status-error/35 bg-status-error/10 text-status-error'
+              }`}
+            >
               {snapshot.warnings.map((warning) => (
                 <li key={warning}>{warning}</li>
               ))}

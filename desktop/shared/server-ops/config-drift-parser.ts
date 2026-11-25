@@ -42,32 +42,60 @@ function inferKind(path: string): DriftConfigKind {
   return 'other'
 }
 
+const FINGERPRINT_LINE =
+  /^(?:MISSING|DENIED|[a-fA-F0-9]{32,64})\|[^|]+(?:\|\d+)?$/
+
+export function extractConfigFingerprintLines(output: string): string[] {
+  const lines: string[] = []
+  for (const line of output.split('\n')) {
+    const trimmed = line.replace(/\r$/, '').trim()
+    if (FINGERPRINT_LINE.test(trimmed)) {
+      lines.push(trimmed)
+    }
+  }
+  return lines
+}
+
+function parseFingerprintLine(line: string): ConfigFingerprint | null {
+  const trimmed = line.replace(/\r$/, '').trim()
+  if (!trimmed || !FINGERPRINT_LINE.test(trimmed)) {
+    return null
+  }
+
+  const parts = trimmed.split('|').map((part) => part.trim())
+  if (parts.length < 2) {
+    return null
+  }
+
+  const token = parts[0].toUpperCase()
+  const sha256 =
+    token === 'MISSING' || token === 'DENIED' ? null : parts[0].toLowerCase()
+  const path = parts[1]
+  const size = parts[2] ? Number(parts[2]) : null
+
+  return {
+    path,
+    kind: inferKind(path),
+    sha256,
+    sizeBytes: Number.isFinite(size) ? size : null,
+    readable: sha256 !== null,
+  }
+}
+
 export function parseConfigFingerprints(raw: string): ConfigFingerprint[] {
   const section = extractOpsSection(raw, 'CONFIG_HASH')
+  const scanText = section || raw
   const items: ConfigFingerprint[] = []
+  const seen = new Set<string>()
 
-  for (const line of section.split('\n')) {
-    const trimmed = line.trim()
-    if (!trimmed) {
+  for (const line of scanText.split('\n')) {
+    const fp = parseFingerprintLine(line)
+    if (!fp || seen.has(fp.path)) {
       continue
     }
 
-    const parts = trimmed.split('|')
-    if (parts.length < 2) {
-      continue
-    }
-
-    const sha256 = parts[0] === 'MISSING' ? null : parts[0]
-    const path = parts[1]
-    const size = parts[2] ? Number(parts[2]) : null
-
-    items.push({
-      path,
-      kind: inferKind(path),
-      sha256,
-      sizeBytes: Number.isFinite(size) ? size : null,
-      readable: sha256 !== null,
-    })
+    seen.add(fp.path)
+    items.push(fp)
   }
 
   return items

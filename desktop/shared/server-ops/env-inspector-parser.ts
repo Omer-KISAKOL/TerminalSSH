@@ -20,29 +20,76 @@ export interface EnvironmentInspectorSnapshot {
 }
 
 const REDACTED_VALUE_PATTERN = /^\s*[A-Za-z_][A-Za-z0-9_]*\s*=/
+const ENV_PATH_PATTERN = /^\/[^\s']+\.env[\w.-]*$/
+
+export function isValidEnvFilePath(path: string): boolean {
+  const trimmed = path.replace(/\r$/, '').trim()
+  if (!ENV_PATH_PATTERN.test(trimmed)) {
+    return false
+  }
+
+  if (/find\s+\//.test(trimmed) || trimmed.includes('/bin/sh')) {
+    return false
+  }
+
+  return true
+}
+
+export function parseEnvFilePaths(raw: string): string[] {
+  const listing = extractOpsSection(raw, 'ENV_FILES')
+  const paths = new Set<string>()
+
+  for (const line of listing.split('\n')) {
+    const trimmed = line.replace(/\r$/, '').trim()
+    if (isValidEnvFilePath(trimmed)) {
+      paths.add(trimmed)
+    }
+  }
+
+  for (const line of raw.split('\n')) {
+    const trimmed = line.replace(/\r$/, '').trim()
+    if (isValidEnvFilePath(trimmed)) {
+      paths.add(trimmed)
+    }
+  }
+
+  return [...paths]
+}
+
+function parseKeysForPath(raw: string, filePath: string): string[] {
+  const block = extractOpsSection(raw, `ENVKEYS:${filePath}`)
+  const keySet = new Set<string>()
+
+  for (const line of block.split('\n')) {
+    const trimmed = line.replace(/\r$/, '').trim()
+    if (/^[A-Za-z_][A-Za-z0-9_]*$/.test(trimmed)) {
+      keySet.add(trimmed)
+    }
+  }
+
+  return [...keySet]
+}
 
 export function parseEnvInspectorOutput(
   host: string,
   raw: string,
-  warnings: string[] = [],
+  extraWarnings: string[] = [],
 ): EnvironmentInspectorSnapshot {
-  const listing = extractOpsSection(raw, 'ENV_FILES')
-    .split('\n')
-    .map((line) => line.trim())
-    .filter(Boolean)
-
+  const warnings = [...extraWarnings]
+  const paths = parseEnvFilePaths(raw)
   const files: EnvFileSummary[] = []
 
-  for (const filePath of listing) {
+  for (const filePath of paths) {
     const block = extractOpsSection(raw, `ENVKEYS:${filePath}`)
-    const keys = block
-      .split('\n')
-      .map((line) => line.trim())
-      .filter((line) => /^[A-Za-z_][A-Za-z0-9_]*$/.test(line))
+    const keys = parseKeysForPath(raw, filePath)
 
     for (const line of block.split('\n')) {
-      if (REDACTED_VALUE_PATTERN.test(line) && !line.match(/^KEY:/)) {
-        warnings.push('Uzak çıktıda değer sızıntısı filtrelendi; yalnızca anahtar adları kullanılıyor.')
+      if (REDACTED_VALUE_PATTERN.test(line) && !/^KEY:/.test(line)) {
+        if (!warnings.includes('Uzak çıktıda değer sızıntısı filtrelendi; yalnızca anahtar adları kullanılıyor.')) {
+          warnings.push(
+            'Uzak çıktıda değer sızıntısı filtrelendi; yalnızca anahtar adları kullanılıyor.',
+          )
+        }
         break
       }
     }
@@ -71,6 +118,8 @@ export function parseEnvInspectorOutput(
 
   if (files.length === 0) {
     warnings.push('.env dosyası bulunamadı veya okunamadı.')
+  } else if (files.every((file) => file.keys.length === 0)) {
+    warnings.push('Dosyalar bulundu ama anahtar okunamadı; dosya izinlerini kontrol edin.')
   }
 
   return {
@@ -78,10 +127,10 @@ export function parseEnvInspectorOutput(
     host,
     files,
     mismatches: mismatches.slice(0, 40),
-    warnings: [...warnings],
+    warnings,
   }
 }
 
 export function envInspectorHasPayload(snapshot: EnvironmentInspectorSnapshot): boolean {
-  return snapshot.files.length > 0 || snapshot.mismatches.length > 0
+  return snapshot.files.some((file) => isValidEnvFilePath(file.path))
 }

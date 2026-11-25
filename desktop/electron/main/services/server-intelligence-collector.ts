@@ -1,4 +1,5 @@
 import type { ServerIntelligenceSnapshot, ServerDiskSnapshot, ServerMemorySnapshot } from '@shared/contracts/server-ops'
+import { extractOpsSection } from '@shared/server-ops/section'
 
 const INTELLIGENCE_SHELL = `
 echo '===META==='
@@ -35,19 +36,6 @@ export function intelligenceHasPayload(snapshot: ServerIntelligenceSnapshot): bo
       snapshot.detectedTools.length > 0 ||
       snapshot.runningServices.length > 0,
   )
-}
-
-function section(raw: string, name: string): string {
-  const marker = `===${name}===`
-  const start = raw.indexOf(marker)
-
-  if (start < 0) {
-    return ''
-  }
-
-  const from = start + marker.length
-  const next = raw.indexOf('===', from)
-  return (next < 0 ? raw.slice(from) : raw.slice(from, next)).trim()
 }
 
 function parseOsRelease(sectionText: string): { osName: string | null; osVersion: string | null } {
@@ -148,27 +136,33 @@ function parseUptime(sectionText: string): { uptime: string | null; loadAverage:
 }
 
 export function parseIntelligenceOutput(host: string, raw: string, warnings: string[] = []): ServerIntelligenceSnapshot {
-  const meta = section(raw, 'META')
+  const meta = extractOpsSection(raw, 'META')
   const metaLines = meta.split('\n').map((line) => line.trim()).filter(Boolean)
   const kernel = metaLines[0] ?? null
   const hostname = metaLines[1] ?? null
 
-  const uptimeSection = parseUptime(section(raw, 'UPTIME'))
-  const memory = parseMemory(section(raw, 'MEM'))
-  const disks = parseDisks(section(raw, 'DISK'))
-  const os = parseOsRelease(section(raw, 'OS'))
+  const uptimeSection = parseUptime(extractOpsSection(raw, 'UPTIME'))
+  const memory = parseMemory(extractOpsSection(raw, 'MEM'))
+  const disks = parseDisks(extractOpsSection(raw, 'DISK'))
+  const os = parseOsRelease(extractOpsSection(raw, 'OS'))
 
-  const runningServices = section(raw, 'SERVICES')
+  const runningServices = extractOpsSection(raw, 'SERVICES')
     .split('\n')
     .map((line) => line.trim())
     .filter(Boolean)
 
-  const detectedTools = section(raw, 'TOOLS')
+  const detectedTools = extractOpsSection(raw, 'TOOLS')
     .split('\n')
     .map((line) => line.trim())
     .filter(Boolean)
 
-  if (!meta && !uptimeSection.uptime) {
+  const hasCoreMetrics =
+    Boolean(hostname || kernel || uptimeSection.uptime || memory?.summary || memory?.totalBytes) ||
+    disks.length > 0 ||
+    detectedTools.length > 0 ||
+    runningServices.length > 0
+
+  if (!hasCoreMetrics) {
     warnings.push('Sistem çıktısı sınırlı; sunucu komutları kısıtlı olabilir.')
   }
 

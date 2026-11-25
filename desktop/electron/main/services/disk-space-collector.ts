@@ -2,25 +2,12 @@ const DISK_SHELL = `
 echo '===MOUNTS==='
 df -h -P -x tmpfs -x devtmpfs 2>/dev/null | head -n 12
 echo '===TOP_DIRS==='
-for p in /var /home /usr /opt /tmp /srv; do
-  [ -d "$p" ] || continue
-  du -x -sk --max-depth=1 "$p" 2>/dev/null
-done | awk 'NF>=2 {print ($1 * 1024) "\\t" $2}' | sort -n | tail -n 22
+du -sk /var /home /usr /opt /tmp /srv /var/log /var/cache 2>/dev/null | awk '{print ($1 * 1024) "\\t" $2}'
 echo '===LARGE_FILES==='
-find /var /home /opt /tmp /srv -xdev -type f -size +48M 2>/dev/null | head -n 25 | while read -r f; do
-  sz=$(stat -c%s "$f" 2>/dev/null || wc -c <"$f" 2>/dev/null || echo 0)
-  echo "$sz|$f|file"
-done | sort -t'|' -k1 -n | tail -n 18
+find /var /home /opt /tmp /srv -xdev -type f -size +32M -printf '%s|%p|file\\n' 2>/dev/null | head -n 18
 echo '===CLUTTER==='
-du -x -sk --max-depth=1 /var/log /var/cache 2>/dev/null | awk 'NF>=2 {print ($1 * 1024) "\\t" $2}'
-find /var/log -xdev -type f \\( -name '*.log' -o -name '*.gz' \\) -size +8M 2>/dev/null | head -n 15 | while read -r f; do
-  sz=$(stat -c%s "$f" 2>/dev/null || echo 0)
-  echo "$sz|$f|log"
-done
-find /var/cache -xdev -type f -size +5M 2>/dev/null | head -n 15 | while read -r f; do
-  sz=$(stat -c%s "$f" 2>/dev/null || echo 0)
-  echo "$sz|$f|cache"
-done
+find /var/log /var/cache -xdev -type f \\( -name '*.log' -o -name '*.gz' \\) -size +4M -printf '%s|%p|log\\n' 2>/dev/null | head -n 12
+find /var/cache -xdev -type f -size +2M -printf '%s|%p|cache\\n' 2>/dev/null | head -n 12
 `.trim()
 
 export function buildDiskAnalyzerCommand(): string {

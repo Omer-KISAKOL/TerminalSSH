@@ -144,14 +144,23 @@ export const serverOpsService = {
       warnings.push(message)
     }
 
-    let snapshot = parseIntelligenceOutput(meta.host, raw, warnings)
+    let snapshot = parseIntelligenceOutput(meta.host, raw, [...warnings])
 
     if (!intelligenceHasPayload(snapshot)) {
-      warnings.push('Birleşik tarama boş döndü; tekil SSH komutları deneniyor.')
       const fallbackRaw = await collectIntelligenceFallback(webContentsId, sessionId)
       if (fallbackRaw.trim().length > 0) {
+        const fallbackWarnings: string[] = []
         raw = fallbackRaw
-        snapshot = parseIntelligenceOutput(meta.host, raw, warnings)
+        snapshot = parseIntelligenceOutput(meta.host, raw, fallbackWarnings)
+        if (intelligenceHasPayload(snapshot)) {
+          snapshot = { ...snapshot, warnings: fallbackWarnings }
+        } else {
+          warnings.push('Birleşik tarama boş döndü; tekil SSH komutları da yetersiz kaldı.')
+          snapshot = { ...snapshot, warnings: [...warnings, ...fallbackWarnings] }
+        }
+      } else {
+        warnings.push('Birleşik tarama boş döndü; tekil SSH komutları denenemedi.')
+        snapshot = { ...snapshot, warnings: [...snapshot.warnings, ...warnings] }
       }
     }
 

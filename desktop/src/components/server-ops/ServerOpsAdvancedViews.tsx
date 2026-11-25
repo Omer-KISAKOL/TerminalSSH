@@ -120,6 +120,24 @@ export function DiskSpaceAnalyzerView({
       >
         {snapshot ? (
           <>
+            {snapshot.mounts.length > 0 ? (
+              <section className="space-y-1.5">
+                <p className="text-xs font-medium text-text-muted">{t('serverOps.disks')}</p>
+                {snapshot.mounts.map((mount) => (
+                  <div
+                    key={`${mount.mountpoint}-${mount.filesystem}`}
+                    className="min-w-0 rounded-lg border border-border px-2 py-1.5 text-xs"
+                  >
+                    <p className="truncate font-medium text-text" title={mount.mountpoint}>
+                      {mount.mountpoint}
+                    </p>
+                    <p className="text-text-muted">
+                      {mount.used} / {mount.size} · {mount.usePercent}
+                    </p>
+                  </div>
+                ))}
+              </section>
+            ) : null}
             <section className="space-y-2">
               <p className="text-xs font-medium text-text-muted">{t('serverOps.diskTopDirs')}</p>
               {snapshot.topDirectories.map((item) => (
@@ -208,7 +226,8 @@ export function ConfigDriftView({
             <ul className="mt-2 space-y-1 text-[11px] text-text-muted">
               {snapshot.fingerprints.map((fp) => (
                 <li key={fp.path} className="truncate" title={fp.path}>
-                  {fp.readable ? 'ok' : '—'} · {fp.path}
+                  {fp.readable ? 'ok' : fp.sha256 === null && fp.sizeBytes === 0 ? 'yetki yok / yok' : '—'} ·{' '}
+                  {fp.path}
                 </li>
               ))}
             </ul>
@@ -283,8 +302,24 @@ export function EndpointMonitorView({
     if (status === 'degraded') {
       return 'text-status-warning'
     }
+    if (status === 'listening') {
+      return 'text-text-muted'
+    }
+    if (status === 'unknown') {
+      return 'text-status-warning'
+    }
     return 'text-status-error'
   }
+
+  const statusLabel = (status: string) => {
+    if (status === 'listening') {
+      return t('serverOps.endpointListening')
+    }
+    return status
+  }
+
+  const httpProbes = snapshot?.probes.filter((probe) => probe.kind === 'http') ?? []
+  const listenerProbes = snapshot?.probes.filter((probe) => probe.kind === 'listener') ?? []
 
   return (
     <ServerOpsModuleFrame
@@ -305,19 +340,50 @@ export function EndpointMonitorView({
         warnings={snapshot?.warnings}
       >
         {snapshot ? (
-          <ul className="space-y-1.5">
-            {snapshot.probes.map((probe) => (
-              <li key={probe.url} className="min-w-0 rounded border border-border px-2 py-1.5 text-xs">
-                <p className={`font-semibold ${statusClass(probe.status)}`}>{probe.status}</p>
-                <p className="truncate text-text" title={probe.url}>
-                  {probe.url}
+          <div className="space-y-3">
+            {httpProbes.length > 0 ? (
+              <div className="space-y-1.5">
+                <p className="text-[11px] font-medium uppercase tracking-wide text-text-muted">
+                  {t('serverOps.endpointHttpSection')}
                 </p>
-                <p className="text-text-muted">
-                  {probe.httpStatus ?? '—'} · {probe.responseMs != null ? `${probe.responseMs.toFixed(0)} ms` : '—'}
+                <ul className="space-y-1.5">
+                  {httpProbes.map((probe) => (
+                    <li key={probe.url} className="min-w-0 rounded border border-border px-2 py-1.5 text-xs">
+                      <p className={`font-semibold ${statusClass(probe.status)}`}>{statusLabel(probe.status)}</p>
+                      <p className="truncate text-text" title={probe.url}>
+                        {probe.label ? `${probe.label} · ` : ''}
+                        {probe.url}
+                      </p>
+                      <p className="text-text-muted">
+                        HTTP {probe.httpStatus ?? '—'} ·{' '}
+                        {probe.responseMs != null ? `${probe.responseMs.toFixed(0)} ms` : '—'}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <p className="text-xs text-text-muted">{t('serverOps.endpointHttpMissing')}</p>
+            )}
+            {listenerProbes.length > 0 ? (
+              <div className="space-y-1.5">
+                <p className="text-[11px] font-medium uppercase tracking-wide text-text-muted">
+                  {t('serverOps.endpointListenersSection')}
                 </p>
-              </li>
-            ))}
-          </ul>
+                <ul className="space-y-1.5">
+                  {listenerProbes.map((probe) => (
+                    <li key={probe.url} className="min-w-0 rounded border border-border px-2 py-1.5 text-xs">
+                      <p className={`font-semibold ${statusClass(probe.status)}`}>{statusLabel(probe.status)}</p>
+                      <p className="truncate text-text" title={probe.url}>
+                        {probe.label ?? probe.url}
+                      </p>
+                      <p className="text-text-muted">{probe.url}</p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+          </div>
         ) : null}
       </ScanContent>
     </ServerOpsModuleFrame>

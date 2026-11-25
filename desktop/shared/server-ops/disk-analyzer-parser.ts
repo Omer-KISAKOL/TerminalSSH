@@ -68,7 +68,7 @@ function parseDuLines(sectionText: string, kind: DiskUsageKind = 'directory'): D
 
   for (const line of sectionText.split('\n')) {
     const trimmed = line.trim()
-    const match = trimmed.match(/^(\d+)\s+(.+)$/)
+    const match = trimmed.match(/^(\d+)\s+(.+)$/) ?? trimmed.match(/^(\d+)\t(.+)$/)
     if (!match) {
       continue
     }
@@ -119,6 +119,7 @@ function parseSizePathLines(sectionText: string): DiskUsageItem[] {
 
 export function diskAnalyzerHasPayload(snapshot: DiskSpaceAnalyzerSnapshot): boolean {
   return (
+    snapshot.mounts.length > 0 ||
     snapshot.topDirectories.length > 0 ||
     snapshot.largeFiles.length > 0 ||
     snapshot.clutterItems.length > 0
