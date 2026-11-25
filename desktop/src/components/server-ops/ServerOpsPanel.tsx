@@ -1,15 +1,37 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import type { ContextCommandSuggestion } from '@shared/contracts/server-ops'
 
 import { useServerOps } from '@/hooks/useServerOps'
+import { useServerOpsFeatures } from '@/hooks/useServerOpsFeatures'
+import { useServerOpsModules } from '@/hooks/useServerOpsModules'
 import { useLocale } from '@/hooks/useLocale'
 
+import {
+  ConfigDriftView,
+  DiskSpaceAnalyzerView,
+  EndpointMonitorView,
+  EnvironmentInspectorView,
+  IncidentAnalyzerView,
+} from './ServerOpsAdvancedViews'
 import { ContextSuggestionsView } from './ContextSuggestionsView'
+import { DependencyIntelligenceView } from './DependencyIntelligenceView'
 import { OperationalTimelineView } from './OperationalTimelineView'
+import { ProcessExplorerView } from './ProcessExplorerView'
 import { ServerIntelligenceView } from './ServerIntelligenceView'
+import { ServerOpsTabNav } from './ServerOpsTabNav'
 
-type ServerOpsTab = 'intelligence' | 'timeline' | 'context'
+export type ServerOpsTab =
+  | 'intelligence'
+  | 'timeline'
+  | 'context'
+  | 'dependencies'
+  | 'processes'
+  | 'disk'
+  | 'drift'
+  | 'env'
+  | 'endpoints'
+  | 'incident'
 
 type ServerOpsPanelProps = {
   sessionId: string | null
@@ -18,10 +40,6 @@ type ServerOpsPanelProps = {
   onPasteCommand: (command: string) => void
 }
 
-const TAB_CLASS_ACTIVE =
-  'border-accent bg-accent/15 text-text shadow-[inset_0_0_0_1px_rgba(var(--color-accent-rgb),0.25)]'
-const TAB_CLASS_IDLE = 'border-transparent text-text-muted hover:bg-surface-muted hover:text-text'
-
 export function ServerOpsPanel({
   sessionId,
   connected,
@@ -29,26 +47,111 @@ export function ServerOpsPanel({
   onPasteCommand,
 }: ServerOpsPanelProps) {
   const { t } = useLocale()
+  const features = useServerOpsFeatures()
   const [tab, setTab] = useState<ServerOpsTab>('intelligence')
   const ops = useServerOps(sessionId, connected)
+  const modules = useServerOpsModules(sessionId, connected)
+
+  const tabs = useMemo(() => {
+    const items: ServerOpsTab[] = []
+    if (features.intelligence) items.push('intelligence')
+    if (features.timeline) items.push('timeline')
+    if (features.context) items.push('context')
+    if (features.dependencyIntelligence) items.push('dependencies')
+    if (features.processExplorer) items.push('processes')
+    if (features.diskSpaceAnalyzer) items.push('disk')
+    if (features.configDriftDetector) items.push('drift')
+    if (features.environmentInspector) items.push('env')
+    if (features.endpointMonitor) items.push('endpoints')
+    if (features.incidentAnalyzer) items.push('incident')
+    return items
+  }, [features])
 
   useEffect(() => {
-    if (
-      tab === 'intelligence' &&
-      connected &&
-      sessionId &&
-      !ops.snapshot &&
-      !ops.isCollecting &&
-      !ops.isLoading
-    ) {
+    modules.reset()
+  }, [modules.reset, sessionId])
+
+  useEffect(() => {
+    if (tabs.length === 0) {
+      return
+    }
+    if (!tabs.includes(tab)) {
+      setTab(tabs[0])
+    }
+  }, [tab, tabs])
+
+  useEffect(() => {
+    if (tab === 'intelligence' && connected && sessionId && !ops.snapshot && !ops.isCollecting && !ops.isLoading) {
       void ops.collectIntelligence()
+    }
+  }, [connected, ops, sessionId, tab])
+
+  useEffect(() => {
+    if (tab === 'dependencies' && connected && sessionId && !ops.dependencySnapshot && !ops.isCollectingDependencies) {
+      void ops.collectDependencies()
+    }
+  }, [connected, ops, sessionId, tab])
+
+  useEffect(() => {
+    if (tab === 'processes' && connected && sessionId && !ops.processSnapshot && !ops.isCollectingProcesses) {
+      void ops.collectProcesses()
+    }
+  }, [connected, ops, sessionId, tab])
+
+  useEffect(() => {
+    if (tab === 'disk' && connected && sessionId && !modules.disk && !modules.collecting.disk) {
+      void modules.collectDisk()
     }
   }, [
     connected,
-    ops.collectIntelligence,
-    ops.isCollecting,
-    ops.isLoading,
-    ops.snapshot,
+    modules.collectDisk,
+    modules.collecting.disk,
+    modules.disk,
+    sessionId,
+    tab,
+  ])
+
+  useEffect(() => {
+    if (tab === 'drift' && connected && sessionId && !modules.drift && !modules.collecting.drift) {
+      void modules.collectDrift()
+    }
+  }, [
+    connected,
+    modules.collectDrift,
+    modules.collecting.drift,
+    modules.drift,
+    sessionId,
+    tab,
+  ])
+
+  useEffect(() => {
+    if (tab === 'env' && connected && sessionId && !modules.env && !modules.collecting.env) {
+      void modules.collectEnv()
+    }
+  }, [connected, modules.collectEnv, modules.collecting.env, modules.env, sessionId, tab])
+
+  useEffect(() => {
+    if (tab === 'endpoints' && connected && sessionId && !modules.endpoints && !modules.collecting.endpoints) {
+      void modules.collectEndpoints()
+    }
+  }, [
+    connected,
+    modules.collectEndpoints,
+    modules.collecting.endpoints,
+    modules.endpoints,
+    sessionId,
+    tab,
+  ])
+
+  useEffect(() => {
+    if (tab === 'incident' && connected && sessionId && !modules.incident && !modules.collecting.incident) {
+      void modules.collectIncident()
+    }
+  }, [
+    connected,
+    modules.collectIncident,
+    modules.collecting.incident,
+    modules.incident,
     sessionId,
     tab,
   ])
@@ -59,8 +162,10 @@ export function ServerOpsPanel({
   }
 
   const rootClass = embedded
-    ? 'flex min-h-0 w-full flex-1 flex-col overflow-hidden bg-surface-raised'
-    : 'flex w-80 min-h-0 shrink-0 flex-col border-l border-border bg-surface lg:w-96'
+    ? 'flex min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden bg-surface-raised'
+    : 'flex w-80 min-h-0 min-w-0 shrink-0 flex-col border-l border-border bg-surface lg:w-96'
+
+  const panelError = ops.error ?? modules.error
 
   if (!connected || !sessionId) {
     return (
@@ -79,44 +184,33 @@ export function ServerOpsPanel({
     <aside className={rootClass}>
       <div className="shrink-0 border-b border-border px-3 py-2.5">
         {!embedded ? (
-          <h2 className="px-1 text-sm font-semibold text-text">{t('serverOps.panelTitle')}</h2>
+          <h2 className="truncate px-1 text-sm font-semibold text-text">{t('serverOps.panelTitle')}</h2>
         ) : null}
         {ops.context ? (
-          <p
-            className={
-              embedded
-                ? 'truncate px-1 text-sm font-medium text-text'
-                : 'mt-0.5 truncate px-1 text-xs text-text-muted'
-            }
-          >
+          <p className="truncate px-1 text-sm font-medium text-text" title={ops.context.host}>
             {ops.context.host}
           </p>
         ) : null}
       </div>
 
-      <nav className="grid grid-cols-3 gap-1 border-b border-border px-2 py-2" aria-label={t('serverOps.panelTitle')}>
-        {(['intelligence', 'timeline', 'context'] as const).map((key) => (
-          <button
-            key={key}
-            type="button"
-            className={`rounded-lg border px-2 py-1.5 text-[11px] font-medium leading-tight transition ${
-              tab === key ? TAB_CLASS_ACTIVE : TAB_CLASS_IDLE
-            }`}
-            onClick={() => setTab(key)}
-          >
-            {t(`serverOps.tabs.${key}`)}
-          </button>
-        ))}
-      </nav>
+      <ServerOpsTabNav
+        tabs={tabs}
+        active={tab}
+        onChange={setTab}
+        labelKey={(key) => t(`serverOps.tabs.${key}`)}
+      />
 
-      <div className="scroll-thin flex min-h-0 flex-1 flex-col overflow-y-auto px-3 py-3">
-        {ops.error ? (
+      <div className="scroll-thin flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden px-3 py-3">
+        {tabs.length === 0 ? (
+          <p className="text-sm text-text-muted">{t('serverOps.modulesDisabled')}</p>
+        ) : null}
+        {panelError ? (
           <p className="mb-2 rounded-lg border border-status-error/35 bg-status-error/10 px-2 py-1.5 text-xs text-status-error">
-            {ops.error}
+            {panelError}
           </p>
         ) : null}
 
-        {tab === 'intelligence' ? (
+        {tab === 'intelligence' && features.intelligence ? (
           <ServerIntelligenceView
             snapshot={ops.snapshot}
             isCollecting={ops.isCollecting}
@@ -124,7 +218,7 @@ export function ServerOpsPanel({
           />
         ) : null}
 
-        {tab === 'timeline' ? (
+        {tab === 'timeline' && features.timeline ? (
           <OperationalTimelineView
             events={ops.timeline}
             retentionDays={ops.retentionDays}
@@ -133,10 +227,64 @@ export function ServerOpsPanel({
           />
         ) : null}
 
-        {tab === 'context' ? (
-          <ContextSuggestionsView
-            suggestions={ops.suggestions}
-            onApprovePaste={handleApprovePaste}
+        {tab === 'context' && features.context ? (
+          <ContextSuggestionsView suggestions={ops.suggestions} onApprovePaste={handleApprovePaste} />
+        ) : null}
+
+        {tab === 'dependencies' && features.dependencyIntelligence ? (
+          <DependencyIntelligenceView
+            snapshot={ops.dependencySnapshot}
+            isCollecting={ops.isCollectingDependencies}
+            onCollect={() => void ops.collectDependencies()}
+          />
+        ) : null}
+
+        {tab === 'processes' && features.processExplorer ? (
+          <ProcessExplorerView
+            snapshot={ops.processSnapshot}
+            isCollecting={ops.isCollectingProcesses}
+            onCollect={() => void ops.collectProcesses()}
+          />
+        ) : null}
+
+        {tab === 'disk' && features.diskSpaceAnalyzer ? (
+          <DiskSpaceAnalyzerView
+            snapshot={modules.disk}
+            isCollecting={modules.collecting.disk}
+            onCollect={() => void modules.collectDisk()}
+          />
+        ) : null}
+
+        {tab === 'drift' && features.configDriftDetector ? (
+          <ConfigDriftView
+            snapshot={modules.drift}
+            isCollecting={modules.collecting.drift}
+            onCollect={() => void modules.collectDrift()}
+            onResetBaseline={() => void modules.collectDrift(true)}
+          />
+        ) : null}
+
+        {tab === 'env' && features.environmentInspector ? (
+          <EnvironmentInspectorView
+            snapshot={modules.env}
+            isCollecting={modules.collecting.env}
+            onCollect={() => void modules.collectEnv()}
+          />
+        ) : null}
+
+        {tab === 'endpoints' && features.endpointMonitor ? (
+          <EndpointMonitorView
+            snapshot={modules.endpoints}
+            isCollecting={modules.collecting.endpoints}
+            onCollect={() => void modules.collectEndpoints()}
+          />
+        ) : null}
+
+        {tab === 'incident' && features.incidentAnalyzer ? (
+          <IncidentAnalyzerView
+            snapshot={modules.incident}
+            isCollecting={modules.collecting.incident}
+            onCollect={() => void modules.collectIncident()}
           />
         ) : null}
       </div>

@@ -45,6 +45,21 @@ export function assertListTimelineRequest(input: unknown): { serverKey: string; 
   return { serverKey, limit }
 }
 
+export function assertCollectConfigDriftRequest(input: unknown): {
+  sessionId: string
+  resetBaseline?: boolean
+} {
+  if (!input || typeof input !== 'object') {
+    throw new IpcValidationError('Geçersiz istek.')
+  }
+
+  const record = input as Record<string, unknown>
+  const sessionId = assertNonEmptyString(record.sessionId, 'sessionId')
+  const resetBaseline = record.resetBaseline === true ? true : undefined
+
+  return { sessionId, resetBaseline }
+}
+
 export function assertRecordSuggestionRequest(input: unknown): {
   sessionId: string
   label: string

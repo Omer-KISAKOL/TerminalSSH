@@ -24,7 +24,14 @@ import type {
 } from '@shared/contracts/sftp'
 import type { ReleaseCheckResponse } from '@shared/contracts/release'
 import type {
+  CollectConfigDriftResponse,
+  CollectDependencyIntelligenceResponse,
+  CollectDiskSpaceResponse,
+  CollectEndpointMonitorResponse,
+  CollectEnvInspectorResponse,
+  CollectIncidentAnalyzerResponse,
   CollectIntelligenceResponse,
+  CollectProcessExplorerResponse,
   ListTimelineRequest,
   ListTimelineResponse,
   ServerOpsContextResponse,
@@ -105,6 +112,13 @@ export interface DesktopApi {
   serverOps: {
     getContext(sessionId: string): Promise<ServerOpsContextResponse>
     collectIntelligence(sessionId: string): Promise<CollectIntelligenceResponse>
+    collectDependencies(sessionId: string): Promise<CollectDependencyIntelligenceResponse>
+    collectProcesses(sessionId: string): Promise<CollectProcessExplorerResponse>
+    collectDiskSpace(sessionId: string): Promise<CollectDiskSpaceResponse>
+    collectConfigDrift(sessionId: string, resetBaseline?: boolean): Promise<CollectConfigDriftResponse>
+    collectEnvInspector(sessionId: string): Promise<CollectEnvInspectorResponse>
+    collectEndpointMonitor(sessionId: string): Promise<CollectEndpointMonitorResponse>
+    collectIncidentAnalyzer(sessionId: string): Promise<CollectIncidentAnalyzerResponse>
     listTimeline(input: ListTimelineRequest): Promise<ListTimelineResponse>
     purgeTimeline(): Promise<{ ok: boolean }>
     recordSuggestion(input: {

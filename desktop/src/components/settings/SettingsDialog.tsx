@@ -8,6 +8,7 @@ import { useLocale } from '@/hooks/useLocale'
 import { AppearanceThemeSection } from './AppearanceThemeSection'
 import { LanguageSection } from './LanguageSection'
 import { ProfileExportSection } from './ProfileExportSection'
+import { ServerOpsFeaturesSection } from './ServerOpsFeaturesSection'
 
 type SettingsDialogProps = {
   open: boolean
@@ -15,7 +16,7 @@ type SettingsDialogProps = {
   onProfilesChanged?: () => void
 }
 
-type SettingsSectionId = 'language' | 'profiles' | 'snippets' | 'themes'
+type SettingsSectionId = 'language' | 'profiles' | 'snippets' | 'themes' | 'serverTools'
 
 export function SettingsDialog({ open, onClose, onProfilesChanged }: SettingsDialogProps) {
   const { t } = useLocale()
@@ -34,6 +35,7 @@ export function SettingsDialog({ open, onClose, onProfilesChanged }: SettingsDia
         { id: 'profiles' as const, label: t('settings.profilesTitle') },
         { id: 'snippets' as const, label: t('settings.snippetsTitle') },
         { id: 'themes' as const, label: t('settings.themes') },
+        { id: 'serverTools' as const, label: t('settings.serverToolsTitle') },
       ] satisfies { id: SettingsSectionId; label: string }[],
     [t],
   )
@@ -48,6 +50,8 @@ export function SettingsDialog({ open, onClose, onProfilesChanged }: SettingsDia
         return { title: t('settings.snippetsTitle'), help: t('settings.snippetsHelp') }
       case 'themes':
         return { title: t('settings.themes'), help: null }
+      case 'serverTools':
+        return { title: t('settings.serverToolsTitle'), help: t('settings.serverToolsHelp') }
     }
   }, [section, t])
 
@@ -126,6 +130,7 @@ export function SettingsDialog({ open, onClose, onProfilesChanged }: SettingsDia
                 </div>
               ) : null}
               {section === 'themes' ? <AppearanceThemeSection panelMode /> : null}
+              {section === 'serverTools' ? <ServerOpsFeaturesSection panelMode /> : null}
             </div>
           </div>
         </div>
