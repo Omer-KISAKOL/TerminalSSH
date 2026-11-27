@@ -1,5 +1,4 @@
 import type {
-  CollectDependencyIntelligenceResponse,
   CollectIntelligenceResponse,
   CollectProcessExplorerResponse,
   ListTimelineResponse,
@@ -15,11 +14,6 @@ import {
 } from './server-intelligence-collector'
 import { operationalTimelineStore } from './operational-timeline-store'
 import {
-  buildDependencyCommand,
-  dependencyHasPayload,
-  parseDependencyOutput,
-} from './dependency-intelligence-collector'
-import {
   buildProcessExplorerCommand,
   parseProcessExplorerOutput,
   processExplorerHasPayload,
@@ -27,7 +21,6 @@ import {
 import {
   clearCachedIntelligence,
   getCachedIntelligence,
-  setCachedDependencies,
   setCachedIntelligence,
   setCachedProcesses,
 } from './server-intelligence-cache'
@@ -197,68 +190,6 @@ export const serverOpsService = {
 
   clearSessionCache(sessionId: string): void {
     clearCachedIntelligence(sessionId)
-  },
-
-  async collectDependencies(
-    webContentsId: number,
-    sessionId: string,
-  ): Promise<CollectDependencyIntelligenceResponse> {
-    const meta = sshSessionManager.getSessionMeta(webContentsId, sessionId)
-
-    if (!meta) {
-      throw new Error('SSH oturumu bulunamadı.')
-    }
-
-    const warnings: string[] = []
-    let raw = ''
-
-    try {
-      const result = await sshSessionManager.exec(
-        webContentsId,
-        sessionId,
-        buildDependencyCommand(),
-        20_000,
-      )
-      raw = `${result.stdout}\n${result.stderr}`.trim()
-    } catch (error) {
-      warnings.push(error instanceof Error ? error.message : 'Bağımlılık taraması başarısız.')
-    }
-
-    let snapshot = parseDependencyOutput(meta.host, raw, warnings)
-
-    if (!dependencyHasPayload(snapshot)) {
-      const listen = await execRemoteLine(
-        webContentsId,
-        sessionId,
-        'ss -tlnp 2>/dev/null | head -n 40',
-      )
-      const systemd = await execRemoteLine(
-        webContentsId,
-        sessionId,
-        "systemctl list-units --type=service --state=running --no-pager --no-legend 2>/dev/null | awk '{print $1}' | head -n 30",
-      )
-      raw = ['===LISTEN===', listen, '===SYSTEMD===', systemd].join('\n')
-      snapshot = parseDependencyOutput(meta.host, raw, warnings)
-    }
-
-    if (!dependencyHasPayload(snapshot)) {
-      warnings.push('Bağımlılık grafiği oluşturulamadı. SSH exec veya araçlar (ss, docker) kullanılamıyor olabilir.')
-      snapshot = { ...snapshot, warnings: [...snapshot.warnings, ...warnings] }
-    }
-
-    setCachedDependencies(sessionId, snapshot)
-
-    operationalTimelineStore.append({
-      serverKey: meta.serverKey,
-      host: meta.host,
-      profileId: meta.profileId,
-      profileName: meta.profileName,
-      type: 'intelligence',
-      summary: 'Bağımlılık haritası yenilendi',
-      detail: `${snapshot.nodes.length} düğüm`,
-    })
-
-    return { snapshot }
   },
 
   async collectProcesses(

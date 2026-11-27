@@ -93,39 +93,14 @@ export interface ServerOpsContextResponse {
   suggestions: ContextCommandSuggestion[]
 }
 
-export type { DependencyIntelligenceSnapshot, DependencyNode, DependencyEdge } from '../server-ops/dependency-parser'
 export type { ProcessExplorerSnapshot, ProcessTreeNode } from '../server-ops/process-parser'
-
-export interface CollectDependencyIntelligenceResponse {
-  snapshot: import('../server-ops/dependency-parser').DependencyIntelligenceSnapshot
-}
 
 export interface CollectProcessExplorerResponse {
   snapshot: import('../server-ops/process-parser').ProcessExplorerSnapshot
 }
 
-export type { DiskSpaceAnalyzerSnapshot, DiskUsageItem } from '../server-ops/disk-analyzer-parser'
-export type { ConfigDriftSnapshot, ConfigDriftChange } from '../server-ops/config-drift-parser'
-export type { EnvironmentInspectorSnapshot, EnvFileSummary } from '../server-ops/env-inspector-parser'
 export type { EndpointMonitorSnapshot, EndpointProbeResult } from '../server-ops/endpoint-monitor-parser'
 export type { IncidentAnalyzerSnapshot, IncidentSignal } from '../server-ops/incident-analyzer-parser'
-
-export interface CollectDiskSpaceResponse {
-  snapshot: import('../server-ops/disk-analyzer-parser').DiskSpaceAnalyzerSnapshot
-}
-
-export interface CollectConfigDriftResponse {
-  snapshot: import('../server-ops/config-drift-parser').ConfigDriftSnapshot
-}
-
-export interface CollectConfigDriftRequest {
-  sessionId: string
-  resetBaseline?: boolean
-}
-
-export interface CollectEnvInspectorResponse {
-  snapshot: import('../server-ops/env-inspector-parser').EnvironmentInspectorSnapshot
-}
 
 export interface CollectEndpointMonitorResponse {
   snapshot: import('../server-ops/endpoint-monitor-parser').EndpointMonitorSnapshot

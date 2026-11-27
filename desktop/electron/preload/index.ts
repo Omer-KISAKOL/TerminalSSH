@@ -211,16 +211,8 @@ const desktopApi: DesktopApi = {
       ipcRenderer.invoke(IPC_CHANNELS.serverOps.getContext, { sessionId }),
     collectIntelligence: (sessionId) =>
       ipcRenderer.invoke(IPC_CHANNELS.serverOps.collectIntelligence, { sessionId }),
-    collectDependencies: (sessionId) =>
-      ipcRenderer.invoke(IPC_CHANNELS.serverOps.collectDependencies, { sessionId }),
     collectProcesses: (sessionId) =>
       ipcRenderer.invoke(IPC_CHANNELS.serverOps.collectProcesses, { sessionId }),
-    collectDiskSpace: (sessionId) =>
-      ipcRenderer.invoke(IPC_CHANNELS.serverOps.collectDiskSpace, { sessionId }),
-    collectConfigDrift: (sessionId, resetBaseline) =>
-      ipcRenderer.invoke(IPC_CHANNELS.serverOps.collectConfigDrift, { sessionId, resetBaseline }),
-    collectEnvInspector: (sessionId) =>
-      ipcRenderer.invoke(IPC_CHANNELS.serverOps.collectEnvInspector, { sessionId }),
     collectEndpointMonitor: (sessionId) =>
       ipcRenderer.invoke(IPC_CHANNELS.serverOps.collectEndpointMonitor, { sessionId }),
     collectIncidentAnalyzer: (sessionId) =>

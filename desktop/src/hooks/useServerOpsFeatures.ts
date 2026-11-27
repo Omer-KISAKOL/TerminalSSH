@@ -35,23 +35,7 @@ export function useServerOpsFeatures() {
   const setIntelligence = useCallback((enabled: boolean) => patchFlags({ intelligence: enabled }), [patchFlags])
   const setTimeline = useCallback((enabled: boolean) => patchFlags({ timeline: enabled }), [patchFlags])
   const setContext = useCallback((enabled: boolean) => patchFlags({ context: enabled }), [patchFlags])
-  const setDependencyIntelligence = useCallback(
-    (enabled: boolean) => patchFlags({ dependencyIntelligence: enabled }),
-    [patchFlags],
-  )
   const setProcessExplorer = useCallback((enabled: boolean) => patchFlags({ processExplorer: enabled }), [patchFlags])
-  const setDiskSpaceAnalyzer = useCallback(
-    (enabled: boolean) => patchFlags({ diskSpaceAnalyzer: enabled }),
-    [patchFlags],
-  )
-  const setConfigDriftDetector = useCallback(
-    (enabled: boolean) => patchFlags({ configDriftDetector: enabled }),
-    [patchFlags],
-  )
-  const setEnvironmentInspector = useCallback(
-    (enabled: boolean) => patchFlags({ environmentInspector: enabled }),
-    [patchFlags],
-  )
   const setEndpointMonitor = useCallback(
     (enabled: boolean) => patchFlags({ endpointMonitor: enabled }),
     [patchFlags],
@@ -78,11 +62,7 @@ export function useServerOpsFeatures() {
     setIntelligence,
     setTimeline,
     setContext,
-    setDependencyIntelligence,
     setProcessExplorer,
-    setDiskSpaceAnalyzer,
-    setConfigDriftDetector,
-    setEnvironmentInspector,
     setEndpointMonitor,
     setIncidentAnalyzer,
     enableAll,

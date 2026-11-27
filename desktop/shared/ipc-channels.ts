@@ -67,11 +67,7 @@ export const IPC_CHANNELS = {
   serverOps: {
     getContext: 'server-ops:get-context',
     collectIntelligence: 'server-ops:collect-intelligence',
-    collectDependencies: 'server-ops:collect-dependencies',
     collectProcesses: 'server-ops:collect-processes',
-    collectDiskSpace: 'server-ops:collect-disk-space',
-    collectConfigDrift: 'server-ops:collect-config-drift',
-    collectEnvInspector: 'server-ops:collect-env-inspector',
     collectEndpointMonitor: 'server-ops:collect-endpoint-monitor',
     collectIncidentAnalyzer: 'server-ops:collect-incident-analyzer',
     listTimeline: 'server-ops:list-timeline',

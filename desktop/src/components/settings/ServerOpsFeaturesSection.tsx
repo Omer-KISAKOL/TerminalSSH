@@ -141,34 +141,10 @@ export function ServerOpsFeaturesSection({ panelMode = false }: ServerOpsFeature
           onChange={features.setContext}
         />
         <FeatureToggle
-          title={t('settings.serverToolsDependencyTitle')}
-          description={t('settings.serverToolsDependencyHelp')}
-          enabled={features.dependencyIntelligence}
-          onChange={features.setDependencyIntelligence}
-        />
-        <FeatureToggle
           title={t('settings.serverToolsProcessTitle')}
           description={t('settings.serverToolsProcessHelp')}
           enabled={features.processExplorer}
           onChange={features.setProcessExplorer}
-        />
-        <FeatureToggle
-          title={t('settings.serverToolsDiskTitle')}
-          description={t('settings.serverToolsDiskHelp')}
-          enabled={features.diskSpaceAnalyzer}
-          onChange={features.setDiskSpaceAnalyzer}
-        />
-        <FeatureToggle
-          title={t('settings.serverToolsDriftTitle')}
-          description={t('settings.serverToolsDriftHelp')}
-          enabled={features.configDriftDetector}
-          onChange={features.setConfigDriftDetector}
-        />
-        <FeatureToggle
-          title={t('settings.serverToolsEnvTitle')}
-          description={t('settings.serverToolsEnvHelp')}
-          enabled={features.environmentInspector}
-          onChange={features.setEnvironmentInspector}
         />
         <FeatureToggle
           title={t('settings.serverToolsEndpointsTitle')}

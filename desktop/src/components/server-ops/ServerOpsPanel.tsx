@@ -7,15 +7,8 @@ import { useServerOpsFeatures } from '@/hooks/useServerOpsFeatures'
 import { useServerOpsModules } from '@/hooks/useServerOpsModules'
 import { useLocale } from '@/hooks/useLocale'
 
-import {
-  ConfigDriftView,
-  DiskSpaceAnalyzerView,
-  EndpointMonitorView,
-  EnvironmentInspectorView,
-  IncidentAnalyzerView,
-} from './ServerOpsAdvancedViews'
+import { EndpointMonitorView, IncidentAnalyzerView } from './ServerOpsAdvancedViews'
 import { ContextSuggestionsView } from './ContextSuggestionsView'
-import { DependencyIntelligenceView } from './DependencyIntelligenceView'
 import { OperationalTimelineView } from './OperationalTimelineView'
 import { ProcessExplorerView } from './ProcessExplorerView'
 import { ServerIntelligenceView } from './ServerIntelligenceView'
@@ -25,11 +18,7 @@ export type ServerOpsTab =
   | 'intelligence'
   | 'timeline'
   | 'context'
-  | 'dependencies'
   | 'processes'
-  | 'disk'
-  | 'drift'
-  | 'env'
   | 'endpoints'
   | 'incident'
 
@@ -57,11 +46,7 @@ export function ServerOpsPanel({
     if (features.intelligence) items.push('intelligence')
     if (features.timeline) items.push('timeline')
     if (features.context) items.push('context')
-    if (features.dependencyIntelligence) items.push('dependencies')
     if (features.processExplorer) items.push('processes')
-    if (features.diskSpaceAnalyzer) items.push('disk')
-    if (features.configDriftDetector) items.push('drift')
-    if (features.environmentInspector) items.push('env')
     if (features.endpointMonitor) items.push('endpoints')
     if (features.incidentAnalyzer) items.push('incident')
     return items
@@ -87,48 +72,10 @@ export function ServerOpsPanel({
   }, [connected, ops, sessionId, tab])
 
   useEffect(() => {
-    if (tab === 'dependencies' && connected && sessionId && !ops.dependencySnapshot && !ops.isCollectingDependencies) {
-      void ops.collectDependencies()
-    }
-  }, [connected, ops, sessionId, tab])
-
-  useEffect(() => {
     if (tab === 'processes' && connected && sessionId && !ops.processSnapshot && !ops.isCollectingProcesses) {
       void ops.collectProcesses()
     }
   }, [connected, ops, sessionId, tab])
-
-  useEffect(() => {
-    if (tab === 'disk' && connected && sessionId && !modules.disk && !modules.collecting.disk) {
-      void modules.collectDisk()
-    }
-  }, [
-    connected,
-    modules.collectDisk,
-    modules.collecting.disk,
-    modules.disk,
-    sessionId,
-    tab,
-  ])
-
-  useEffect(() => {
-    if (tab === 'drift' && connected && sessionId && !modules.drift && !modules.collecting.drift) {
-      void modules.collectDrift()
-    }
-  }, [
-    connected,
-    modules.collectDrift,
-    modules.collecting.drift,
-    modules.drift,
-    sessionId,
-    tab,
-  ])
-
-  useEffect(() => {
-    if (tab === 'env' && connected && sessionId && !modules.env && !modules.collecting.env) {
-      void modules.collectEnv()
-    }
-  }, [connected, modules.collectEnv, modules.collecting.env, modules.env, sessionId, tab])
 
   useEffect(() => {
     if (tab === 'endpoints' && connected && sessionId && !modules.endpoints && !modules.collecting.endpoints) {
@@ -231,44 +178,11 @@ export function ServerOpsPanel({
           <ContextSuggestionsView suggestions={ops.suggestions} onApprovePaste={handleApprovePaste} />
         ) : null}
 
-        {tab === 'dependencies' && features.dependencyIntelligence ? (
-          <DependencyIntelligenceView
-            snapshot={ops.dependencySnapshot}
-            isCollecting={ops.isCollectingDependencies}
-            onCollect={() => void ops.collectDependencies()}
-          />
-        ) : null}
-
         {tab === 'processes' && features.processExplorer ? (
           <ProcessExplorerView
             snapshot={ops.processSnapshot}
             isCollecting={ops.isCollectingProcesses}
             onCollect={() => void ops.collectProcesses()}
-          />
-        ) : null}
-
-        {tab === 'disk' && features.diskSpaceAnalyzer ? (
-          <DiskSpaceAnalyzerView
-            snapshot={modules.disk}
-            isCollecting={modules.collecting.disk}
-            onCollect={() => void modules.collectDisk()}
-          />
-        ) : null}
-
-        {tab === 'drift' && features.configDriftDetector ? (
-          <ConfigDriftView
-            snapshot={modules.drift}
-            isCollecting={modules.collecting.drift}
-            onCollect={() => void modules.collectDrift()}
-            onResetBaseline={() => void modules.collectDrift(true)}
-          />
-        ) : null}
-
-        {tab === 'env' && features.environmentInspector ? (
-          <EnvironmentInspectorView
-            snapshot={modules.env}
-            isCollecting={modules.collecting.env}
-            onCollect={() => void modules.collectEnv()}
           />
         ) : null}
 

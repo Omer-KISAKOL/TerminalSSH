@@ -2,11 +2,7 @@ export type ServerOpsFeatureFlags = {
   intelligence: boolean
   timeline: boolean
   context: boolean
-  dependencyIntelligence: boolean
   processExplorer: boolean
-  diskSpaceAnalyzer: boolean
-  configDriftDetector: boolean
-  environmentInspector: boolean
   endpointMonitor: boolean
   incidentAnalyzer: boolean
 }
@@ -19,11 +15,7 @@ export const SERVER_OPS_FEATURE_KEYS = [
   'intelligence',
   'timeline',
   'context',
-  'dependencyIntelligence',
   'processExplorer',
-  'diskSpaceAnalyzer',
-  'configDriftDetector',
-  'environmentInspector',
   'endpointMonitor',
   'incidentAnalyzer',
 ] as const satisfies ReadonlyArray<keyof ServerOpsFeatureFlags>
@@ -32,11 +24,7 @@ const defaultFlags: ServerOpsFeatureFlags = {
   intelligence: true,
   timeline: true,
   context: true,
-  dependencyIntelligence: true,
   processExplorer: true,
-  diskSpaceAnalyzer: true,
-  configDriftDetector: true,
-  environmentInspector: true,
   endpointMonitor: true,
   incidentAnalyzer: true,
 }
@@ -47,26 +35,10 @@ function mergeFlags(parsed: Partial<ServerOpsFeatureFlags> | null | undefined): 
       typeof parsed?.intelligence === 'boolean' ? parsed.intelligence : defaultFlags.intelligence,
     timeline: typeof parsed?.timeline === 'boolean' ? parsed.timeline : defaultFlags.timeline,
     context: typeof parsed?.context === 'boolean' ? parsed.context : defaultFlags.context,
-    dependencyIntelligence:
-      typeof parsed?.dependencyIntelligence === 'boolean'
-        ? parsed.dependencyIntelligence
-        : defaultFlags.dependencyIntelligence,
     processExplorer:
       typeof parsed?.processExplorer === 'boolean'
         ? parsed.processExplorer
         : defaultFlags.processExplorer,
-    diskSpaceAnalyzer:
-      typeof parsed?.diskSpaceAnalyzer === 'boolean'
-        ? parsed.diskSpaceAnalyzer
-        : defaultFlags.diskSpaceAnalyzer,
-    configDriftDetector:
-      typeof parsed?.configDriftDetector === 'boolean'
-        ? parsed.configDriftDetector
-        : defaultFlags.configDriftDetector,
-    environmentInspector:
-      typeof parsed?.environmentInspector === 'boolean'
-        ? parsed.environmentInspector
-        : defaultFlags.environmentInspector,
     endpointMonitor:
       typeof parsed?.endpointMonitor === 'boolean'
         ? parsed.endpointMonitor

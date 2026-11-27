@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from 'react'
 
 import type {
   ContextCommandSuggestion,
-  DependencyIntelligenceSnapshot,
   OperationalTimelineEvent,
   ProcessExplorerSnapshot,
   ServerIntelligenceSnapshot,
@@ -12,14 +11,12 @@ import type {
 type UseServerOpsState = {
   context: ServerOpsContextResponse | null
   snapshot: ServerIntelligenceSnapshot | null
-  dependencySnapshot: DependencyIntelligenceSnapshot | null
   processSnapshot: ProcessExplorerSnapshot | null
   suggestions: ContextCommandSuggestion[]
   timeline: OperationalTimelineEvent[]
   retentionDays: number
   isLoading: boolean
   isCollecting: boolean
-  isCollectingDependencies: boolean
   isCollectingProcesses: boolean
   error: string | null
 }
@@ -27,14 +24,12 @@ type UseServerOpsState = {
 const initialState: UseServerOpsState = {
   context: null,
   snapshot: null,
-  dependencySnapshot: null,
   processSnapshot: null,
   suggestions: [],
   timeline: [],
   retentionDays: 3,
   isLoading: false,
   isCollecting: false,
-  isCollectingDependencies: false,
   isCollectingProcesses: false,
   error: null,
 }
@@ -120,27 +115,6 @@ export function useServerOps(sessionId: string | null, enabled: boolean) {
     }))
   }, [state.context])
 
-  const collectDependencies = useCallback(async () => {
-    if (!sessionId || !enabled || !window.desktopApi?.serverOps?.collectDependencies) {
-      return
-    }
-
-    setState((current) => ({ ...current, isCollectingDependencies: true, error: null }))
-
-    try {
-      const result = await window.desktopApi.serverOps.collectDependencies(sessionId)
-      setState((current) => ({
-        ...current,
-        dependencySnapshot: result.snapshot,
-        isCollectingDependencies: false,
-        error: null,
-      }))
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Bağımlılık taraması başarısız.'
-      setState((current) => ({ ...current, isCollectingDependencies: false, error: message }))
-    }
-  }, [enabled, sessionId])
-
   const collectProcesses = useCallback(async () => {
     if (!sessionId || !enabled || !window.desktopApi?.serverOps?.collectProcesses) {
       return
@@ -203,7 +177,6 @@ export function useServerOps(sessionId: string | null, enabled: boolean) {
     ...state,
     refreshContext,
     collectIntelligence,
-    collectDependencies,
     collectProcesses,
     refreshTimeline,
     recordSuggestion,
