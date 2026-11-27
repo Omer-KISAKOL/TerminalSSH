@@ -1,41 +1,45 @@
-export const ENV_SEARCH_ROOTS = ['/home', '/var/www', '/www', '/opt', '/srv'] as const
-
-export const ENV_FILE_GLOB_NAMES = [
-  '.env',
-  '.env.local',
-  '.env.production',
-  '.env.development',
-  '.env.staging',
-  '.env.example',
+export const ENV_SEARCH_ROOTS = [
+  '/home',
+  '/var/www',
+  '/www',
+  '/wwwroot',
+  '/opt',
+  '/srv',
+  '/data',
+  '/usr/share/nginx/html',
 ] as const
 
-const FIND_EXPR = ENV_FILE_GLOB_NAMES.map((name) => `-name '${name}'`)
-  .join(' -o ')
-
-const ENV_FIND_SHELL = `
+const ENV_FIND_CORE = `
 echo '===ENV_FILES==='
 (
-  find ${ENV_SEARCH_ROOTS.join(' ')} -maxdepth 8 \\( ${FIND_EXPR} \\) 2>/dev/null
-  if [ -n "$HOME" ]; then
-    find "$HOME" -maxdepth 8 \\( ${FIND_EXPR} \\) 2>/dev/null
+  for base in ${ENV_SEARCH_ROOTS.map((r) => `"${r}"`).join(' ')}; do
+  if [ -d "$base" ]; then
+    find "$base" -maxdepth 10 \\( -name '.env' -o -name '.env.*' -o -iname '.env.local' -o -iname '.env.production' \\) -type f 2>/dev/null
   fi
-) | sort -u | head -n 16
+  done
+  if [ -n "$HOME" ] && [ -d "$HOME" ]; then
+    find "$HOME" -maxdepth 10 \\( -name '.env' -o -name '.env.*' \\) -type f 2>/dev/null
+  fi
+  cwd=$(pwd 2>/dev/null)
+  if [ -n "$cwd" ] && [ -d "$cwd" ]; then
+    find "$cwd" -maxdepth 6 \\( -name '.env' -o -name '.env.*' \\) -type f 2>/dev/null
+  fi
+) | sort -u | head -n 20
 `.trim()
 
 export function buildEnvFindCommand(): string {
-  return `/bin/sh -c ${JSON.stringify(ENV_FIND_SHELL)}`
+  return `sh -c ${JSON.stringify(ENV_FIND_CORE)}`
 }
 
 export function buildEnvKeysCommand(filePath: string): string {
   const safePath = filePath.replace(/'/g, `'\\''`)
   const shell = `
 echo '===ENVKEYS:${safePath}==='
-grep -E '^[[:space:]]*([A-Za-z_][A-Za-z0-9_]*|export[[:space:]]+[A-Za-z_][A-Za-z0-9_]*)=' '${safePath}' 2>/dev/null | sed -E 's/^[[:space:]]*(export[[:space:]]+)?([A-Za-z_][A-Za-z0-9_]*)=.*/\\2/' | head -n 80
+grep -v '^[[:space:]]*#' '${safePath}' 2>/dev/null | grep '=' | sed 's/[[:space:]]*=.*//' | sed 's/^[[:space:]]*export[[:space:]]*//' | sed 's/[[:space:]]//g' | grep -E '^[A-Za-z_][A-Za-z0-9_]*$' | head -n 80
 `.trim()
-  return `/bin/sh -c ${JSON.stringify(shell)}`
+  return `sh -c ${JSON.stringify(shell)}`
 }
 
-/** @deprecated Prefer find + per-file key commands in server-ops-extended-service */
 export function buildEnvInspectorCommand(): string {
   return buildEnvFindCommand()
 }

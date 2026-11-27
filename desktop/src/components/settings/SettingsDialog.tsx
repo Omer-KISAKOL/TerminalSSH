@@ -117,7 +117,9 @@ export function SettingsDialog({ open, onClose, onProfilesChanged }: SettingsDia
 
             <div
               className={`min-h-0 flex-1 px-6 py-5 ${
-                section === 'snippets' ? 'flex flex-col overflow-hidden' : 'overflow-y-auto'
+                section === 'snippets'
+                  ? 'flex flex-col overflow-hidden'
+                  : 'scroll-thin overflow-y-auto overscroll-y-contain pr-1'
               }`}
             >
               {section === 'language' ? <LanguageSection panelMode /> : null}

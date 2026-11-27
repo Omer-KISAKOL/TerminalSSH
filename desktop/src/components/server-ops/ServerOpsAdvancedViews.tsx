@@ -10,7 +10,6 @@ import type {
 import { configDriftHasPayload } from '@shared/server-ops/config-drift-parser'
 import { diskAnalyzerHasPayload } from '@shared/server-ops/disk-analyzer-parser'
 import { endpointMonitorHasPayload } from '@shared/server-ops/endpoint-monitor-parser'
-import { envInspectorHasPayload } from '@shared/server-ops/env-inspector-parser'
 import { incidentAnalyzerHasPayload } from '@shared/server-ops/incident-analyzer-parser'
 
 import { Button } from '@/components/ui/Button'
@@ -259,13 +258,18 @@ export function EnvironmentInspectorView({
         isCollecting={isCollecting}
         snapshot={snapshot}
         emptyText={t('serverOps.envEmpty')}
-        scanEmptyText={t('serverOps.moduleScanEmpty')}
-        noData={snapshot ? !envInspectorHasPayload(snapshot) : false}
-        warnings={snapshot?.warnings}
+        scanEmptyText={t('serverOps.envScanFailed')}
+        noData={snapshot ? snapshot.scanStatus === 'failed' : false}
+        warnings={snapshot?.scanStatus === 'failed' || snapshot?.scanStatus === 'partial' ? snapshot.warnings : []}
       >
         {snapshot ? (
           <>
             <p className="text-xs text-text-muted">{t('serverOps.envNoSecrets')}</p>
+            {snapshot.scanStatus === 'empty' ? (
+              <p className="rounded-lg border border-border bg-surface-muted/40 px-3 py-2 text-sm text-text-muted">
+                {t('serverOps.envNoneFound')}
+              </p>
+            ) : null}
             {snapshot.files.map((file) => (
               <div key={file.path} className="min-w-0 rounded-lg border border-border p-2">
                 <p className="truncate text-xs font-medium text-text" title={file.path}>

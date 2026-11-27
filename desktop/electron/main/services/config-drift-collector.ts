@@ -9,7 +9,7 @@ export const CONFIG_DRIFT_PATHS = [
 
 function fingerprintLineForPath(path: string): string {
   const escaped = path.replace(/'/g, `'\\''`)
-  return `f='${escaped}'; if [ -e "$f" ] && [ -r "$f" ]; then h=$(sha256sum "$f" 2>/dev/null | awk '{print $1}'); [ -z "$h" ] && h=$(md5sum "$f" 2>/dev/null | awk '{print $1}'); sz=$(wc -c < "$f" 2>/dev/null | tr -d ' '); echo "$h|$f|${sz:-0}"; elif [ -e "$f" ]; then echo "DENIED|$f|0"; else echo "MISSING|$f|0"; fi`
+  return `f='${escaped}'; if [ -e "$f" ] && [ -r "$f" ]; then h=$(sha256sum "$f" 2>/dev/null | awk '{print $1}'); [ -z "$h" ] && h=$(md5sum "$f" 2>/dev/null | awk '{print $1}'); sz=$(wc -c < "$f" 2>/dev/null | tr -d ' '); [ -z "$sz" ] && sz=0; echo "$h|$f|$sz"; elif [ -e "$f" ]; then echo "DENIED|$f|0"; else echo "MISSING|$f|0"; fi`
 }
 
 const DISCOVER_NGINX_SITES_SHELL =

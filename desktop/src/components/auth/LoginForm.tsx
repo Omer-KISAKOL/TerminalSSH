@@ -77,26 +77,27 @@ export function LoginForm({
           />
         </label>
 
-        <label className="flex flex-col gap-1.5 text-sm">
-          <div className="flex items-center justify-between gap-2">
+        <div className="flex flex-col gap-1.5 text-sm">
+          <div className="relative">
             <span className={authLabelClass}>{t('auth.password')}</span>
+            <div className="mt-1.5 [&_button]:text-white/55 [&_button:hover]:text-white">
+              <PasswordInput
+                autoComplete="current-password"
+                className={authFieldClass}
+                value={password}
+                onChange={setPassword}
+              />
+            </div>
             <button
               type="button"
-              className="text-xs text-status-connected underline-offset-2 hover:underline"
+              tabIndex={-1}
+              className="absolute right-0 top-0 text-xs text-status-connected underline-offset-2 hover:underline"
               onClick={onForgotPassword}
             >
               {t('auth.forgotPassword')}
             </button>
           </div>
-          <div className="[&_button]:text-white/55 [&_button:hover]:text-white">
-            <PasswordInput
-              autoComplete="current-password"
-              className={authFieldClass}
-              value={password}
-              onChange={setPassword}
-            />
-          </div>
-        </label>
+        </div>
 
         <Button type="submit" variant="secondary" className={authButtonClass} loading={loading}>
           {t('auth.login')}

@@ -15,6 +15,19 @@ const STORAGE_KEY = 'terminalssh-server-ops-features'
 
 export const SERVER_OPS_FEATURES_CHANGED = 'terminalssh:server-ops-features-changed'
 
+export const SERVER_OPS_FEATURE_KEYS = [
+  'intelligence',
+  'timeline',
+  'context',
+  'dependencyIntelligence',
+  'processExplorer',
+  'diskSpaceAnalyzer',
+  'configDriftDetector',
+  'environmentInspector',
+  'endpointMonitor',
+  'incidentAnalyzer',
+] as const satisfies ReadonlyArray<keyof ServerOpsFeatureFlags>
+
 const defaultFlags: ServerOpsFeatureFlags = {
   intelligence: true,
   timeline: true,
@@ -77,6 +90,16 @@ export function loadServerOpsFeatureFlags(): ServerOpsFeatureFlags {
   } catch {
     return { ...defaultFlags }
   }
+}
+
+export function buildServerOpsFlagsAll(enabled: boolean): ServerOpsFeatureFlags {
+  return SERVER_OPS_FEATURE_KEYS.reduce<ServerOpsFeatureFlags>(
+    (accumulator, key) => {
+      accumulator[key] = enabled
+      return accumulator
+    },
+    { ...defaultFlags },
+  )
 }
 
 export function saveServerOpsFeatureFlags(flags: ServerOpsFeatureFlags): void {

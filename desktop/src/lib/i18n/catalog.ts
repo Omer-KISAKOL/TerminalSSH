@@ -121,6 +121,8 @@ export const messagesTr = {
     menuNav: 'Ayarlar menüsü',
     serverToolsTitle: 'Sunucu araçları',
     serverToolsHelp: 'İsteğe bağlı SSH tabanlı izleme modülleri.',
+    serverToolsEnableAll: 'Hepsini aç',
+    serverToolsDisableAll: 'Hepsini kapat',
     serverToolsStatusTitle: 'Durum (Server Intelligence)',
     serverToolsStatusHelp: 'Canlı sistem özeti, disk, bellek ve servis taraması.',
     serverToolsTimelineTitle: 'Geçmiş (Operational Timeline)',
@@ -363,7 +365,10 @@ export const messagesTr = {
     moduleScanEmpty:
       'Tarama tamamlandı ama sunucudan veri gelmedi. SFTP-only hesap, SSH exec kısıtı veya du/find/curl yetkisi olabilir. “Yenile” ile tekrar deneyin.',
     driftNoChanges: 'Önceki baz ile fark yok (veya ilk baz kaydı oluşturuldu).',
-    envNoKeys: 'Okunabilir anahtar bulunamadı.',
+    envNoKeys: 'Bu dosyada okunabilir anahtar yok (izin veya boş dosya).',
+    envNoneFound:
+      'Bu sunucuda .env dosyası bulunamadı. Bu bir hata değil; dosya farklı bir yolda olabilir veya hiç kullanılmıyor olabilir.',
+    envScanFailed: 'Tarama çalışmadı. SSH exec ve find komutuna izin verildiğinden emin olun.',
   },
   snippets: {
     panelTitle: "Snippet'ler",
@@ -587,6 +592,8 @@ export const messagesEn = {
     menuNav: 'Settings menu',
     serverToolsTitle: 'Server tools',
     serverToolsHelp: 'Optional SSH-based monitoring modules.',
+    serverToolsEnableAll: 'Enable all',
+    serverToolsDisableAll: 'Disable all',
     serverToolsStatusTitle: 'Status (Server Intelligence)',
     serverToolsStatusHelp: 'Live system summary, disks, memory, and service scan.',
     serverToolsTimelineTitle: 'Timeline (Operational Timeline)',
@@ -828,7 +835,10 @@ export const messagesEn = {
     moduleScanEmpty:
       'Scan finished but the host returned no usable data. Check shell access, SSH exec, and du/find/curl permissions, then tap Refresh.',
     driftNoChanges: 'No drift vs baseline (or baseline was just created).',
-    envNoKeys: 'No readable keys found.',
+    envNoKeys: 'No readable keys in this file (permissions or empty file).',
+    envNoneFound:
+      'No .env file was found on this server. That is normal if you do not use dotenv files or they live elsewhere.',
+    envScanFailed: 'Scan failed. Ensure SSH exec allows find and shell commands.',
   },
   snippets: {
     panelTitle: 'Snippets',

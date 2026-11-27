@@ -19,6 +19,11 @@ export type AppearanceThemeId =
   | 'rose-pine'
   | 'rose-pine-moon'
   | 'rose-pine-dawn'
+  | 'copper-foundry'
+  | 'tokyo-rain'
+  | 'saffron-vault'
+  | 'salt-mirage'
+  | 'boreal-mist'
 
 export type AppearanceThemeColors = {
   surface: string
@@ -345,6 +350,91 @@ export const APPEARANCE_THEMES: AppearanceTheme[] = [
       terminalBackground: '#faf4ed',
       terminalForeground: '#575279',
       terminalCursor: '#d7827e',
+    },
+  },
+  {
+    id: 'copper-foundry',
+    name: 'Copper Foundry',
+    previewBars: ['#E8A87C', '#E07B39', '#C45C26'],
+    colors: {
+      surface: '#1c1511',
+      surfaceRaised: '#261e18',
+      surfaceMuted: '#302820',
+      border: '#4a3c32',
+      text: '#f2e6dc',
+      textMuted: '#a89585',
+      statusConnected: '#e07b39',
+      terminalBackground: '#261e18',
+      terminalForeground: '#e8a87c',
+      terminalCursor: '#ff9f5a',
+    },
+  },
+  {
+    id: 'tokyo-rain',
+    name: 'Tokyo Rain',
+    previewBars: ['#A8D8FF', '#FF6B9D', '#FFD93D'],
+    colors: {
+      surface: '#141820',
+      surfaceRaised: '#1a2230',
+      surfaceMuted: '#232d3d',
+      border: '#354152',
+      text: '#d4e4f7',
+      textMuted: '#7a8fa6',
+      statusConnected: '#ff6b9d',
+      terminalBackground: '#1a2230',
+      terminalForeground: '#a8d8ff',
+      terminalCursor: '#ff6b9d',
+    },
+  },
+  {
+    id: 'saffron-vault',
+    name: 'Saffron Vault',
+    previewBars: ['#F4D35E', '#6EB5FF', '#F4C430'],
+    colors: {
+      surface: '#0c0f1a',
+      surfaceRaised: '#12172a',
+      surfaceMuted: '#1a2138',
+      border: '#2d3555',
+      text: '#e8ecf4',
+      textMuted: '#8892ab',
+      statusConnected: '#f4c430',
+      terminalBackground: '#12172a',
+      terminalForeground: '#f4d35e',
+      terminalCursor: '#6eb5ff',
+    },
+  },
+  {
+    id: 'salt-mirage',
+    name: 'Salt Mirage',
+    previewBars: ['#2C5282', '#C05621', '#38B2AC'],
+    colors: {
+      surface: '#f4f7fa',
+      surfaceRaised: '#fafcfe',
+      surfaceMuted: '#e8eef3',
+      border: '#cdd6e0',
+      text: '#243447',
+      textMuted: '#5c6b7a',
+      statusConnected: '#c05621',
+      terminalBackground: '#fafcfe',
+      terminalForeground: '#2c5282',
+      terminalCursor: '#c05621',
+    },
+  },
+  {
+    id: 'boreal-mist',
+    name: 'Boreal Mist',
+    previewBars: ['#9EF0E4', '#B8A0FF', '#7EE8D8'],
+    colors: {
+      surface: '#0a1214',
+      surfaceRaised: '#0f1c20',
+      surfaceMuted: '#15282e',
+      border: '#24505a',
+      text: '#cce8e4',
+      textMuted: '#6a9a94',
+      statusConnected: '#7ee8d8',
+      terminalBackground: '#0f1c20',
+      terminalForeground: '#9ef0e4',
+      terminalCursor: '#b8a0ff',
     },
   },
 ]

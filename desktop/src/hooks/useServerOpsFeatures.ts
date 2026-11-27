@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 
 import {
+  buildServerOpsFlagsAll,
   loadServerOpsFeatureFlags,
   saveServerOpsFeatureFlags,
   SERVER_OPS_FEATURES_CHANGED,
@@ -60,6 +61,18 @@ export function useServerOpsFeatures() {
     [patchFlags],
   )
 
+  const enableAll = useCallback(() => {
+    const next = buildServerOpsFlagsAll(true)
+    saveServerOpsFeatureFlags(next)
+    setFlags(next)
+  }, [])
+
+  const disableAll = useCallback(() => {
+    const next = buildServerOpsFlagsAll(false)
+    saveServerOpsFeatureFlags(next)
+    setFlags(next)
+  }, [])
+
   return {
     ...flags,
     setIntelligence,
@@ -72,5 +85,7 @@ export function useServerOpsFeatures() {
     setEnvironmentInspector,
     setEndpointMonitor,
     setIncidentAnalyzer,
+    enableAll,
+    disableAll,
   }
 }

@@ -222,19 +222,26 @@ export const serverOpsExtendedService = {
 
     const warnings: string[] = []
     let raw = ''
+    let execFailed = false
 
     try {
       raw = await execCollect(webContentsId, sessionId, buildEnvFindCommand(), 25_000)
     } catch (error) {
-      warnings.push(error instanceof Error ? error.message : '.env incelemesi başarısız.')
+      execFailed = true
+      warnings.push(error instanceof Error ? error.message : '.env taraması çalıştırılamadı.')
     }
 
     let paths = parseEnvFilePaths(raw)
 
     if (paths.length === 0) {
       const fallbackList = await execRemoteLine(webContentsId, sessionId, buildEnvFindCommand())
-      raw = `${raw}\n${fallbackList}`
-      paths = parseEnvFilePaths(raw)
+      if (fallbackList.trim()) {
+        raw = `${raw}\n${fallbackList}`
+        paths = parseEnvFilePaths(raw)
+        if (paths.length > 0) {
+          execFailed = false
+        }
+      }
     }
 
     for (const filePath of paths.slice(0, 12)) {
@@ -242,17 +249,7 @@ export const serverOpsExtendedService = {
       raw = `${raw}\n${keysRaw}`
     }
 
-    let snapshot = parseEnvInspectorOutput(meta.host, raw, warnings)
-
-    if (!envInspectorHasPayload(snapshot)) {
-      snapshot = {
-        ...snapshot,
-        warnings: [
-          ...snapshot.warnings,
-          'find izni veya okuma yetkisi yok olabilir; .env genelde /var/www veya proje kökündedir.',
-        ],
-      }
-    }
+    const snapshot = parseEnvInspectorOutput(meta.host, raw, warnings, execFailed)
 
     setCachedEnvInspector(sessionId, snapshot)
     return { snapshot }

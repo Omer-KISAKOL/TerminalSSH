@@ -1,5 +1,7 @@
 import { extractOpsSection } from './section'
 
+export type EnvInspectorScanStatus = 'ok' | 'empty' | 'partial' | 'failed'
+
 export interface EnvFileSummary {
   path: string
   keys: string[]
@@ -14,13 +16,14 @@ export interface EnvKeyMismatch {
 export interface EnvironmentInspectorSnapshot {
   collectedAt: string
   host: string
+  scanStatus: EnvInspectorScanStatus
   files: EnvFileSummary[]
   mismatches: EnvKeyMismatch[]
   warnings: string[]
 }
 
 const REDACTED_VALUE_PATTERN = /^\s*[A-Za-z_][A-Za-z0-9_]*\s*=/
-const ENV_PATH_PATTERN = /^\/[^\s']+\.env[\w.-]*$/
+const ENV_PATH_PATTERN = /^\/[^\s']+\.env([\w.-]*)?$/
 
 export function isValidEnvFilePath(path: string): boolean {
   const trimmed = path.replace(/\r$/, '').trim()
@@ -28,7 +31,7 @@ export function isValidEnvFilePath(path: string): boolean {
     return false
   }
 
-  if (/find\s+\//.test(trimmed) || trimmed.includes('/bin/sh')) {
+  if (/find\s+\//.test(trimmed) || trimmed.includes('/bin/sh') || trimmed.includes('sh -c')) {
     return false
   }
 
@@ -70,10 +73,30 @@ function parseKeysForPath(raw: string, filePath: string): string[] {
   return [...keySet]
 }
 
+export function resolveEnvScanStatus(
+  files: EnvFileSummary[],
+  execFailed: boolean,
+): EnvInspectorScanStatus {
+  if (execFailed && files.length === 0) {
+    return 'failed'
+  }
+
+  if (files.length === 0) {
+    return 'empty'
+  }
+
+  if (files.every((file) => file.keys.length === 0)) {
+    return 'partial'
+  }
+
+  return 'ok'
+}
+
 export function parseEnvInspectorOutput(
   host: string,
   raw: string,
   extraWarnings: string[] = [],
+  execFailed = false,
 ): EnvironmentInspectorSnapshot {
   const warnings = [...extraWarnings]
   const paths = parseEnvFilePaths(raw)
@@ -85,7 +108,11 @@ export function parseEnvInspectorOutput(
 
     for (const line of block.split('\n')) {
       if (REDACTED_VALUE_PATTERN.test(line) && !/^KEY:/.test(line)) {
-        if (!warnings.includes('Uzak çıktıda değer sızıntısı filtrelendi; yalnızca anahtar adları kullanılıyor.')) {
+        if (
+          !warnings.includes(
+            'Uzak çıktıda değer sızıntısı filtrelendi; yalnızca anahtar adları kullanılıyor.',
+          )
+        ) {
           warnings.push(
             'Uzak çıktıda değer sızıntısı filtrelendi; yalnızca anahtar adları kullanılıyor.',
           )
@@ -96,6 +123,8 @@ export function parseEnvInspectorOutput(
 
     files.push({ path: filePath, keys })
   }
+
+  const scanStatus = resolveEnvScanStatus(files, execFailed)
 
   const keyToFiles = new Map<string, string[]>()
   for (const file of files) {
@@ -116,15 +145,14 @@ export function parseEnvInspectorOutput(
     }
   }
 
-  if (files.length === 0) {
-    warnings.push('.env dosyası bulunamadı veya okunamadı.')
-  } else if (files.every((file) => file.keys.length === 0)) {
-    warnings.push('Dosyalar bulundu ama anahtar okunamadı; dosya izinlerini kontrol edin.')
+  if (scanStatus === 'partial') {
+    warnings.push('Bazı .env dosyaları bulundu ama anahtar okunamadı (dosya izni gerekebilir).')
   }
 
   return {
     collectedAt: new Date().toISOString(),
     host,
+    scanStatus,
     files,
     mismatches: mismatches.slice(0, 40),
     warnings,
@@ -132,5 +160,5 @@ export function parseEnvInspectorOutput(
 }
 
 export function envInspectorHasPayload(snapshot: EnvironmentInspectorSnapshot): boolean {
-  return snapshot.files.some((file) => isValidEnvFilePath(file.path))
+  return snapshot.files.length > 0
 }
